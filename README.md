@@ -2,4 +2,4 @@
 
 ## Learn R for free and discover how much you can do with it!
 
-Created by [Francisco E. Fontúrbel](https://github.com/fonturbel)
+Created by [Francisco E. Fontúrbel](https://github.com/fonturbel) :sunglasses:
