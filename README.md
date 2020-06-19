@@ -1,2 +1,5 @@
-# R_caffè
-Learn R for free and discover how much you can do with it!
+# R caffè :coffee:
+
+## Learn R for free and discover how much you can do with it!
+
+Created by [Francisco E. Fontúrbel](https://github.com/fonturbel)
