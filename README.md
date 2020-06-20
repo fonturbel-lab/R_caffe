@@ -6,4 +6,6 @@ Created by [Francisco E. Fontúrbel](https://github.com/fonturbel) :sunglasses:
 
 ![cup](images/caffe.png)
 
+## Terms of use
+
 ![license](images/license.png)
