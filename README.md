@@ -6,7 +6,7 @@ Created by [Francisco E. Fontúrbel](https://github.com/fonturbel) :sunglasses:
 
 ![cup](images/caffe.png)
 
-This repository presents a comprehensive R course intended for self-learning and build capacities in statistical analysis using R, R Studio, and RMarkdown language.
+This repository presents a comprehensive R course intended for self-learning and build capacities in statistical analysis using [R](https://cran.r-project.org), [R Studio](https://rstudio.com), and RMarkdown language.
 
 ## Terms of use
 
