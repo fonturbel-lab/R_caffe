@@ -1,5 +1,5 @@
 ---
-title: "Managing and operating objects in R"
+title: "01 - Managing and operating objects in R"
 author: "Francisco E. Fonturbel"
 date: "11/May/2022"
 output: 
@@ -54,6 +54,21 @@ Using the command `head()` we can examine the first 6 lines of the dataset and f
 ```{r irish}
 head(iris)
 ```
+
+How many species are present in this dataset? we may count them one by one or... just ask R:
+
+```{r splev}
+#Examining variable levels
+levels(Species)
+
+#Creating an object to quantify how many levels do we have
+spp<-levels(Species)
+length(spp)
+```
+
+In this case there are only three species, but this is particularly useful for large datasets with many levels.
+
+## First-aid plots: viewing our data
 
 
 
