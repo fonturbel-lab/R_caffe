@@ -121,6 +121,16 @@ boxplot(Petal.Length~Species, main="Petal lenght variation", xlab="Plant species
 boxplot(Petal.Width~Species, main="Petal width variation", xlab="Plant species", ylab="Petal width")
 ```
 
+And what if we want to put the four boxplots into a single plot? Easy to do! let's use the `par(mfrow=c(row,col))` command:
+
+```{r bp2, fig.width=10, fig.height=8}
+par(mfrow=c(2,2))
+boxplot(Sepal.Length~Species, main="Sepal lenght variation", xlab="Plant species", ylab="Sepal lenght")
+boxplot(Sepal.Width~Species, main="Sepal width variation", xlab="Plant species", ylab="Sepal width")
+boxplot(Petal.Length~Species, main="Petal lenght variation", xlab="Plant species", ylab="Petal lenght")
+boxplot(Petal.Width~Species, main="Petal width variation", xlab="Plant species", ylab="Petal width")
+par(mfrow=c(1,1))
+```
 
 ## Session
 
