@@ -110,6 +110,16 @@ dataS<-subset(iris, Species=="setosa")
 plot(Sepal.Length~Sepal.Width, main="Flower traits", xlab="Sepal length", ylab="Sepal width", col="dodgerblue2", pch=19, data=dataS)
 ```
 
+### Boxplots: visually comparing variables
+
+Let's use boxplots to compare some variables:
+
+```{r bp1}
+boxplot(Sepal.Length~Species, main="Sepal lenght variation", xlab="Plant species", ylab="Sepal lenght")
+boxplot(Sepal.Width~Species, main="Sepal width variation", xlab="Plant species", ylab="Sepal width")
+boxplot(Petal.Length~Species, main="Petal lenght variation", xlab="Plant species", ylab="Petal lenght")
+boxplot(Petal.Width~Species, main="Petal width variation", xlab="Plant species", ylab="Petal width")
+```
 
 
 ## Session
