@@ -132,6 +132,11 @@ boxplot(Petal.Width~Species, main="Petal width variation", xlab="Plant species",
 par(mfrow=c(1,1))
 ```
 
+
+## Final thoughts
+
+R is a useful tool to work with any kind of data. As long as we understand how objects work, and lear some basic coding skills (a useful guide of basic R commands are available [here](https://iqss.github.io/dss-workshops/R/Rintro/base-r-cheat-sheet.pdf) to download as a PDF file).
+
 ## Session
 
 ```{r session, echo=TRUE}
