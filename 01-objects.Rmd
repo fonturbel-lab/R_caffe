@@ -70,6 +70,26 @@ In this case there are only three species, but this is particularly useful for l
 
 ## First-aid plots: viewing our data
 
+Before start analyzing our data, it is always a good idea to make simple plots to decribe our data. For example, how are sepal lenght values distributed? let's make an histogram:
+
+```{r hist1}
+hist(Sepal.Length)
+```
+
+Interesting! there is some variation on sepal length but the color is so dull... why not giving it some color?
+
+```{r hist2}
+hist(Sepal.Length, col="blueviolet")
+```
+
+Much better!
+
+And we may now wonder, how sepal length and with are related? let's make a scatterplot:
+
+```{r sp1}
+plot(Sepal.Length~Sepal.Width)
+```
+
 
 
 ## Session
