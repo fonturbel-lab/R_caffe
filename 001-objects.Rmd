@@ -32,7 +32,7 @@ Tips for loading your data without problem:
 
 (2) Avoid spaces, points, and commas in variable names.
 
-(3) Do not leave empty cells.
+(3) Do not leave empty cells. If there is no data, use `NA` to fill those empty cells.
 
 ```{r loading data}
 #Let's load the data file
