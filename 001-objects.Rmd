@@ -20,7 +20,19 @@ knitr::opts_chunk$set(
 
 R is an open source platform that can be used to perform statistical analyses and many other things (genetics, maps, etc.). So, R is an object-based programming language, which means that it is based on creating, manipulating, and operating objects.
 
-R objects are case sensitive, for example, "vector" and "Vector" are considered as different objects.
+R objects are case sensitive, for example, "vector" and "Vector" are considered as different objects. Thus, if you are getting a recurrent error trying to call or operate an object, the first thing to do is check your spelling. Be sure that you are calling your object exactly as it was created (hint: the Environment tab on R Studio, located at the upper right corner, contains a list of all objects and functions currently loaded in R).
+
+## Datasets
+
+The primordial input in science is data. Regardless of our study field, we all use data (collected after hard fieldwork or long lab hours) and the quality of our analyses and papers depend on the quality of our data. Likewise, properly managing our data is crucial to have a smooth experience in R. So, my first advice will be: "please, **AVOID** the `openxlsx` library; it might seem to make your life easier but most of the time it will make your experience with R very hard.
+
+Tips for loading your data without problem:
+
+(1) Prefer csv (comma-separated text) or txt (tab-separated text) formats to input your data in R.
+
+(2) Avoid spaces, points, and commas in variable names.
+
+(3) Do not leave empty cells.
 
 ```{r loading data}
 #Let's load the data file
