@@ -39,6 +39,15 @@ Tips for loading your data without problem:
 
 No data to test yet? Don't worry! R has several example datasets to work with. Just type `data()` to see the available data in base R (some additional datasets may be available within other packages as well).
 
+One of the nicests datasets is `iris`, which contains information on flower measurements of three species of the _Iris_ genus.
+
+```{r iris}
+data(iris)
+attach(iris)
+names(iris)
+```
+
+
 
 ## Session
 
