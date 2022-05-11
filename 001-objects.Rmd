@@ -1,0 +1,67 @@
+---
+title: "Randomized Block ANOVA"
+author: "Francisco E. Fonturbel"
+date: "30/March/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	echo = TRUE,
+	message = FALSE,
+	warning = FALSE
+)
+```
+
+## Randomized Block Design
+
+This repository contains the code and the explanations to perform a **randomized block design**. In this kind of model, similar test subjects are grouped in **blocks** and each block is tested against all treatment levels of the primary factor, at a random order. This approach is intended to get rid of possible infiuences of external factors (e.g., slope or sunlight incidence).
+
+Let's suppose that we sample the height of _Echinopsis chiloensis_ cacti in three populations (randonmly selected) at the study area. We took 15 measurements at each one of the populations. We took measurements at three different locations within each population to capture the environmental heterogeneity. The information is contained on the file named _cactus.txt_ located in the `data` folder.
+
+```{r loading data}
+#Let's load the data file
+#We will create an object called "data" with this information
+data<-read.table("data/cactus.txt", header = T)
+attach(data)
+```
+
+Let's see if we can see the data file by calling the object:
+
+```{r call}
+data
+```
+
+OK, it seems to be in order! Now we have to concatenate the three columns into one:
+
+```{r conc}
+#Concatenate the data rows of df1 into a single vector r
+r<-c(t(as.matrix(data)))
+#Assign new variables for the treatment levels and number of observations
+f = c("Pop1", "Pop2", "Pop3") #Population names
+k = 3 #Number of populations sampled
+n = 15 #Number of samples per population
+#Create a vector of treatment factors that corresponds to each element of r
+tm <- gl(k, 1, n*k, factor(f))
+```
+
+In a next step, we need to define the blocks:
+
+```{r blocks}
+blk = gl(n, k, k*n)             # blocking factor
+```
+
+
+Now we have our data properly ordered. Let's fit a one-way ANOVA model with this:
+
+```{r ANOVA}
+aov.cactus <- aov(r ~ tm + blk)
+```
+
+OK, now we have an object called `aov.cactus`, now we'll use the `summary()` function to see the results:
+
+```{r result_aov}
+summary(aov.cactus)
+```
+
+Our results indicate that cactus height is **significantly different** among the three sampled population. However, the block factor `blk` is not significant, indicating that the influence of environmental heterogeneity within populations is negligible.
