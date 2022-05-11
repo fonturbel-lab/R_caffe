@@ -47,6 +47,14 @@ attach(iris)
 names(iris)
 ```
 
+Thus, this dataset contains four columns with quantitative data and a fifth column with categorical values, corresponding to the different species.
+
+Using the command `head()` we can examine the first 6 lines of the dataset and figure how it looks like:
+
+```{r irish}
+head(iris)
+```
+
 
 
 ## Session
