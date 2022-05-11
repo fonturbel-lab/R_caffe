@@ -16,11 +16,9 @@ knitr::opts_chunk$set(
 )
 ```
 
-## Randomized Block Design
+## Handling data in R
 
-This repository contains the code and the explanations to perform a **randomized block design**. In this kind of model, similar test subjects are grouped in **blocks** and each block is tested against all treatment levels of the primary factor, at a random order. This approach is intended to get rid of possible infiuences of external factors (e.g., slope or sunlight incidence).
-
-Let's suppose that we sample the height of _Echinopsis chiloensis_ cacti in three populations (randonmly selected) at the study area. We took 15 measurements at each one of the populations. We took measurements at three different locations within each population to capture the environmental heterogeneity. The information is contained on the file named _cactus.txt_ located in the `data` folder.
+R is an open source platform that can be used to perform statistical analyses and many other things (genetics, maps, etc.). So, R is an object-based programming language, which means that it is based on creating, manipulating, and operating objects.
 
 ```{r loading data}
 #Let's load the data file
