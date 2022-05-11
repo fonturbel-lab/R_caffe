@@ -2,7 +2,10 @@
 title: "Managing and operating objects in R"
 author: "Francisco E. Fonturbel"
 date: "11/May/2022"
-output: html_document
+output: 
+  html_document:
+    includes:
+        after_body: footer.html
 ---
 
 ```{r setup, include=FALSE}
@@ -65,3 +68,9 @@ summary(aov.cactus)
 ```
 
 Our results indicate that cactus height is **significantly different** among the three sampled population. However, the block factor `blk` is not significant, indicating that the influence of environmental heterogeneity within populations is negligible.
+
+## Session
+
+```{r session, echo=TRUE}
+sessionInfo()
+```
