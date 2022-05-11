@@ -20,6 +20,8 @@ knitr::opts_chunk$set(
 
 R is an open source platform that can be used to perform statistical analyses and many other things (genetics, maps, etc.). So, R is an object-based programming language, which means that it is based on creating, manipulating, and operating objects.
 
+R objects are case sensitive, for example, "vector" and "Vector" are considered as different objects.
+
 ```{r loading data}
 #Let's load the data file
 #We will create an object called "data" with this information
