@@ -90,6 +90,16 @@ And we may now wonder, how sepal length and with are related? let's make a scatt
 plot(Sepal.Length~Sepal.Width)
 ```
 
+We may add some information to the plot:
+
+```{r sp2}
+plot(Sepal.Length~Sepal.Width, main="Flower traits", xlab="Sepal length", ylab="Sepal width", col="dodgerblue2", pch=19)
+#Changing shape
+plot(Sepal.Length~Sepal.Width, main="Flower traits", xlab="Sepal length", ylab="Sepal width", col="yellow", bg="blueviolet", pch=24)
+#Coloring each species with a different color
+plot(Sepal.Length~Sepal.Width, main="Flower traits", xlab="Sepal length", ylab="Sepal width", col=iris$Species, pch=19)
+```
+
 
 
 ## Session
