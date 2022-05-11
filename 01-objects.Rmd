@@ -133,7 +133,7 @@ par(mfrow=c(1,1))
 ```
 
 
-## Operating object
+## Operating objects
 
 We can make a series of mathematical and logical operations with our objects and some intuituive commands, for example use `log()` to obtain the logarith of a given number.
 
