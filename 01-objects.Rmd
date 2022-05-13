@@ -70,7 +70,7 @@ In this case there are only three species, but this is particularly useful for l
 
 ## First-aid plots: viewing our data
 
-Before start analyzing our data, it is always a good idea to make simple plots to decribe our data. For example, how are sepal lenght values distributed? let's make an histogram:
+Before start analyzing our data, it is always a good idea to make simple plots to describe our data. For example, how are sepal lenght values distributed? let's make an histogram:
 
 ```{r hist1}
 hist(Sepal.Length)
@@ -163,7 +163,7 @@ What if, for example, we want to use `y` in logarithmic scale. Let's see hoy it 
 
 ```{r sp5}
 #Y tambien podemos hacer operaciones matematicas con las variables:
-ylog<-log(y)
+ylog<-log(y+1)
 plot(x,ylog, pch=19, col="forestgreen")
 ```
 
