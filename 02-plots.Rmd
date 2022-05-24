@@ -27,9 +27,17 @@ library(ggplot2)
 library(ggthemes)
 library(tidyr)
 library(dplyr)
+library(gapminder)
+```
+
+So, with the `ggplot2` R library we can go from this:
+
+```{r ugly}
+plot(gdpPercap ~ lifeExp, data = gapminder, col = gapminder$continent)
 ```
 
 
+To this:
 
 
 ## Final thoughts
