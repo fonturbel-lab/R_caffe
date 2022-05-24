@@ -288,7 +288,7 @@ multiplot(p1, p3, p5, p2, p4, cols = 2)
 
 ## Final thoughts
 
-R is a useful graphic tool to produce high-quality plots
+R is a useful graphic tool to produce high-quality plots. Once we learn the basic principles or graphics geometry, we will be able to produce very good professional graphics, which can be readly published without the need of tweaking or re-processing the data into a dedicated graphics software.
 
 ## Session
 
