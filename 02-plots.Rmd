@@ -29,6 +29,8 @@ library(tidyr)
 library(dplyr)
 library(gapminder)
 library(scales)
+library(ggsci)
+library(vegan)
 ```
 
 So, with the `ggplot2` R library we can go from this:
@@ -162,6 +164,61 @@ ggplot(iris_agg, aes(x = Species, y = mean_petal_len, color = Species)) +
   guides(color=FALSE) +
   theme_few()
 ```
+
+# More elaborate examples
+
+## nMDS plots
+
+Non-metric multidimensional scaling is a powerful method to reduce n-dimensions to two dimensions (similarly than a Principal Component Analysis) to assess differences between two or more groups.
+
+Let's see an example from [Gonzalez-Ancin et al. (2022)](https://www.cambridge.org/core/journals/oryx/article/intermediate-levels-of-wood-extraction-may-facilitate-coexistence-of-an-endemic-arboreal-marsupial-and-indigenous-communities/7E08676B30B1C4392BF34522D495EDB2):
+
+```{r nmds}
+plants = read.csv("data/02_plants.csv",
+                   header=TRUE,
+                   sep=",")
+  
+plant.dt<-plants[,2:24]
+plantdist<-vegdist(plant.dt)
+
+plant.mds<-metaMDS(plantdist, distance = "bray")
+plant.mds
+
+plant.scores<-as.data.frame(scores(plant.mds))
+plant.scores$site<-rownames(plant.scores)
+plant.scores$grid<-plants$grid
+
+grp.G1 <- plant.scores[plant.scores$grid == "G1", ][chull(plant.scores[plant.scores$grid == 
+    "G1", c("NMDS1", "NMDS2")]), ]  # hull values for Native habitat
+grp.G2 <- plant.scores[plant.scores$grid == "G2", ][chull(plant.scores[plant.scores$grid == 
+    "G2", c("NMDS1", "NMDS2")]), ]  # hull values for Secondary habitat
+grp.G3 <- plant.scores[plant.scores$grid == "G3", ][chull(plant.scores[plant.scores$grid == 
+    "G3", c("NMDS1", "NMDS2")]), ]  # hull values for Logged habitat
+
+hull.plant <- rbind(grp.G1, grp.G2, grp.G3)  #combine groups
+
+plant.nmds.plot<-ggplot() + 
+  geom_polygon(data=hull.plant,aes(x=NMDS1,y=NMDS2,fill=grid,group=grid),alpha=0.30) + # add the convex hulls
+  geom_point(data=plant.scores,aes(x=NMDS1,y=NMDS2,shape=grid,colour=grid),size=4) + # add the point markers
+  coord_equal() +
+  scale_fill_startrek() +
+  scale_color_startrek() +
+  theme_bw() + 
+  labs(x="nMDS 1", y="nMDS 2") +
+  theme(axis.text.x = element_text(size = 16),  # remove x-axis text
+        axis.text.y = element_text(size = 16), # remove y-axis text
+        axis.ticks = element_blank(),  # remove axis ticks
+        axis.title.x = element_text(size=18), # remove x-axis labels
+        axis.title.y = element_text(size=18), # remove y-axis labels
+        panel.background = element_blank(), 
+        panel.grid.major = element_blank(),  #remove major-grid labels
+        panel.grid.minor = element_blank(),  #remove minor-grid labels
+        plot.background = element_blank(),
+        legend.title = element_blank(),
+        legend.text = element_text(size = 16))
+plant.nmds.plot
+```
+
 
 ## Final thoughts
 
