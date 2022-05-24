@@ -1,0 +1,186 @@
+---
+title: "02 - Making awesome plots in R"
+author: "Francisco E. Fonturbel"
+date: "24/May/2022"
+output: 
+  html_document:
+    includes:
+        after_body: footer.html
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	echo = TRUE,
+	message = FALSE,
+	warning = FALSE
+)
+```
+
+## Handling data in R
+
+R is an open source platform that can be used to perform statistical analyses and many other things (genetics, maps, etc.). So, R is an object-based programming language, which means that it is based on creating, manipulating, and operating objects.
+
+R objects are case sensitive, for example, "vector" and "Vector" are considered as different objects. Thus, if you are getting a recurrent error trying to call or operate an object, the first thing to do is check your spelling. Be sure that you are calling your object exactly as it was created (hint: the Environment tab on R Studio, located at the upper right corner, contains a list of all objects and functions currently loaded in R).
+
+## Datasets
+
+The primordial input in science is data. Regardless of our study field, we all use data (collected after hard fieldwork or long lab hours) and the quality of our analyses and papers depend on the quality of our data. Likewise, properly managing our data is crucial to have a smooth experience in R. So, my first advice will be: "please, **AVOID** the `openxlsx` library; it might seem to make your life easier but most of the time it will make your experience with R very hard.
+
+Tips for loading your data without problem:
+
+(1) Prefer csv (comma-separated text) or txt (tab-separated text) formats to input your data in R.
+
+(2) Avoid spaces, points, and commas in variable names.
+
+(3) Do not leave empty cells. If there is no data, use `NA` to fill those empty cells.
+
+
+### Example datasets
+
+No data to test yet? Don't worry! R has several example datasets to work with. Just type `data()` to see the available data in base R (some additional datasets may be available within other packages as well).
+
+One of the nicests datasets is `iris`, which contains information on flower measurements of three species of the _Iris_ genus.
+
+```{r iris}
+data(iris)
+attach(iris)
+names(iris)
+```
+
+Thus, this dataset contains four columns with quantitative data and a fifth column with categorical values, corresponding to the different species.
+
+Using the command `head()` we can examine the first 6 lines of the dataset and figure how it looks like:
+
+```{r irish}
+head(iris)
+```
+
+How many species are present in this dataset? we may count them one by one or... just ask R:
+
+```{r splev}
+#Examining variable levels
+levels(Species)
+
+#Creating an object to quantify how many levels do we have
+spp<-levels(Species)
+length(spp)
+```
+
+In this case there are only three species, but this is particularly useful for large datasets with many levels.
+
+## First-aid plots: viewing our data
+
+Before start analyzing our data, it is always a good idea to make simple plots to describe our data. For example, how are sepal lenght values distributed? let's make an histogram:
+
+```{r hist1}
+hist(Sepal.Length)
+```
+
+Interesting! there is some variation on sepal length but the color is so dull... why not giving it some color?
+
+```{r hist2}
+hist(Sepal.Length, col="blueviolet")
+```
+
+Much better!
+
+And we may now wonder, how sepal length and with are related? let's make a scatterplot:
+
+```{r sp1}
+plot(Sepal.Length~Sepal.Width)
+```
+
+We may add some information to the plot:
+
+```{r sp2}
+plot(Sepal.Length~Sepal.Width, main="Flower traits", xlab="Sepal length", ylab="Sepal width", col="dodgerblue2", pch=19)
+#Changing shape and border color
+plot(Sepal.Length~Sepal.Width, main="Flower traits", xlab="Sepal length", ylab="Sepal width", col="yellow", bg="blueviolet", pch=24)
+#Coloring each species with a different color
+plot(Sepal.Length~Sepal.Width, main="Flower traits", xlab="Sepal length", ylab="Sepal width", col=iris$Species, pch=19)
+```
+
+
+What if we want to plot only _Iris setosa_?
+
+```{r sp3}
+#Subsetting data
+dataS<-subset(iris, Species=="setosa")
+#And making the plot:
+plot(Sepal.Length~Sepal.Width, main="Flower traits", xlab="Sepal length", ylab="Sepal width", col="dodgerblue2", pch=19, data=dataS)
+```
+
+### Boxplots: visually comparing variables
+
+Let's use boxplots to compare some variables:
+
+```{r bp1}
+boxplot(Sepal.Length~Species, main="Sepal lenght variation", xlab="Plant species", ylab="Sepal lenght")
+boxplot(Sepal.Width~Species, main="Sepal width variation", xlab="Plant species", ylab="Sepal width")
+boxplot(Petal.Length~Species, main="Petal lenght variation", xlab="Plant species", ylab="Petal lenght")
+boxplot(Petal.Width~Species, main="Petal width variation", xlab="Plant species", ylab="Petal width")
+```
+
+And what if we want to put the four boxplots into a single plot? Easy to do! let's use the `par(mfrow=c(row,col))` command:
+
+```{r bp2, fig.width=10, fig.height=8}
+par(mfrow=c(2,2))
+boxplot(Sepal.Length~Species, main="Sepal lenght variation", xlab="Plant species", ylab="Sepal lenght")
+boxplot(Sepal.Width~Species, main="Sepal width variation", xlab="Plant species", ylab="Sepal width")
+boxplot(Petal.Length~Species, main="Petal lenght variation", xlab="Plant species", ylab="Petal lenght")
+boxplot(Petal.Width~Species, main="Petal width variation", xlab="Plant species", ylab="Petal width")
+par(mfrow=c(1,1))
+```
+
+
+## Operating objects
+
+We can make a series of mathematical and logical operations with our objects and some intuituive commands, for example use `log()` to obtain the logarith of a given number.
+
+Along with R sample datasets, we can also generate random data. With the code below, we will generate two variables `x` and `y` with a normal distribution and N = 500:
+
+```{r randvars}
+x<-rnorm(500)
+y<-rnorm(500)
+```
+
+And how they look like?
+
+```{r bp3}
+hist(x, col="cornflowerblue")
+hist(y, col="coral")
+```
+
+How `x` and `y` are related?
+
+```{r sp4}
+plot(x,y, pch=19, col="firebrick2")
+```
+
+### Transforming variables
+
+What if, for example, we want to use `y` in logarithmic scale. Let's see hoy it affects the scatterplot:
+
+```{r sp5}
+#Y tambien podemos hacer operaciones matematicas con las variables:
+ylog<-log(y+1)
+plot(x,ylog, pch=19, col="forestgreen")
+```
+
+And what if we want to multiply `x` by $\pi$
+
+```{r sp6}
+xs<-x*3.1416
+plot(xs,y, pch=19, col="darkslateblue")
+```
+
+
+## Final thoughts
+
+R is a useful tool to work with any kind of data. As long as we understand how objects work, and lear some basic coding skills (a useful guide of basic R commands are available [here](https://iqss.github.io/dss-workshops/R/Rintro/base-r-cheat-sheet.pdf) to download as a PDF file).
+
+## Session
+
+```{r session, echo=TRUE}
+sessionInfo()
+```
