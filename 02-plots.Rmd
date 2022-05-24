@@ -105,6 +105,40 @@ for (i in conts) {
 * Points, lines, polygons, etc.
 * Related functions: ```geom_point()```, ```geom_bar()```, ```geom_line()```
 
+## Starting from the very basic
+
+Remember our old friend, the _iris_ dataset? Let's to some basic plotting:
+
+```{r basic1}
+ggplot(data = iris, aes(x = Sepal.Length, y = Sepal.Width)) +
+  geom_point()
+```
+
+Not very fancy, right? hahahaha
+
+That if we create a custom theme to tell R and `ggplot2` how we like our plot
+
+```{r grooming}
+##Some ggplot2 grooming
+My_Theme = theme(
+  axis.title.x = element_text(size = 20,face="bold"),
+  axis.text.x = element_text(size = 16),
+  axis.text.y = element_text(size = 16),
+  axis.title.y = element_text(size = 20,face="bold"),
+  legend.text = element_text(size = 14),
+  legend.title = element_text(size = 14,face="bold"),
+  panel.grid.major = element_blank(),
+  panel.grid.minor = element_blank(),
+  panel.background = element_rect(fill = "white"),
+  plot.title = element_text(size = 20,face="bold"))
+```
+
+```{r basic2}
+ggplot(data = iris, aes(x = Sepal.Length, y = Sepal.Width, col = Species)) +
+  geom_point() +
+  My_Theme
+```
+
 
 ## Final thoughts
 
