@@ -219,6 +219,14 @@ plant.nmds.plot<-ggplot() +
 plant.nmds.plot
 ```
 
+## Compound barplots
+
+Let's re-create Figure 5 from [Cordero et al. (2021)]() paper:
+
+```{r barplots}
+
+```
+
 
 ## Final thoughts
 
