@@ -139,6 +139,29 @@ ggplot(data = iris, aes(x = Sepal.Length, y = Sepal.Width, col = Species)) +
   My_Theme
 ```
 
+Better, right?
+
+## Pre-processing our data to make better graphics
+
+We will use the `dplyr` library to summarize the iris data, then make the plot below.
+
+```{r iris-summ}
+iris_agg <- iris %>%
+  group_by(Species) %>%
+  summarise(mean_petal_len = mean(Petal.Length),
+            sd_petal_len = sd(Petal.Length))
+```
+
+```{r iris-summ2, echo=F}
+ggplot(iris_agg, aes(x = Species, y = mean_petal_len, color = Species)) +
+  geom_point() +
+  geom_errorbar(aes(ymin = mean_petal_len - sd_petal_len,
+                    ymax = mean_petal_len + sd_petal_len), width = 0.15) +
+  xlab("Species") +
+  ylab("Mean Petal Length") +
+  guides(color=FALSE) +
+  theme_few()
+```
 
 ## Final thoughts
 
