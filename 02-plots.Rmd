@@ -75,51 +75,36 @@ for (i in conts) {
 }
 ```
 
-# Why ggplot?
+##  So, Why ggplot?
 
-##  Why ggplot?
-* More elegant and compact code than with base graphics
-* More aesthetically pleasing defaults than lattice
-* Very powerful for exploratory data analysis
-
-## Why ggplot?
-* \alert{gg} is for \alert{grammar of graphics} (term by Lee Wilkinson)
-* A set of terms that defines the basic components of a plot
-* Used to produce figures using coherant, consistant syntax
-
-##  So, why ggplot?
+* Is more elegant and compact code than with base graphics
+* Has more aesthetically pleasing defaults than lattice
+* Uses a set of terms that defines the basic components of a plot
+* Used to produce figures using coherent, consistant syntax
 * Supports a continuum of expertise
-* Easy to get started, plenty of power for complex figures 
+* Easy to get started, plenty of power for complex figures 33
 
+## The ggplot grammar
 
-# The Grammar
-
-##  Some terminology
 ### Data
+
 * Must be a data frame (```data.frame()```, ```as.data.frame()```)
 * Gets pulled into the ```ggplot()``` object
 
-##  tidyr
-Helps your data play nice with ggplot
 
+### Aesthetics
 
-# Aesthetics
+* How your data are represented visually (i.e., mapping)
+* Which data on the x?
+* Which data on the y?
+* Also defines color, shape, groups, etc.
 
-## Some terminology
-### \alert{aes}thetics
-* How your data are represented visually 
-  + a.k.a. mapping
-* which data on the x
-* which data on the y
-* but also: \textcolor{red}{color}, \LARGE{size}, \normalsize{shape, transparency}
+### Geometries
 
-# Geometries
-
-## Some terminology
-### \alert{geom}etry
 * The geometric objects in the plot
-* points, lines, polygons, etc.
-* functions: ```geom_point()```, ```geom_bar()```, ```geom_line()```
+* Points, lines, polygons, etc.
+* Related functions: ```geom_point()```, ```geom_bar()```, ```geom_line()```
+
 
 ## Final thoughts
 
