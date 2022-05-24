@@ -1,0 +1,16 @@
+Site	Age	Count
+Ocoa1987	Infantile	26136
+Ocoa1987	Juvenile	12754
+Ocoa1987	Adult	23844
+Ocoa2017	Infantile	2359
+Ocoa2017	Juvenile	7078
+Ocoa2017	Adult	31143
+Cocalan	Infantile	703
+Cocalan	Juvenile	540
+Cocalan	Adult	321
+Candelaria	Infantile	0
+Candelaria	Juvenile	2
+Candelaria	Adult	345
+Elsalto	Infantile	2
+Elsalto	Juvenile	504
+Elsalto	Adult	2972
