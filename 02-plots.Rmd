@@ -28,6 +28,7 @@ library(ggthemes)
 library(tidyr)
 library(dplyr)
 library(gapminder)
+library(scales)
 ```
 
 So, with the `ggplot2` R library we can go from this:
@@ -49,6 +50,29 @@ ggplot(gapminder, aes(x = gdpPercap, y = lifeExp)) +
   facet_wrap(~continent) +
   theme_few() + 
   guides(color = "none")
+```
+
+
+Or making something more elaborate:
+
+```{r awesome2}
+gapminder <- as.data.frame(gapminder)
+conts <- unique(gapminder[,"continent"])
+cols <- scales::hue_pal()(length(conts))
+par(mfrow = c(2,3))
+counter <- 1
+for (i in conts) {
+  plot(gapminder[which(gapminder$continent == i), "gdpPercap"],
+       gapminder[which(gapminder$continent == i), "lifeExp"], col = cols[counter],
+       xlab = "Per Capita GDP", ylab = "Life Expectancy (yrs)",
+       main = i, las = 1, log = "x")
+  fit <- lm(gapminder[which(gapminder$continent == i), "lifeExp"] ~ log(gapminder[which(gapminder$continent == i), "gdpPercap"]))
+  pred <- predict(fit, interval = "confidence")
+  lines(sort(gapminder[which(gapminder$continent == i), "gdpPercap"]), sort(pred[,1]))
+  lines(sort(gapminder[which(gapminder$continent == i), "gdpPercap"]), sort(pred[,2]), lty = 2)
+  lines(sort(gapminder[which(gapminder$continent == i), "gdpPercap"]), sort(pred[,3]), lty = 2)
+  counter <- counter + 1
+}
 ```
 
 
