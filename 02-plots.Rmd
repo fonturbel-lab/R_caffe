@@ -31,6 +31,8 @@ library(gapminder)
 library(scales)
 library(ggsci)
 library(vegan)
+
+source("multiplot.R")
 ```
 
 So, with the `ggplot2` R library we can go from this:
@@ -221,10 +223,66 @@ plant.nmds.plot
 
 ## Compound barplots
 
-Let's re-create Figure 5 from [Cordero et al. (2021)]() paper:
+Let's re-create Figure 5 from [Cordero et al. (2021)](https://www.frontiersin.org/articles/10.3389/fevo.2021.719566/full) paper:
 
-```{r barplots}
+```{r barplots, fig.height=10}
+palms<-read.table("data/02_palms.txt", header = T)
 
+palms$Age <- factor(palms$Age, levels = c("Infantile", "Juvenile", "Adult"))
+
+dataOc1<-subset(palms, Site == "Ocoa1987")
+dataOc2<-subset(palms, Site == "Ocoa2017")
+dataCoc<-subset(palms, Site == "Cocalan")
+dataCan<-subset(palms, Site == "Candelaria")
+dataES<-subset(palms, Site == "Elsalto")
+
+
+p1<-ggplot(data=dataOc1, aes(x=Age, y=Count, fill = Age)) +
+  geom_bar(stat="identity", color = "black") +
+  scale_fill_brewer(palette="Blues") +
+  labs(x="", y="Individuals") +
+  ggtitle("Ocoa (1987)") +
+  theme_classic() +
+  My_Theme +
+  theme(legend.position = "none")
+
+p2<-ggplot(data=dataOc2, aes(x=Age, y=Count, fill = Age)) +
+  geom_bar(stat="identity", color = "black") +
+  scale_fill_brewer(palette="Blues") +
+  labs(x="", y="Individuals") +
+  ggtitle("Ocoa (2017)") +
+  theme_classic() +
+  My_Theme +
+  theme(legend.position = "none")
+
+p3<-ggplot(data=dataCoc, aes(x=Age, y=Count, fill = Age)) +
+  geom_bar(stat="identity", color = "black") +
+  scale_fill_brewer(palette="Blues") +
+  labs(x="", y="Individuals") +
+  ggtitle("Cocalan") +
+  theme_classic() +
+  My_Theme +
+  theme(legend.position = "none")
+
+p4<-ggplot(data=dataCan, aes(x=Age, y=Count, fill = Age)) +
+  geom_bar(stat="identity", color = "black") +
+  scale_fill_brewer(palette="Blues") +
+  labs(x="", y="Individuals") +
+  ggtitle("Candelaria") +
+  theme_classic() +
+  My_Theme +
+  theme(legend.position = "none")
+
+p5<-ggplot(data=dataES, aes(x=Age, y=Count, fill = Age)) +
+  geom_bar(stat="identity", color = "black") +
+  scale_fill_brewer(palette="Blues") +
+  labs(x="", y="Individuals") +
+  ggtitle("El Salto") +
+  theme_classic() +
+  My_Theme +
+  theme(legend.position = "none")
+
+multiplot(p1, p3, p5, p2, p4, cols = 2)
 ```
 
 
