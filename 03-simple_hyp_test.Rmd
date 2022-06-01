@@ -37,6 +37,31 @@ attach(data)
 
 So, we have a simple dataset containing plant height measurements for two treatments (named A and B).
 
+```{r ttest}
+t.test(height~treatment)
+```
+
+So, it seems that plant height differs, let's take a look using a simple boxplot:
+
+```{r bp1}
+boxplot(height~treatment, col = "darkorange1")
+```
+
+Also, _t tests_ depend on two main assumptions: normality and variance homogeneity. To examine normality we will use the Shapiro-Wilk test and to examine variance homogeneity we will use the Bartlett test.
+
+```{r norm}
+shapiro.test(height)
+hist(height, col = "dodgerblue2")
+```
+
+OK, our data is normal but has some deviations from the "ideal" normal curve. Let's examine a Q-Q (quantile-quantile) plot to confirm this:
+
+```{r qq}
+qqnorm(data$height, pch = 1, frame = FALSE)
+qqline(data$height, col = "firebrick", lwd = 3)
+```
+
+An ideal normal distribution will follow the red line.
 
 ## Final thoughts
 
