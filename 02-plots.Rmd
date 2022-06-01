@@ -156,7 +156,7 @@ iris_agg <- iris %>%
             sd_petal_len = sd(Petal.Length))
 ```
 
-```{r iris-summ2, echo=F}
+```{r iris-summ2, echo=TRUE}
 ggplot(iris_agg, aes(x = Species, y = mean_petal_len, color = Species)) +
   geom_point() +
   geom_errorbar(aes(ymin = mean_petal_len - sd_petal_len,
