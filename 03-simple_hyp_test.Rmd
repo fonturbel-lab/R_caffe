@@ -20,17 +20,16 @@ knitr::opts_chunk$set(
 
 Now that we have the basic principles of creating and operating objects in R, as well as making some pretty nice graphics, now let's get started with statistics in R. Now we will start with some basic hypothesis testing by comparing the means of two or more treatments (groups).
 
-```{r packages}
-library(ggplot2)
-library(ggthemes)
-library(tidyr)
-library(dplyr)
-library(gapminder)
-library(scales)
-library(ggsci)
-library(vegan)
+Let's imagine that we measured the growth of some plants with two treatments: watered with 100 mL per day and watered with 50 mL per day. If there is no effect of the amount of water received, we should expect (i.e., null hypothesis) that the mean height of the plants will be equal:
 
-source("multiplot.R")
+$\mu {1} = \mu {2}$ 
+
+
+
+
+```{r packages}
+library(dplyr)
+library(vegan)
 ```
 
 aaa
