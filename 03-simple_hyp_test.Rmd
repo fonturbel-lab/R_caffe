@@ -28,6 +28,8 @@ And, of course, our alternative hypothesis would be:
 
 $\mu {1} \neq \mu {2}$
 
+## T-test
+
 As we have only two groups, we can use Student's _t test_ using the `t.test` function included in the R base package.
 
 ```{r packages}
@@ -62,6 +64,18 @@ qqline(data$height, col = "firebrick", lwd = 3)
 ```
 
 An ideal normal distribution will follow the red line.
+
+And now, let's test for **variance homogeneity**
+
+```{r vhom}
+bartlett.test(height~treatment)
+```
+
+What a relief! our data has homogeneous variances and therefore our results are reliable (failing to meet statistical assumptions would result in unreliable results).
+
+### Non-parametric version
+
+What if we fail
 
 ## Final thoughts
 
