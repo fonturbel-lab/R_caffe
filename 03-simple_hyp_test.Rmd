@@ -75,7 +75,13 @@ What a relief! our data has homogeneous variances and therefore our results are 
 
 ### Non-parametric version
 
-What if we fail
+What if we fail to meet the normality assumption? Well, we can try a non-parametric version of the _t test_ called Mann–Whitney–Wilcoxon, which can be summoned using the `wilcox.test` function.
+
+```{r npwil}
+wilcox.test(height~treatment)
+```
+
+The non-parametric test has confirmed our _t-test_ results.
 
 ## Final thoughts
 
