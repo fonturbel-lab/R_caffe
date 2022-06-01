@@ -1,7 +1,7 @@
 ---
-title: "02 - Making awesome plots in R"
+title: "03 - Simple hypothesis test in R"
 author: "Francisco E. Fonturbel"
-date: "24/May/2022"
+date: "01/June/2022"
 output: 
   html_document:
     includes:
@@ -16,11 +16,9 @@ knitr::opts_chunk$set(
 )
 ```
 
-## The art of making graphics in R
+## Simple hypothesis test in R
 
-R is a powerful graphic engine too. But we have to learn some things before we can produce awesome plots for our reports and papers. When R become popular, most people acknowledged it statistical power but criticized its limited ability to produce quality graphics. Basic R plots were plain and dull, and often needed tweaking in an external software (e.g., Adobe Illustrator). However, now the situation is quite different thanks to the arrival of `ggplot`, which have introduced a new way to produce high-quality plots of almost everything using an universal grammar.
-
-This lesson contains some examples developed by Naupaka Zimmerman during an ESA workshop in 2019.
+Now that we have the basic principles of creating and operating objects in R, as well as making some pretty nice graphics, now let's get started with statistics in R. Now we will start with some basic hypothesis testing by comparing the means of two or more treatments (groups).
 
 ```{r packages}
 library(ggplot2)
@@ -35,260 +33,12 @@ library(vegan)
 source("multiplot.R")
 ```
 
-So, with the `ggplot2` R library we can go from this:
-
-```{r ugly}
-plot(gdpPercap ~ lifeExp, data = gapminder, col = gapminder$continent)
-```
-
-
-To this:
-
-```{r awesome}
-ggplot(gapminder, aes(x = gdpPercap, y = lifeExp)) +
-  geom_point(shape = 1, aes(color = continent)) +
-  stat_smooth(method = "lm", size = 1, color = "black") +
-  scale_x_log10() + 
-  xlab("Per Capita GDP") + 
-  ylab("Life Expectancy (yrs)") +
-  facet_wrap(~continent) +
-  theme_few() + 
-  guides(color = "none")
-```
-
-
-Or making something more elaborate:
-
-```{r awesome2}
-gapminder <- as.data.frame(gapminder)
-conts <- unique(gapminder[,"continent"])
-cols <- scales::hue_pal()(length(conts))
-par(mfrow = c(2,3))
-counter <- 1
-for (i in conts) {
-  plot(gapminder[which(gapminder$continent == i), "gdpPercap"],
-       gapminder[which(gapminder$continent == i), "lifeExp"], col = cols[counter],
-       xlab = "Per Capita GDP", ylab = "Life Expectancy (yrs)",
-       main = i, las = 1, log = "x")
-  fit <- lm(gapminder[which(gapminder$continent == i), "lifeExp"] ~ log(gapminder[which(gapminder$continent == i), "gdpPercap"]))
-  pred <- predict(fit, interval = "confidence")
-  lines(sort(gapminder[which(gapminder$continent == i), "gdpPercap"]), sort(pred[,1]))
-  lines(sort(gapminder[which(gapminder$continent == i), "gdpPercap"]), sort(pred[,2]), lty = 2)
-  lines(sort(gapminder[which(gapminder$continent == i), "gdpPercap"]), sort(pred[,3]), lty = 2)
-  counter <- counter + 1
-}
-```
-
-##  So, Why ggplot?
-
-* Is more elegant and compact code than with base graphics
-* Has more aesthetically pleasing defaults than lattice
-* Uses a set of terms that defines the basic components of a plot
-* Used to produce figures using coherent, consistant syntax
-* Supports a continuum of expertise
-* Easy to get started, plenty of power for complex figures 33
-
-## The ggplot grammar
-
-### Data
-
-* Must be a data frame (```data.frame()```, ```as.data.frame()```)
-* Gets pulled into the ```ggplot()``` object
-
-
-### Aesthetics
-
-* How your data are represented visually (i.e., mapping)
-* Which data on the x?
-* Which data on the y?
-* Also defines color, shape, groups, etc.
-
-### Geometries
-
-* The geometric objects in the plot
-* Points, lines, polygons, etc.
-* Related functions: ```geom_point()```, ```geom_bar()```, ```geom_line()```
-
-## Starting from the very basic
-
-Remember our old friend, the _iris_ dataset? Let's to some basic plotting:
-
-```{r basic1}
-ggplot(data = iris, aes(x = Sepal.Length, y = Sepal.Width)) +
-  geom_point()
-```
-
-Not very fancy, right? hahahaha
-
-That if we create a custom theme to tell R and `ggplot2` how we like our plot
-
-```{r grooming}
-##Some ggplot2 grooming
-My_Theme = theme(
-  axis.title.x = element_text(size = 20,face="bold"),
-  axis.text.x = element_text(size = 16),
-  axis.text.y = element_text(size = 16),
-  axis.title.y = element_text(size = 20,face="bold"),
-  legend.text = element_text(size = 14),
-  legend.title = element_text(size = 14,face="bold"),
-  panel.grid.major = element_blank(),
-  panel.grid.minor = element_blank(),
-  panel.background = element_rect(fill = "white"),
-  plot.title = element_text(size = 20,face="bold"))
-```
-
-```{r basic2}
-ggplot(data = iris, aes(x = Sepal.Length, y = Sepal.Width, col = Species)) +
-  geom_point() +
-  My_Theme
-```
-
-Better, right?
-
-## Pre-processing our data to make better graphics
-
-We will use the `dplyr` library to summarize the iris data, then make the plot below.
-
-```{r iris-summ}
-iris_agg <- iris %>%
-  group_by(Species) %>%
-  summarise(mean_petal_len = mean(Petal.Length),
-            sd_petal_len = sd(Petal.Length))
-```
-
-```{r iris-summ2, echo=TRUE}
-ggplot(iris_agg, aes(x = Species, y = mean_petal_len, color = Species)) +
-  geom_point() +
-  geom_errorbar(aes(ymin = mean_petal_len - sd_petal_len,
-                    ymax = mean_petal_len + sd_petal_len), width = 0.15) +
-  xlab("Species") +
-  ylab("Mean Petal Length") +
-  guides(color=FALSE) +
-  theme_few()
-```
-
-# More elaborate examples
-
-## nMDS plots
-
-Non-metric multidimensional scaling is a powerful method to reduce n-dimensions to two dimensions (similarly than a Principal Component Analysis) to assess differences between two or more groups.
-
-Let's see an example from [Gonzalez-Ancin et al. (2022)](https://www.cambridge.org/core/journals/oryx/article/intermediate-levels-of-wood-extraction-may-facilitate-coexistence-of-an-endemic-arboreal-marsupial-and-indigenous-communities/7E08676B30B1C4392BF34522D495EDB2):
-
-```{r nmds}
-plants = read.csv("data/02_plants.csv",
-                   header=TRUE,
-                   sep=",")
-  
-plant.dt<-plants[,2:24]
-plantdist<-vegdist(plant.dt)
-
-plant.mds<-metaMDS(plantdist, distance = "bray")
-plant.mds
-
-plant.scores<-as.data.frame(scores(plant.mds))
-plant.scores$site<-rownames(plant.scores)
-plant.scores$grid<-plants$grid
-
-grp.G1 <- plant.scores[plant.scores$grid == "G1", ][chull(plant.scores[plant.scores$grid == 
-    "G1", c("NMDS1", "NMDS2")]), ]  # hull values for Native habitat
-grp.G2 <- plant.scores[plant.scores$grid == "G2", ][chull(plant.scores[plant.scores$grid == 
-    "G2", c("NMDS1", "NMDS2")]), ]  # hull values for Secondary habitat
-grp.G3 <- plant.scores[plant.scores$grid == "G3", ][chull(plant.scores[plant.scores$grid == 
-    "G3", c("NMDS1", "NMDS2")]), ]  # hull values for Logged habitat
-
-hull.plant <- rbind(grp.G1, grp.G2, grp.G3)  #combine groups
-
-plant.nmds.plot<-ggplot() + 
-  geom_polygon(data=hull.plant,aes(x=NMDS1,y=NMDS2,fill=grid,group=grid),alpha=0.30) + # add the convex hulls
-  geom_point(data=plant.scores,aes(x=NMDS1,y=NMDS2,shape=grid,colour=grid),size=4) + # add the point markers
-  coord_equal() +
-  scale_fill_startrek() +
-  scale_color_startrek() +
-  theme_bw() + 
-  labs(x="nMDS 1", y="nMDS 2") +
-  theme(axis.text.x = element_text(size = 16),  # remove x-axis text
-        axis.text.y = element_text(size = 16), # remove y-axis text
-        axis.ticks = element_blank(),  # remove axis ticks
-        axis.title.x = element_text(size=18), # remove x-axis labels
-        axis.title.y = element_text(size=18), # remove y-axis labels
-        panel.background = element_blank(), 
-        panel.grid.major = element_blank(),  #remove major-grid labels
-        panel.grid.minor = element_blank(),  #remove minor-grid labels
-        plot.background = element_blank(),
-        legend.title = element_blank(),
-        legend.text = element_text(size = 16))
-plant.nmds.plot
-```
-
-## Compound barplots
-
-Let's re-create Figure 5 from [Cordero et al. (2021)](https://www.frontiersin.org/articles/10.3389/fevo.2021.719566/full) paper:
-
-```{r barplots, fig.height=10}
-palms<-read.table("data/02_palms.txt", header = T)
-
-palms$Age <- factor(palms$Age, levels = c("Infantile", "Juvenile", "Adult"))
-
-dataOc1<-subset(palms, Site == "Ocoa1987")
-dataOc2<-subset(palms, Site == "Ocoa2017")
-dataCoc<-subset(palms, Site == "Cocalan")
-dataCan<-subset(palms, Site == "Candelaria")
-dataES<-subset(palms, Site == "Elsalto")
-
-
-p1<-ggplot(data=dataOc1, aes(x=Age, y=Count, fill = Age)) +
-  geom_bar(stat="identity", color = "black") +
-  scale_fill_brewer(palette="Blues") +
-  labs(x="", y="Individuals") +
-  ggtitle("Ocoa (1987)") +
-  theme_classic() +
-  My_Theme +
-  theme(legend.position = "none")
-
-p2<-ggplot(data=dataOc2, aes(x=Age, y=Count, fill = Age)) +
-  geom_bar(stat="identity", color = "black") +
-  scale_fill_brewer(palette="Blues") +
-  labs(x="", y="Individuals") +
-  ggtitle("Ocoa (2017)") +
-  theme_classic() +
-  My_Theme +
-  theme(legend.position = "none")
-
-p3<-ggplot(data=dataCoc, aes(x=Age, y=Count, fill = Age)) +
-  geom_bar(stat="identity", color = "black") +
-  scale_fill_brewer(palette="Blues") +
-  labs(x="", y="Individuals") +
-  ggtitle("Cocalan") +
-  theme_classic() +
-  My_Theme +
-  theme(legend.position = "none")
-
-p4<-ggplot(data=dataCan, aes(x=Age, y=Count, fill = Age)) +
-  geom_bar(stat="identity", color = "black") +
-  scale_fill_brewer(palette="Blues") +
-  labs(x="", y="Individuals") +
-  ggtitle("Candelaria") +
-  theme_classic() +
-  My_Theme +
-  theme(legend.position = "none")
-
-p5<-ggplot(data=dataES, aes(x=Age, y=Count, fill = Age)) +
-  geom_bar(stat="identity", color = "black") +
-  scale_fill_brewer(palette="Blues") +
-  labs(x="", y="Individuals") +
-  ggtitle("El Salto") +
-  theme_classic() +
-  My_Theme +
-  theme(legend.position = "none")
-
-multiplot(p1, p3, p5, p2, p4, cols = 2)
-```
+aaa
 
 
 ## Final thoughts
 
-R is a useful graphic tool to produce high-quality plots. Once we learn the basic principles or graphics geometry, we will be able to produce very good professional graphics, which can be readly published without the need of tweaking or re-processing the data into a dedicated graphics software.
+a
 
 ## Session
 
