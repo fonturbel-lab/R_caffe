@@ -83,6 +83,45 @@ wilcox.test(height~treatment)
 
 The non-parametric test has confirmed our _t-test_ results.
 
+
+## More than two groups: the ANOVA test
+
+What if instead two treatments we have three? One first though would be making three _t-tests_ to compare treatment 1 vs 2, treatment 2 vs 3, and treatment 1 vs 3. But the **problem** here is that we have multiple comparisons upon the same data and therefore we will need apply some sort of correction to our significance values (e.g., a Bonferroni correction).
+
+But, we have a more adequate option that is called Analysis of Variance (ANOVA) that can be called using the `aov` function in R. To illustrate this, we will call our old friend, the _iris_ dataset that has three species and some morphological measurements.
+
+```{r iris}
+data(iris)
+attach(iris)
+```
+
+How sepal lenght differ among species? let's make a simple boxplot:
+
+```{r bp_iris}
+boxplot(Sepal.Length~Species, col = "blueviolet", ylab= "Sepal lenght")
+```
+
+```{r aov}
+comp1<-aov(Sepal.Length~Species)
+summary(comp1)
+```
+
+As we can suspect after examining the boxplot, there are significant differences here. ANOVA tests rely on the same assumptions than _t-tests_ so let's check normality and variance homogeneity:
+
+```{r normsl}
+shapiro.test(Sepal.Length)
+```
+
+Ouch! our response variable is not normal!
+
+
+```{r vhiris}
+bartlett.test(Sepal.Length~Species)
+```
+
+And also variances are not homogeneous. Therefore, our results may not be reliable.
+
+
 ## Final thoughts
 
 a
