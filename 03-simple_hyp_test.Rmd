@@ -28,7 +28,7 @@ And, of course, our alternative hypothesis would be:
 
 $\mu {1} \neq \mu {2}$
 
-## T-test
+## Two groups: _t-test_
 
 As we have only two groups, we can use Student's _t test_ using the `t.test` function included in the R base package.
 
