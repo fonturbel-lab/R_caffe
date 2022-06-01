@@ -88,7 +88,11 @@ The non-parametric test has confirmed our _t-test_ results.
 
 What if instead two treatments we have three? One first though would be making three _t-tests_ to compare treatment 1 vs 2, treatment 2 vs 3, and treatment 1 vs 3. But the **problem** here is that we have multiple comparisons upon the same data and therefore we will need apply some sort of correction to our significance values (e.g., a Bonferroni correction).
 
-But, we have a more adequate option that is called Analysis of Variance (ANOVA) that can be called using the `aov` function in R. To illustrate this, we will call our old friend, the _iris_ dataset that has three species and some morphological measurements.
+But, we have a more adequate option that is called Analysis of Variance (ANOVA) that can be called using the `aov` function in R. In this case, our null hypothesis would be:
+
+$\mu {1} = \mu {2} = ... = \mu {n}$
+
+To illustrate this, we will call our old friend, the _iris_ dataset that has three species and some morphological measurements.
 
 ```{r iris}
 data(iris)
@@ -137,7 +141,7 @@ kruskal.test(Sepal.Length~Species)
 
 ## Final thoughts
 
-a
+We have learned two simple methods for hypothesis testin today: _t-test_ and ANOVA. The first one is used when we are comparing two groups while the second one is used when we have more than two groups to avoid the multiple comparison problem. Both tests rely on some statistical assumptions, which can be tested using some statistical tests or by visual examination.
 
 ## Session
 
