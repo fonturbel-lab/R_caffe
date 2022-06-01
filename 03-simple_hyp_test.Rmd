@@ -31,8 +31,8 @@ $\mu {1} \neq \mu {2}$
 As we have only two groups, we can use Student's _t test_ using the `t.test` function included in the R base package.
 
 ```{r packages}
-library(dplyr)
-library(vegan)
+data<-read.csv("03_waterpl.csv", header = TRUE, sep = ";")
+attach(data)
 ```
 
 aaa
