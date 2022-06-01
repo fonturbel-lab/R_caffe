@@ -58,7 +58,7 @@ hist(height, col = "dodgerblue2")
 
 OK, our data is normal but has some deviations from the "ideal" normal curve. Let's examine a Q-Q (quantile-quantile) plot to confirm this:
 
-```{r qq}
+```{r qq1}
 qqnorm(data$height, pch = 1, frame = FALSE)
 qqline(data$height, col = "firebrick", lwd = 3)
 ```
@@ -114,12 +114,25 @@ shapiro.test(Sepal.Length)
 
 Ouch! our response variable is not normal!
 
+```{r qq2}
+qqnorm(iris$Sepal.Length, pch = 1, frame = FALSE)
+qqline(iris$Sepal.Length, col = "firebrick", lwd = 3)
+```
+
 
 ```{r vhiris}
 bartlett.test(Sepal.Length~Species)
 ```
 
 And also variances are not homogeneous. Therefore, our results may not be reliable.
+
+### Non-parametric version
+
+As for _t-test_, we have a non-parametric version of ANOVA called Kruskal-Wallis test, which can be executed with the function `kruskal.test`
+
+```{r kw}
+kruskal.test(Sepal.Length~Species)
+```
 
 
 ## Final thoughts
