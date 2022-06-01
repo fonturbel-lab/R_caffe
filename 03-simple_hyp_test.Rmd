@@ -24,8 +24,9 @@ Let's imagine that we measured the growth of some plants with two treatments: wa
 
 $\mu {1} = \mu {2}$ 
 
+And, of course, our alternative hypothesis would be:
 
-
+$\mu {1} \neq \mu {2}$ 
 
 ```{r packages}
 library(dplyr)
