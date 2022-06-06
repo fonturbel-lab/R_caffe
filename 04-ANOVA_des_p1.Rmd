@@ -16,11 +16,11 @@ knitr::opts_chunk$set(
 )
 ```
 
-## Randomized Block Design
+## Completely Randomized Design
 
-This repository contains the code and the explanations to perform a **randomized block design**. In this kind of model, similar test subjects are grouped in **blocks** and each block is tested against all treatment levels of the primary factor, at a random order. This approach is intended to get rid of possible infiuences of external factors (e.g., slope or sunlight incidence).
+This repository contains the code and the explanations to perform a **completely randomized design**. In this kind of model, we have only one experimental factor under consideration.
 
-Let's suppose that we sample the height of _Echinopsis chiloensis_ cacti in three populations (randonmly selected) at the study area. We took 15 measurements at each one of the populations. We took measurements at three different locations within each population to capture the environmental heterogeneity. The information is contained on the file named _cactus.txt_ located in the `data` folder.
+Let's suppose that we sample the height of _Echinopsis chiloensis_ cacti in three populations (randonmly selected) out of 15 populations available in our study area. We took 15 measurements at each one of the populations. The information is contained on the file named _cactus.txt_ located in the `data` folder.
 
 ```{r data}
 #Let's load the data file
@@ -47,6 +47,27 @@ n = 15 #Number of samples per population
 tm <- gl(k, 1, n*k, factor(f))
 ```
 
+Now we have our data properly ordered. Let's fit a one-way ANOVA model with this:
+
+```{r ANOVA.r}
+aov.cactus.r <- aov(r ~ tm)
+```
+
+OK, now we have an object called `aov.cactus`, now we'll use the `summary()` function to see the results:
+
+```{r result_aov_r}
+summary(aov.cactus.r)
+```
+
+Our results indicate that cactus height is **significantly different** among the three sampled population.
+
+
+## Randomized Block Design
+
+This repository contains the code and the explanations to perform a **randomized block design**. In this kind of model, similar test subjects are grouped in **blocks** and each block is tested against all treatment levels of the primary factor, at a random order. This approach is intended to get rid of possible infiuences of external factors (e.g., slope or sunlight incidence).
+
+Let's suppose that we sample the height of _Echinopsis chiloensis_ cacti in three populations (randonmly selected) at the study area. We took 15 measurements at each one of the populations. We took measurements at three different locations within each population to capture the environmental heterogeneity. The information is contained on the file named _cactus.txt_ located in the `data` folder.
+
 In a next step, we need to define the blocks:
 
 ```{r blocks}
@@ -69,26 +90,7 @@ summary(aov.cactus.b)
 Our results indicate that cactus height is **significantly different** among the three sampled population. However, the block factor `blk` is not significant, indicating that the influence of environmental heterogeneity within populations is negligible.
 
 
-## Completely Randomized Design
 
-This repository contains the code and the explanations to perform a **completely randomized design**. In this kind of model, we have only one experimental factor under consideration.
-
-Let's suppose that we sample the height of _Echinopsis chiloensis_ cacti in three populations (randonmly selected) out of 15 populations available in our study area. We took 15 measurements at each one of the populations. The information is contained on the file named _cactus.txt_ located in the `data` folder.
-
-
-Now we have our data properly ordered. Let's fit a one-way ANOVA model with this:
-
-```{r ANOVA.r}
-aov.cactus.r <- aov(r ~ tm)
-```
-
-OK, now we have an object called `aov.cactus`, now we'll use the `summary()` function to see the results:
-
-```{r result_aov_r}
-summary(aov.cactus.r)
-```
-
-Our results indicate that cactus height is **significantly different** among the three sampled population.
 
 
 ## Final thoughts
