@@ -1,7 +1,7 @@
 ---
-title: "03 - Simple hypothesis test in R"
+title: "04 - Other ANOVA designs part 1"
 author: "Francisco E. Fonturbel"
-date: "01/June/2022"
+date: "06/June/2022"
 output: 
   html_document:
     includes:
