@@ -175,10 +175,10 @@ pre code {
 </div>
 
 
-<div id="randomized-block-design" class="section level2">
-<h2>Randomized Block Design</h2>
-<p>This repository contains the code and the explanations to perform a <strong>randomized block design</strong>. In this kind of model, similar test subjects are grouped in <strong>blocks</strong> and each block is tested against all treatment levels of the primary factor, at a random order. This approach is intended to get rid of possible infiuences of external factors (e.g., slope or sunlight incidence).</p>
-<p>Let’s suppose that we sample the height of <em>Echinopsis chiloensis</em> cacti in three populations (randonmly selected) at the study area. We took 15 measurements at each one of the populations. We took measurements at three different locations within each population to capture the environmental heterogeneity. The information is contained on the file named <em>cactus.txt</em> located in the <code>data</code> folder.</p>
+<div id="completely-randomized-design" class="section level2">
+<h2>Completely Randomized Design</h2>
+<p>Now, we will examine the code and the explanations to perform a <strong>completely randomized design</strong>. In this kind of model, we have only one experimental factor under consideration.</p>
+<p>Let’s suppose that we sample the height of <em>Echinopsis chiloensis</em> cacti in three populations (randomly selected) out of 15 populations available in our study area. We took 15 measurements at each one of the populations. The information is contained on the file named <em>04-cactus.txt</em> located in the <code>data</code> folder.</p>
 <pre class="r"><code>#Let&#39;s load the data file
 data&lt;-read.table(&quot;data/04-cactus.txt&quot;, header = T)
 attach(data)</code></pre>
@@ -209,12 +209,26 @@ k = 3 #Number of populations sampled
 n = 15 #Number of samples per population
 #Create a vector of treatment factors that corresponds to each element of r
 tm &lt;- gl(k, 1, n*k, factor(f))</code></pre>
-<p>In a next step, we need to define the blocks:</p>
-<pre class="r"><code>blk = gl(n, k, k*n)             # blocking factor</code></pre>
 <p>Now we have our data properly ordered. Let’s fit a one-way ANOVA model with this:</p>
-<pre class="r"><code>aov.cactus &lt;- aov(r ~ tm + blk)</code></pre>
+<pre class="r"><code>aov.cactus.r &lt;- aov(r ~ tm)</code></pre>
+<p>OK, now we have an object called <code>aov.cactus.r</code>, now we’ll use the <code>summary()</code> function to see the results:</p>
+<pre class="r"><code>summary(aov.cactus.r)</code></pre>
+<pre><code>##             Df Sum Sq Mean Sq F value   Pr(&gt;F)    
+## tm           2   6226  3113.1   71.23 3.19e-14 ***
+## Residuals   42   1835    43.7                     
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<p>Our results indicate that cactus height is <strong>significantly different</strong> among the three sampled population.</p>
+</div>
+<div id="randomized-block-design" class="section level2">
+<h2>Randomized Block Design</h2>
+<p>Now, let’s go further and get acquianted with the <strong>randomized block design</strong>. In this kind of model, similar test subjects are grouped in <strong>blocks</strong> and each block is tested against all treatment levels of the primary factor, at a random order. This approach is intended to get rid of possible influences of external factors (e.g., slope or sunlight incidence).</p>
+<p>In a further step, we need to define the blocks:</p>
+<pre class="r"><code>blk = gl(n, k, k*n)             # blocking factor</code></pre>
+<p>Now we have our data properly ordered blocks, let’s fit a one-way ANOVA model with this:</p>
+<pre class="r"><code>aov.cactus.b &lt;- aov(r ~ tm + blk)</code></pre>
 <p>OK, now we have an object called <code>aov.cactus</code>, now we’ll use the <code>summary()</code> function to see the results:</p>
-<pre class="r"><code>summary(aov.cactus)</code></pre>
+<pre class="r"><code>summary(aov.cactus.b)</code></pre>
 <pre><code>##             Df Sum Sq Mean Sq F value   Pr(&gt;F)    
 ## tm           2   6226  3113.1  77.105 4.09e-12 ***
 ## blk         14    705    50.4   1.247    0.299    
