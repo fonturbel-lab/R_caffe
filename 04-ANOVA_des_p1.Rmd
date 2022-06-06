@@ -91,7 +91,7 @@ Our results indicate that cactus height is **significantly different** among the
 
 ## Final thoughts
 
-xxxx
+ANOVA is quite a flexible test that allows to consider some sources of variation to obtain more reliable results. If we suspect that external factors may be affecting our data, using a randomized block design may be a good option.
 
 ## Session
 
