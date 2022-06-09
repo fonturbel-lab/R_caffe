@@ -20,6 +20,12 @@ This repository presents a comprehensive R course intended for self-learning and
 
 05.- Other ANOVA designs part 2
 
+06.- MANOVA
+
+07.- Linear regression and correlation
+
+08.- Multiple linear regression
+
 ## Terms of use
 
 This information is provided under a Creative Commons BY-SA license. Therefore, you may freely use this material, but you must (i) give the appropriate credit to the authors by citing this repository and its doi, and (ii) if you transform, remix, or build upon this data, the resulting dataset should be shared under the same license conditions.
