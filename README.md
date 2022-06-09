@@ -20,30 +20,30 @@ This repository presents a comprehensive R course intended for self-learning and
 
 04.- Other ANOVA designs part 1
 
-05.- Other ANOVA designs part 2
+_05.- Other ANOVA designs part 2_
 
-06.- Other ANOVA designs part 3
+_06.- Other ANOVA designs part 3_
 
-07.- MANOVA
+_07.- MANOVA_
 
-08.- Linear regression and correlation
+_08.- Linear regression and correlation_
 
-09.- Multiple linear regression
+_09.- Multiple linear regression_
 
-10.- Model averaging and regression trees
+_10.- Model averaging and regression trees_
 
 
 ### Part 2
 
-11.- Generalized Linear Models and data distributions
+_11.- Generalized Linear Models and data distributions_
 
-12.- Special distributions and Generalized Estimation Equations
+_12.- Special distributions and Generalized Estimation Equations_
 
-14.- Generalizar Additive Models
+_14.- Generalized Additive Models_
 
-15.- Mixeed-effects Generalized Linear/Additive Models
+_15.- Mixed-effects Generalized Linear/Additive Models_
 
-16.- Spatially-explicit Generalized Linear/Additive Models
+_16.- Spatially-explicit Generalized Linear/Additive Models_
 
 ## Terms of use
 
