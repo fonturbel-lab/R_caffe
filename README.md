@@ -10,6 +10,8 @@ This repository presents a comprehensive R course intended for self-learning and
 
 ## Content
 
+### Part 1
+
 01.- Managing and operating objects in R
 
 02.- Making awesome plots in R
@@ -27,6 +29,21 @@ This repository presents a comprehensive R course intended for self-learning and
 08.- Linear regression and correlation
 
 09.- Multiple linear regression
+
+10.- Model averaging and regression trees
+
+
+### Part 2
+
+11.- Generalized Linear Models and data distributions
+
+12.- Special distributions and Generalized Estimation Equations
+
+14.- Generalizar Additive Models
+
+15.- Mixeed-effects Generalized Linear/Additive Models
+
+16.- Spatially-explicit Generalized Linear/Additive Models
 
 ## Terms of use
 
