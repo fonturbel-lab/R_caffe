@@ -20,11 +20,13 @@ This repository presents a comprehensive R course intended for self-learning and
 
 05.- Other ANOVA designs part 2
 
-06.- MANOVA
+06.- Other ANOVA designs part 3
 
-07.- Linear regression and correlation
+07.- MANOVA
 
-08.- Multiple linear regression
+08.- Linear regression and correlation
+
+09.- Multiple linear regression
 
 ## Terms of use
 
