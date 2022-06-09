@@ -45,6 +45,17 @@ _15.- Mixed-effects Generalized Linear/Additive Models_
 
 _16.- Spatially-explicit Generalized Linear/Additive Models_
 
+### Part 3
+
+_17.- Basic time series analysis_
+
+_18.- ANOSIM and SIMPER_
+
+_19.- PCA and nMDS_
+
+
+(lessons in _italics_ are not public yet, please be patient)
+
 ## Terms of use
 
 This information is provided under a Creative Commons BY-SA license. Therefore, you may freely use this material, but you must (i) give the appropriate credit to the authors by citing this repository and its doi, and (ii) if you transform, remix, or build upon this data, the resulting dataset should be shared under the same license conditions.
