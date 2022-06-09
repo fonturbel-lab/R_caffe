@@ -61,6 +61,15 @@ _20.- Circular statistics_
 
 (lessons in _italics_ are not public yet, please be patient)
 
+
+This first edition (c) 2022 is composed by 20 lessons, but more lessons are expected to be added in the near future (have any suggestions? please let me know).
+
+
+#### Our social media :metal:
+
+Follow Fontúrbel's lab on [Twitter](https://twitter.com/IntegrativeEco) and [Instagram](https://www.instagram.com/integrative.ecolab) to see what's new.
+
+
 ## Terms of use
 
 This information is provided under a Creative Commons BY-SA license. Therefore, you may freely use this material, but you must (i) give the appropriate credit to the authors by citing this repository and its doi, and (ii) if you transform, remix, or build upon this data, the resulting dataset should be shared under the same license conditions.
