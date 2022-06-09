@@ -10,7 +10,7 @@ This repository presents a comprehensive R course intended for self-learning and
 
 ## Content
 
-### Part 1
+### Part 1 :baby:
 
 01.- Managing and operating objects in R
 
@@ -33,25 +33,28 @@ _09.- Multiple linear regression_
 _10.- Model averaging and regression trees_
 
 
-### Part 2
+### Part 2 :man_beard:
 
 _11.- Generalized Linear Models and data distributions_
 
 _12.- Special distributions and Generalized Estimation Equations_
 
-_14.- Generalized Additive Models_
+_13.- Generalized Additive Models_
 
-_15.- Mixed-effects Generalized Linear/Additive Models_
+_14.- Mixed-effects Generalized Linear/Additive Models_
 
-_16.- Spatially-explicit Generalized Linear/Additive Models_
+_15.- Spatially-explicit Generalized Linear/Additive Models_
 
-### Part 3
 
-_17.- Basic time series analysis_
+### Part 3 :older_adult:
 
-_18.- ANOSIM and SIMPER_
+_16.- Basic time series analysis_
 
-_19.- PCA and nMDS_
+_17.- ANOSIM and SIMPER_
+
+_18.- PCA and nMDS_
+
+_19.- Biodiversity analysis in R_
 
 _20.- Circular statistics_
 
