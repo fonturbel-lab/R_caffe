@@ -53,6 +53,8 @@ _18.- ANOSIM and SIMPER_
 
 _19.- PCA and nMDS_
 
+_20.- Circular statistics_
+
 
 (lessons in _italics_ are not public yet, please be patient)
 
