@@ -62,34 +62,12 @@ Well, some comparisons appear marked as "NA" (which represents **missing values*
 
 ## Factorial ANOVA
 
-Now, let's go further and get acquianted with the **randomized block design**. In this kind of model, similar test subjects are grouped in **blocks** and each block is tested against all treatment levels of the primary factor, at a random order. This approach is intended to get rid of possible influences of external factors (e.g., slope or sunlight incidence).
-
-
-In a further step, we need to define the blocks:
-
-```{r blocks}
-blk = gl(n, k, k*n)             # blocking factor
-```
-
-
-Now we have our data properly ordered blocks, let's fit a one-way ANOVA model with this:
-
-```{r ANOVAb}
-aov.cactus.b <- aov(r ~ tm + blk)
-```
-
-OK, now we have an object called `aov.cactus`, now we'll use the `summary()` function to see the results:
-
-```{r result_aov_b}
-summary(aov.cactus.b)
-```
-
-Our results indicate that cactus height is **significantly different** among the three sampled population. However, the block factor `blk` is not significant, indicating that the influence of environmental heterogeneity within populations is negligible.
+Until now we have operated **fixed factors**. A fixed factor is a categorical variable from which we have total control and we have measured
 
 
 ## Final thoughts
 
-ANOVA is quite a flexible test that allows to consider some sources of variation to obtain more reliable results. If we suspect that external factors may be affecting our data, using a randomized block design may be a good option.
+Nested and Factorial ANOVA designs allow us to analyze more complex experiments and obtain reliable estimates taking those aspects in consideration. It is important to have these issues in mind when we are proposing a research project, as we need to think ahead in the statistical analyses to be used before going to the field and collect our data. Otherwise, if we perform a flawed design and collected field data, analyzing such data will be difficult and probably our results might be unreliable.
 
 ## Session
 
