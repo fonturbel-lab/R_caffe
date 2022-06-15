@@ -62,7 +62,7 @@ Well, some comparisons appear marked as "NA" (which represents **missing values*
 
 ## Factorial ANOVA
 
-Until now we have operated **fixed factors**. A fixed factor is a categorical variable from which we have total control and we have measured
+Until now we have operated **fixed factors**. A fixed factor is a categorical variable from which we have total control and we have measured all its levels. But not everything can be labeled as a fixed factor in nature. We may have another confounding factors that can be affecting our results, but we have no control over them and/or we have (or cannot) measured all levels. Those weird factors are called **random factors**.
 
 
 ## Final thoughts
