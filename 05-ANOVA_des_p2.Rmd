@@ -22,24 +22,42 @@ In some opportunities, we have more than one factor explaining our response vari
 
 ```{r data}
 #Let's load the data file
-data<-read.table("data/04-cactus.txt", header = T)
+data<-read.table("data/05-infest.txt", header = T)
 attach(data)
+
+data$valley <- factor(data$valley, ordered=T)
+data$site <-factor(data$site, ordered=T)
 ```
 
+```{r data_pres}
+data
+```
 
-Now we have our data properly ordered. Let's fit a one-way ANOVA model with this:
+As you may see in the example data, we have two valleys (Elqui and Limari) and within each valley we have two sampling sites in which we measured cockroach infestation (ewww!). So, we need to nest `site` within `valley` to properly analyze our data.
+
+Let's fit a nested ANOVA model with this:
 
 ```{r ANOVA.r}
-aov.cactus.r <- aov(r ~ tm)
+replications(~ valley * site, data)
+
+aov.infest <- aov(infestation ~ valley/site)
 ```
 
-OK, now we have an object called `aov.cactus.r`, now we'll use the `summary()` function to see the results:
+OK, now we have an object called `aov.infest`, now we'll use the `summary()` function to see the results:
 
 ```{r result_aov_r}
-summary(aov.cactus.r)
+summary(aov.infest)
 ```
 
-Our results indicate that cactus height is **significantly different** among the three sampled population.
+Our results indicate that infestation height is **significantly different** among valleys and sampling sites.
+
+Another thought... what if we want to know which sites explain the differences? Let me introduce you the _a posteriori_ tests, which are commonly used to explain pairwise differences in ANOVA models. One of the most famous _a posteriori_ tests is the Tukey test, which can be summoned using the `TukeyHSD` function. Let's see:
+
+```{r tukey}
+TukeyHSD(aov.infest)
+```
+
+Well, some comparisons appear marked as "NA" (which represents **missing values** in R jargon). Why there are missing comparisons? because we have nested factors! of course! we cannot compare sites that are in other valleys.
 
 
 ## Factorial ANOVA
