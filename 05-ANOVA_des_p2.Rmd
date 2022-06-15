@@ -16,7 +16,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-## Completely Randomized Design
+## Nested ANOVA
 
 Now, we will examine the code and the explanations to perform a **completely randomized design**. In this kind of model, we have only one experimental factor under consideration.
 
