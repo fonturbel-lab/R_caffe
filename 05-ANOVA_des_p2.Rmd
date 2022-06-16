@@ -130,7 +130,15 @@ boxplot(EGGS~SEASON:DENSITY, data = dataf)
 
 ### Including an error term
 
-Let's assume that we only care about the season in the last example, but we need to account for egg density (as an error term)
+Let's assume that we only care about the season in the last example, but we need to account for egg density (as an error term).
+
+```{r aov6}
+aov.err<-aov(EGGS~SEASON + Error(DENSITY), data = dataf)
+summary(aov.err)
+```
+
+What are we looking here? We are examining the effects of season on the mean number of eggs, but corrected by the egg density variability.
+
 
 ## Final thoughts
 
