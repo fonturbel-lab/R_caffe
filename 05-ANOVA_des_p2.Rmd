@@ -1,7 +1,7 @@
 ---
 title: "05 - Other ANOVA designs part 2"
 author: "Francisco E. Fonturbel"
-date: "14/June/2022"
+date: "15/June/2022"
 output: 
   html_document:
     includes:
@@ -124,7 +124,7 @@ summary(aov.intonly)
 Let's make a simple boxplot to see how it looks like:
 
 ```{r bp, fig.width=12}
-boxplot(EGGS~SEASON:DENSITY, data = dataf)
+boxplot(EGGS~SEASON:DENSITY, col = "dodgerblue2", data = dataf)
 ```
 
 
