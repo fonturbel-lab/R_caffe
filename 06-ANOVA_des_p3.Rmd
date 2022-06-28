@@ -52,7 +52,7 @@ Our show that diet had a **significantly effect** on athletes' pulse, but not wo
 
 ## ANCOVA (Analysis of Covariance)
 
-Until now we have used categorical factors
+So far we have used categorical factors, but what about continuous covariates? We may have a non-categorical variable that is not our analysis focus we know that it can influence our results (e.g., altitute). Therefore, in these cases we need to use an **Analysis of Covariance** (ANCOVA for short)
 
 Let's use an example from Quinn (1988), in which we have the mean number of eggs as a response variable with two factors: season and density treatments.
 
