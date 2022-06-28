@@ -90,7 +90,7 @@ par(mfrow=c(1,1))
 
 ## Final thoughts
 
-Repeated measures ANOVA and ANCOVA allow us to .
+Repeated measures ANOVA and ANCOVA allow us to conduct more complex ANOVA models by including temporal replication (and overcome the pseudoreplication problem) and to include a continuous covariate to account to such variability in our comparisons.
 
 ## Session
 
