@@ -87,52 +87,6 @@ plot(fecund.lm)
 par(mfrow=c(1,1))
 ```
 
-Well, density also matters. We have two significant ANOVA results, but what is the joint effect of them?
-
-Let's conduct a two-way ANOVA:
-
-```{r aov3}
-aov.2w<-aov(EGGS~SEASON+DENSITY, data = dataf)
-summary(aov.2w)
-```
-
-As expected, both terms are significant. But this does not resolves the problem.
-
-Let's examine the interaction model (replacing + for *):
-
-```{r aov4}
-aov.int<-aov(EGGS~SEASON*DENSITY, data = dataf)
-summary(aov.int)
-```
-
-Nice! while both terms are significant, the interaction is not significant, meaning that both factors have similar slopes and respond in the same way. A signoficant interaction means that when one factor increases, the other one decreased.
-
-What if we ONLY want the interaction term? just replace * by :
-
-
-```{r aov5}
-aov.intonly<-aov(EGGS~SEASON:DENSITY, data = dataf)
-summary(aov.intonly)
-```
-
-Let's make a simple boxplot to see how it looks like:
-
-```{r bp, fig.width=12}
-boxplot(EGGS~SEASON:DENSITY, col = "dodgerblue2", data = dataf)
-```
-
-
-### Including an error term
-
-Let's assume that we only care about the season in the last example, but we need to account for egg density (as an error term).
-
-```{r aov6}
-aov.err<-aov(EGGS~SEASON + Error(DENSITY), data = dataf)
-summary(aov.err)
-```
-
-What are we looking here? We are examining the effects of season on the mean number of eggs, but corrected by the egg density variability.
-
 
 ## Final thoughts
 
