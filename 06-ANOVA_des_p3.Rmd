@@ -1,0 +1,151 @@
+---
+title: "05 - Other ANOVA designs part 2"
+author: "Francisco E. Fonturbel"
+date: "15/June/2022"
+output: 
+  html_document:
+    includes:
+        after_body: footer.html
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	echo = TRUE,
+	message = FALSE,
+	warning = FALSE
+)
+```
+
+## Nested ANOVA
+
+In some opportunities, we have more than one factor explaining our response variable. If those factors are independent, we simply use a two-way ANOVA design, but what if one factor is a subset of the other? Let's imagine that we measured plant diameter in three populations, and at each population we set three experimental treatments: control, half water and 10% water. So, we will have the water treatment factor nested within the population factor. Thus, each treatment constitutes a sub-replicate of each population replicate. Therefore, it won't be correct to treat this as a two-way ANOVA; we need to use a Nested ANOVA design instead. Let's see some example data:
+
+```{r data}
+#Let's load the data file
+data<-read.table("data/05-infest.txt", header = T)
+attach(data)
+
+data$valley <- factor(data$valley, ordered=T)
+data$site <-factor(data$site, ordered=T)
+```
+
+```{r data_pres}
+data
+```
+
+As you may see in the example data, we have two valleys (Elqui and Limari) and within each valley we have two sampling sites in which we measured cockroach infestation (ewww!). So, we need to nest `site` within `valley` to properly analyze our data.
+
+Let's fit a nested ANOVA model with this:
+
+```{r ANOVA.r}
+replications(~ valley * site, data)
+
+aov.infest <- aov(infestation ~ valley/site)
+```
+
+OK, now we have an object called `aov.infest`, now we'll use the `summary()` function to see the results:
+
+```{r result_aov_r}
+summary(aov.infest)
+```
+
+Our results indicate that infestation height is **significantly different** among valleys and sampling sites.
+
+Another thought... what if we want to know which sites explain the differences? Let me introduce you the _a posteriori_ tests, which are commonly used to explain pairwise differences in ANOVA models. One of the most famous _a posteriori_ tests is the Tukey test, which can be summoned using the `TukeyHSD` function. Let's see:
+
+```{r tukey}
+TukeyHSD(aov.infest)
+```
+
+Well, some comparisons appear marked as "NA" (which represents **missing values** in R jargon). Why there are missing comparisons? because we have nested factors! of course! we cannot compare sites that are in other valleys.
+
+
+## Factorial ANOVA
+
+Until now we have operated **fixed factors**. A fixed factor is a categorical variable from which we have total control and we have measured all its levels. But not everything can be labeled as a fixed factor in nature. We may have another confounding factors that can be affecting our results, but we have no control over them and/or we have (or cannot) measured all levels. Those weird factors are called **random factors**. In Factorial ANOVA designs we have three possible models types:
+
+(1) **Model I:** Have only fixed factors.
+
+(2) **Model II:** Have only random factors.
+
+(3) **Model III:*** Have a mixture of fixed and random factors.
+
+Let's use an example from Quinn (1988), in which we have the mean number of eggs as a response variable with two factors: season and density treatments.
+
+```{r data2}
+dataf<-read.csv("data/05-quinn.csv", header = TRUE, sep = ",")
+attach(dataf)
+```
+
+We may fit independent ANOVAs for each factor:
+
+```{r aov1}
+aov.season<-aov(EGGS~SEASON, data = dataf)
+summary(aov.season)
+```
+
+OK, season matters.
+
+Now let's examine density effects:
+
+```{r aov2}
+aov.dens<-aov(EGGS~DENSITY, data = dataf)
+summary(aov.dens)
+```
+
+Well, density also matters. We have two significant ANOVA results, but what is the joint effect of them?
+
+Let's conduct a two-way ANOVA:
+
+```{r aov3}
+aov.2w<-aov(EGGS~SEASON+DENSITY, data = dataf)
+summary(aov.2w)
+```
+
+As expected, both terms are significant. But this does not resolves the problem.
+
+Let's examine the interaction model (replacing + for *):
+
+```{r aov4}
+aov.int<-aov(EGGS~SEASON*DENSITY, data = dataf)
+summary(aov.int)
+```
+
+Nice! while both terms are significant, the interaction is not significant, meaning that both factors have similar slopes and respond in the same way. A signoficant interaction means that when one factor increases, the other one decreased.
+
+What if we ONLY want the interaction term? just replace * by :
+
+
+```{r aov5}
+aov.intonly<-aov(EGGS~SEASON:DENSITY, data = dataf)
+summary(aov.intonly)
+```
+
+Let's make a simple boxplot to see how it looks like:
+
+```{r bp, fig.width=12}
+boxplot(EGGS~SEASON:DENSITY, col = "dodgerblue2", data = dataf)
+```
+
+
+### Including an error term
+
+Let's assume that we only care about the season in the last example, but we need to account for egg density (as an error term).
+
+```{r aov6}
+aov.err<-aov(EGGS~SEASON + Error(DENSITY), data = dataf)
+summary(aov.err)
+```
+
+What are we looking here? We are examining the effects of season on the mean number of eggs, but corrected by the egg density variability.
+
+
+## Final thoughts
+
+Nested and Factorial ANOVA designs allow us to analyze more complex experiments and obtain reliable estimates taking those aspects in consideration. It is important to have these issues in mind when we are proposing a research project, as we need to think ahead in the statistical analyses to be used before going to the field and collect our data. Otherwise, if we perform a flawed design and collected field data, analyzing such data will be difficult and probably our results might be unreliable.
+
+## Session
+
+```{r session, echo=TRUE}
+sessionInfo()
+```
