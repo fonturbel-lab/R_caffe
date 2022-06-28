@@ -22,7 +22,7 @@ This repository presents a comprehensive R course intended for self-learning and
 
 05.- Other ANOVA designs part 2
 
-_06.- Other ANOVA designs part 3_
+06.- Other ANOVA designs part 3
 
 _07.- MANOVA_
 
