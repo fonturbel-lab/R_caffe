@@ -77,9 +77,9 @@ summary(fecund.lm)
 print(fecund.ancova)
 ```
 
-OK, season matters.
+Our results show that our covariate has a significant effect on our results altogether with site and microhabitat.
 
-Now let's examine density effects:
+Now let's examine some plots to see how residuals are distributed:
 
 ```{r acvplot}
 par(mfrow=c(2,2))
@@ -90,7 +90,7 @@ par(mfrow=c(1,1))
 
 ## Final thoughts
 
-Nested and Factorial ANOVA designs allow us to analyze more complex experiments and obtain reliable estimates taking those aspects in consideration. It is important to have these issues in mind when we are proposing a research project, as we need to think ahead in the statistical analyses to be used before going to the field and collect our data. Otherwise, if we perform a flawed design and collected field data, analyzing such data will be difficult and probably our results might be unreliable.
+Repeated measures ANOVA and ANCOVA allow us to .
 
 ## Session
 
