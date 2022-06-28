@@ -18,46 +18,36 @@ knitr::opts_chunk$set(
 
 ## Repeated measures ANOVA
 
-A common task is measuring the same experimental unit in multiple times. 
+A common task is measuring the same experimental unit in multiple times. For example, we have plants growing under three different treatments and we measure plant height as a response variable, but we measure our plant every week for two months. So, we cannot consider each measurement as an independent data point as they represent pseudo-replicates. Thus, we cannot run a simple one-way ANOVA with such data, but we can run a **repeated measures ANOVA** instead to correct our data indicating R that we have sampled the same experimental unit _t_ times.
 
 ```{r data}
 #Let's load the data file
-data<-read.table("data/05-infest.txt", header = T)
+data<-read.table("data/06-repeated.txt", header = T)
+
+data$id <- factor(data$id)
+data$workout <- factor(data$workout)
+data$diet <- factor(data$diet)
+data$time <- factor(data$time)
 attach(data)
-
-data$valley <- factor(data$valley, ordered=T)
-data$site <-factor(data$site, ordered=T)
 ```
 
-```{r data_pres}
-data
-```
 
-As you may see in the example data, we have two valleys (Elqui and Limari) and within each valley we have two sampling sites in which we measured cockroach infestation (ewww!). So, we need to nest `site` within `valley` to properly analyze our data.
+Our example data is based on some athletes that had three different workout schemes and three different diets, and we measured their pulse (as a response variable) three times during the experiment. Thus, our fixed factors are workout scheme and diet (athletes received different combinations of those factors), and the column _time_ represent the repeated measured.
 
-Let's fit a nested ANOVA model with this:
+
+Let's fit a repeated measures ANOVA model with this:
 
 ```{r ANOVA.r}
-replications(~ valley * site, data)
-
-aov.infest <- aov(infestation ~ valley/site)
+rm.aov <- aov(pulse ~ diet * workout * time + Error(id) )
 ```
 
 OK, now we have an object called `aov.infest`, now we'll use the `summary()` function to see the results:
 
 ```{r result_aov_r}
-summary(aov.infest)
+summary(rm.aov)
 ```
 
-Our results indicate that infestation height is **significantly different** among valleys and sampling sites.
-
-Another thought... what if we want to know which sites explain the differences? Let me introduce you the _a posteriori_ tests, which are commonly used to explain pairwise differences in ANOVA models. One of the most famous _a posteriori_ tests is the Tukey test, which can be summoned using the `TukeyHSD` function. Let's see:
-
-```{r tukey}
-TukeyHSD(aov.infest)
-```
-
-Well, some comparisons appear marked as "NA" (which represents **missing values** in R jargon). Why there are missing comparisons? because we have nested factors! of course! we cannot compare sites that are in other valleys.
+Our show that diet had a **significantly effect** on athletes' pulse, but not workout scheme or the intearaction of both. Further, the repeated measures showed that pulse changed over time and this change was related to diet.
 
 
 ## ANCOVA (Analysis of Covariance)
