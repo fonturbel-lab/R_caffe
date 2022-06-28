@@ -52,29 +52,39 @@ Our show that diet had a **significantly effect** on athletes' pulse, but not wo
 
 ## ANCOVA (Analysis of Covariance)
 
-So far we have used categorical factors, but what about continuous covariates? We may have a non-categorical variable that is not our analysis focus we know that it can influence our results (e.g., altitute). Therefore, in these cases we need to use an **Analysis of Covariance** (ANCOVA for short)
+So far we have used categorical factors, but what about continuous covariates? We may have a non-categorical variable that is not our analysis focus we know that it can influence our results (e.g., altitute). Therefore, in these cases we need to use an **Analysis of Covariance** (ANCOVA for short).
 
-Let's use an example from Quinn (1988), in which we have the mean number of eggs as a response variable with two factors: season and density treatments.
+Let's use an example data in which we have fecundity as a response variable, site and microhabitat as fixed factors, and individual size as a continuous covariate.
 
 ```{r data2}
-dataf<-read.csv("data/05-quinn.csv", header = TRUE, sep = ",")
+library(car)
+
+dataf<-read.table("data/06-ancova.txt", header = TRUE)
+
+dataf$site <- factor(dataf$site, ordered=T)
+dataf$microhab <-factor(dataf$microhab, ordered=T)
+
 attach(dataf)
 ```
 
-We may fit independent ANOVAs for each factor:
 
-```{r aov1}
-aov.season<-aov(EGGS~SEASON, data = dataf)
-summary(aov.season)
+And now we can fit the `ANCOVA`:
+
+```{r ancova}
+fecund.lm <- lm(lnfecund ~ size + site * microhab)
+fecund.ancova <- Anova(fecund.lm, type = 'III')
+summary(fecund.lm)
+print(fecund.ancova)
 ```
 
 OK, season matters.
 
 Now let's examine density effects:
 
-```{r aov2}
-aov.dens<-aov(EGGS~DENSITY, data = dataf)
-summary(aov.dens)
+```{r acvplot}
+par(mfrow=c(2,2))
+plot(fecund.lm)
+par(mfrow=c(1,1))
 ```
 
 Well, density also matters. We have two significant ANOVA results, but what is the joint effect of them?
