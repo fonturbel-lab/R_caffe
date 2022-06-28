@@ -1,7 +1,7 @@
 ---
-title: "05 - Other ANOVA designs part 2"
+title: "06 - Other ANOVA designs part 3"
 author: "Francisco E. Fonturbel"
-date: "15/June/2022"
+date: "28/June/2022"
 output: 
   html_document:
     includes:
@@ -16,9 +16,9 @@ knitr::opts_chunk$set(
 )
 ```
 
-## Nested ANOVA
+## Repeated measures ANOVA
 
-In some opportunities, we have more than one factor explaining our response variable. If those factors are independent, we simply use a two-way ANOVA design, but what if one factor is a subset of the other? Let's imagine that we measured plant diameter in three populations, and at each population we set three experimental treatments: control, half water and 10% water. So, we will have the water treatment factor nested within the population factor. Thus, each treatment constitutes a sub-replicate of each population replicate. Therefore, it won't be correct to treat this as a two-way ANOVA; we need to use a Nested ANOVA design instead. Let's see some example data:
+A common task is measuring the same experimental unit in multiple times. 
 
 ```{r data}
 #Let's load the data file
@@ -60,7 +60,7 @@ TukeyHSD(aov.infest)
 Well, some comparisons appear marked as "NA" (which represents **missing values** in R jargon). Why there are missing comparisons? because we have nested factors! of course! we cannot compare sites that are in other valleys.
 
 
-## Factorial ANOVA
+## ANCOVA (Analysis of Covariance)
 
 Until now we have operated **fixed factors**. A fixed factor is a categorical variable from which we have total control and we have measured all its levels. But not everything can be labeled as a fixed factor in nature. We may have another confounding factors that can be affecting our results, but we have no control over them and/or we have (or cannot) measured all levels. Those weird factors are called **random factors**. In Factorial ANOVA designs we have three possible models types:
 
