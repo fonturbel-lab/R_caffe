@@ -52,13 +52,7 @@ Our show that diet had a **significantly effect** on athletes' pulse, but not wo
 
 ## ANCOVA (Analysis of Covariance)
 
-Until now we have operated **fixed factors**. A fixed factor is a categorical variable from which we have total control and we have measured all its levels. But not everything can be labeled as a fixed factor in nature. We may have another confounding factors that can be affecting our results, but we have no control over them and/or we have (or cannot) measured all levels. Those weird factors are called **random factors**. In Factorial ANOVA designs we have three possible models types:
-
-(1) **Model I:** Have only fixed factors.
-
-(2) **Model II:** Have only random factors.
-
-(3) **Model III:*** Have a mixture of fixed and random factors.
+Until now we have used categorical factors
 
 Let's use an example from Quinn (1988), in which we have the mean number of eggs as a response variable with two factors: season and density treatments.
 
