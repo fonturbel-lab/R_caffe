@@ -1,0 +1,99 @@
+---
+title: "06 - Other ANOVA designs part 3"
+author: "Francisco E. Fonturbel"
+date: "28/June/2022"
+output: 
+  html_document:
+    includes:
+        after_body: footer.html
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	echo = TRUE,
+	message = FALSE,
+	warning = FALSE
+)
+```
+
+## Repeated measures ANOVA
+
+A common task is measuring the same experimental unit in multiple times. For example, we have plants growing under three different treatments and we measure plant height as a response variable, but we measure our plant every week for two months. So, we cannot consider each measurement as an independent data point as they represent pseudo-replicates. Thus, we cannot run a simple one-way ANOVA with such data, but we can run a **repeated measures ANOVA** instead to correct our data indicating R that we have sampled the same experimental unit _t_ times.
+
+```{r data}
+#Let's load the data file
+data<-read.table("data/06-repeated.txt", header = T)
+
+data$id <- factor(data$id)
+data$workout <- factor(data$workout)
+data$diet <- factor(data$diet)
+data$time <- factor(data$time)
+attach(data)
+```
+
+
+Our example data is based on some athletes that had three different workout schemes and three different diets, and we measured their pulse (as a response variable) three times during the experiment. Thus, our fixed factors are workout scheme and diet (athletes received different combinations of those factors), and the column _time_ represent the repeated measured.
+
+
+Let's fit a repeated measures ANOVA model with this:
+
+```{r ANOVA.r}
+rm.aov <- aov(pulse ~ diet * workout * time + Error(id) )
+```
+
+OK, now we have an object called `aov.infest`, now we'll use the `summary()` function to see the results:
+
+```{r result_aov_r}
+summary(rm.aov)
+```
+
+Our show that diet had a **significantly effect** on athletes' pulse, but not workout scheme or the intearaction of both. Further, the repeated measures showed that pulse changed over time and this change was related to diet.
+
+
+## ANCOVA (Analysis of Covariance)
+
+So far we have used categorical factors, but what about continuous covariates? We may have a non-categorical variable that is not our analysis focus we know that it can influence our results (e.g., altitute). Therefore, in these cases we need to use an **Analysis of Covariance** (ANCOVA for short).
+
+Let's use an example data in which we have fecundity as a response variable, site and microhabitat as fixed factors, and individual size as a continuous covariate.
+
+```{r data2}
+library(car)
+
+dataf<-read.table("data/06-ancova.txt", header = TRUE)
+
+dataf$site <- factor(dataf$site, ordered=T)
+dataf$microhab <-factor(dataf$microhab, ordered=T)
+
+attach(dataf)
+```
+
+
+And now we can fit the `ANCOVA`:
+
+```{r ancova}
+fecund.lm <- lm(lnfecund ~ size + site * microhab)
+fecund.ancova <- Anova(fecund.lm, type = 'III')
+summary(fecund.lm)
+print(fecund.ancova)
+```
+
+Our results show that our covariate has a significant effect on our results altogether with site and microhabitat.
+
+Now let's examine some plots to see how residuals are distributed:
+
+```{r acvplot}
+par(mfrow=c(2,2))
+plot(fecund.lm)
+par(mfrow=c(1,1))
+```
+
+
+## Final thoughts
+
+Repeated measures ANOVA and ANCOVA allow us to conduct more complex ANOVA models by including temporal replication (and overcome the pseudoreplication problem) and to include a continuous covariate to account to such variability in our comparisons.
+
+## Session
+
+```{r session, echo=TRUE}
+sessionInfo()
+```
