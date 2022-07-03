@@ -18,16 +18,18 @@ knitr::opts_chunk$set(
 
 ## Multivariate ANOVA
 
-Until now, we operated ANOVA tests using one or more factors (or even a covariate) against a single response variable.
+Until now, we operated ANOVA tests using one or more factors (or even a covariate) against a single response variable. But, what if we have two or more response variables? Is not rare that we measure several response attributes on a study system. So, if we have multiple response variables we could perform individual ANOVA tests for each response variable, but doing this represents two problems: (1) we cannot account for the global effect based on individual tests, and (2) we would have to correct our P-values for multiple comparisons.
+
+Fortunately, there is an alternative for this: The Multivariate Analysis of Variance, aka **MANOVA**. Let's see this example data:
 
 ```{r data}
 #Let's load the data file
 data<-read.table("data/07_manova.txt", header = T)
 attach(data)
+head(data)
 ```
 
-
-Our example data is based on some athletes that had three different workout schemes and three different diets, and we measured their pulse (as a response variable) three times during the experiment. Thus, our fixed factors are workout scheme and diet (athletes received different combinations of those factors), and the column _time_ represent the repeated measured.
+Our example presents data for polluted and non-polluted sites in which a rodent species occurs. We sampled seven heavy metals (Arsenic, Copper, Cadmium, Lead, Tin, Antimony, and Zinc) at the rodent tissue (_T samples) as well as in the soil (_E samples). So, we want to know if the heavy metal load (i.e., considering all elements together as response variable) vary between polluted and non-polluted sites. Also, we want to know if male and female rodents have different heavy metal loads, and if the contact or the consumption of plants from the polluted soil have an effect on heavy metal loads.
 
 
 Let's fit a repeated measures ANOVA model with this:
