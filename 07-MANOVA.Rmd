@@ -23,7 +23,10 @@ Until now, we operated ANOVA tests using one or more factors (or even a covariat
 Fortunately, there is an alternative for this: The Multivariate Analysis of Variance, aka **MANOVA**. Let's see this example data:
 
 ```{r data}
-#Let's load the data file
+#Let's load the data file and libraries required
+library(vegan)
+library(MVN)
+
 data<-read.table("data/07_manova.txt", header = T)
 attach(data)
 head(data)
@@ -32,57 +35,7 @@ head(data)
 Our example presents data for polluted and non-polluted sites in which a rodent species occurs. We sampled seven heavy metals (Arsenic, Copper, Cadmium, Lead, Tin, Antimony, and Zinc) at the rodent tissue (_T samples) as well as in the soil (_E samples). So, we want to know if the heavy metal load (i.e., considering all elements together as response variable) vary between polluted and non-polluted sites. Also, we want to know if male and female rodents have different heavy metal loads, and if the contact or the consumption of plants from the polluted soil have an effect on heavy metal loads.
 
 
-Let's fit a repeated measures ANOVA model with this:
 
-```{r ANOVA.r}
-rm.aov <- aov(pulse ~ diet * workout * time + Error(id) )
-```
-
-OK, now we have an object called `aov.infest`, now we'll use the `summary()` function to see the results:
-
-```{r result_aov_r}
-summary(rm.aov)
-```
-
-Our show that diet had a **significantly effect** on athletes' pulse, but not workout scheme or the intearaction of both. Further, the repeated measures showed that pulse changed over time and this change was related to diet.
-
-
-## ANCOVA (Analysis of Covariance)
-
-So far we have used categorical factors, but what about continuous covariates? We may have a non-categorical variable that is not our analysis focus we know that it can influence our results (e.g., altitute). Therefore, in these cases we need to use an **Analysis of Covariance** (ANCOVA for short).
-
-Let's use an example data in which we have fecundity as a response variable, site and microhabitat as fixed factors, and individual size as a continuous covariate.
-
-```{r data2}
-library(car)
-
-dataf<-read.table("data/06-ancova.txt", header = TRUE)
-
-dataf$site <- factor(dataf$site, ordered=T)
-dataf$microhab <-factor(dataf$microhab, ordered=T)
-
-attach(dataf)
-```
-
-
-And now we can fit the `ANCOVA`:
-
-```{r ancova}
-fecund.lm <- lm(lnfecund ~ size + site * microhab)
-fecund.ancova <- Anova(fecund.lm, type = 'III')
-summary(fecund.lm)
-print(fecund.ancova)
-```
-
-Our results show that our covariate has a significant effect on our results altogether with site and microhabitat.
-
-Now let's examine some plots to see how residuals are distributed:
-
-```{r acvplot}
-par(mfrow=c(2,2))
-plot(fecund.lm)
-par(mfrow=c(1,1))
-```
 
 
 ## Final thoughts
