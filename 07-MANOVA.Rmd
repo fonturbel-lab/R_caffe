@@ -1,7 +1,7 @@
 ---
-title: "06 - Other ANOVA designs part 3"
+title: "07 - MANOVA"
 author: "Francisco E. Fonturbel"
-date: "28/June/2022"
+date: "03/July/2022"
 output: 
   html_document:
     includes:
@@ -16,13 +16,13 @@ knitr::opts_chunk$set(
 )
 ```
 
-## Repeated measures ANOVA
+## Multivariate ANOVA
 
-A common task is measuring the same experimental unit in multiple times. For example, we have plants growing under three different treatments and we measure plant height as a response variable, but we measure our plant every week for two months. So, we cannot consider each measurement as an independent data point as they represent pseudo-replicates. Thus, we cannot run a simple one-way ANOVA with such data, but we can run a **repeated measures ANOVA** instead to correct our data indicating R that we have sampled the same experimental unit _t_ times.
+Until now, we operated ANOVA tests using one or more factors (or even a covariate) against a single response variable.
 
 ```{r data}
 #Let's load the data file
-data<-read.table("data/06-repeated.txt", header = T)
+data<-read.table("data/07-manova.txt", header = T)
 
 data$id <- factor(data$id)
 data$workout <- factor(data$workout)
