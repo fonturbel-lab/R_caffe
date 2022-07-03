@@ -41,7 +41,7 @@ Let's fit a repeated measures ANOVA model with this:
 rm.aov <- aov(pulse ~ diet * workout * time + Error(id) )
 ```
 
-OK, now we have an object called `aov.infest`, now we'll use the `summary()` function to see the results:
+OK, now we have an object called `rm.aov`, now we'll use the `summary()` function to see the results:
 
 ```{r result_aov_r}
 summary(rm.aov)

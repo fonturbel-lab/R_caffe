@@ -396,8 +396,8 @@ combinations of those factors), and the column <em>time</em> represent
 the repeated measured.</p>
 <p>Let’s fit a repeated measures ANOVA model with this:</p>
 <pre class="r"><code>rm.aov &lt;- aov(pulse ~ diet * workout * time + Error(id) )</code></pre>
-<p>OK, now we have an object called <code>aov.infest</code>, now we’ll
-use the <code>summary()</code> function to see the results:</p>
+<p>OK, now we have an object called <code>rm.aov</code>, now we’ll use
+the <code>summary()</code> function to see the results:</p>
 <pre class="r"><code>summary(rm.aov)</code></pre>
 <pre><code>## 
 ## Error: id
