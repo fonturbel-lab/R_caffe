@@ -22,12 +22,7 @@ Until now, we operated ANOVA tests using one or more factors (or even a covariat
 
 ```{r data}
 #Let's load the data file
-data<-read.table("data/07-manova.txt", header = T)
-
-data$id <- factor(data$id)
-data$workout <- factor(data$workout)
-data$diet <- factor(data$diet)
-data$time <- factor(data$time)
+data<-read.table("data/07_manova.txt", header = T)
 attach(data)
 ```
 
