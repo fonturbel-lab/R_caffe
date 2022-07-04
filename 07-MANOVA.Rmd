@@ -150,7 +150,7 @@ summary(manova4)
 
 ## Final thoughts
 
-MANOVA is
+MANOVA is a very good alternative when we have multiple response variables and we want to assess the overall effect. In operational terms, MANOVA is operated pretty much like ANOVA. The only missing thing here are the _a posteriori_ tests, as they are not available (yet) for MANOVA.
 
 ## Session
 
