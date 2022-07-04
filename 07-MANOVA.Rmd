@@ -35,9 +35,9 @@ head(data)
 Our example presents data for polluted and non-polluted sites in which a rodent species occurs. We sampled seven heavy metals (Arsenic, Copper, Cadmium, Lead, Tin, Antimony, and Zinc) at the rodent tissue (_T samples) as well as in the soil (_E samples). So, we want to know if the heavy metal load (i.e., considering all elements together as response variable) vary between polluted and non-polluted sites. Also, we want to know if male and female rodents have different heavy metal loads, and if the contact or the consumption of plants from the polluted soil have an effect on heavy metal loads.
 
 
-## Effects of the environment
+## Effects of the animal tissue
 
-In this first part we will use metal concentration on the soil as our response variable. For this, we must create a response vector first:
+In this first part we will use metal concentration on the animal tissue as our response variable. For this, we must create a response vector first:
 
 ```{r y_vector}
 y<-data[10:16]
@@ -144,6 +144,15 @@ As with ANOVA, we can have more than one factor in the model and estimate their 
 ```{r manova4}
 manova4<-manova(as.matrix(y)~Site*Sex)
 summary(manova4)
+```
+
+
+## Effects on the environment
+
+Now, we will repeat the analyses using the data from soil samples instead.
+
+```{r vector-d}
+d<-data[3:9]
 ```
 
 
