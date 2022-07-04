@@ -172,6 +172,38 @@ summary.aov(manovad)
 
 In this case, all elements have significantly different concentrations in the soil between sites.
 
+### Testing the other factors
+
+
+**Contact with polluted plants**
+
+```{r manova5}
+manova5<-manova(as.matrix(d)~Contact)
+summary(manova5)
+```
+
+No effect of contact.
+
+
+**Eating polluted plants**
+
+```{r manova6}
+manova6<-manova(as.matrix(d)~Eat)
+summary(manova6)
+```
+
+No effect as well.
+
+
+**Males versus females**
+
+```{r manova7}
+manova7<-manova(as.matrix(d)~Sex)
+summary(manova7)
+```
+
+And no effect as well.
+
 
 ## Final thoughts
 
