@@ -378,7 +378,9 @@ enzymatic activity based on an experimental trial. We know from the
 books that many enzymes perform better at certain temperatures, and we
 want to test it in our laboratory. So, let’s load the example file with
 temperature and enzymatic activity data.</p>
-<pre class="r"><code>data&lt;-read.csv(&quot;data/08_enzactivity.csv&quot;, header = T, sep = &quot;,&quot;)
+<pre class="r"><code>library(confintr)
+
+data&lt;-read.csv(&quot;data/08_enzactivity.csv&quot;, header = T, sep = &quot;,&quot;)
 attach(data)
 head(data)</code></pre>
 <pre><code>##   X temperature enzactiv
@@ -460,15 +462,84 @@ themselves.</p>
 ## 
 ## data:  resid(mod1)
 ## W = 0.99677, p-value = 0.4237</code></pre>
-<p>Great! we are good to go.</p>
+<p>Great! we are good to go. Our results are reliable.</p>
 </div>
 </div>
 <div id="correlation" class="section level2">
 <h2>Correlation</h2>
+<p>Well, linear regression is such a wonderful tool, but it has a very
+heavy underlying assumption: causality. In our last example, enzymatic
+activity was a consequence of temperature. But what if we don’t have any
+reasons to assume cause-and-effect? In that case, we can assess
+<strong>correlation</strong>, which is a mathematical measurement of
+relationship between two continuous variables.</p>
+<p>The most common correlation method is Pearson’s correlation test (a
+parametric one), but in case we have weird funny data, we can use the
+non-parametric correlations tests of Spearman or Kendall.</p>
+<p>We will use our same dataset to assess the correlation between
+temperature and enzymatic activity. For doing that we will use the
+<code>cor.test</code> function</p>
+<pre class="r"><code>cor.test(temperature, enzactiv, method = &quot;pearson&quot;)</code></pre>
+<pre><code>## 
+##  Pearson&#39;s product-moment correlation
+## 
+## data:  temperature and enzactiv
+## t = 38.505, df = 496, p-value &lt; 2.2e-16
+## alternative hypothesis: true correlation is not equal to 0
+## 95 percent confidence interval:
+##  0.8417942 0.8861031
+## sample estimates:
+##       cor 
+## 0.8656337</code></pre>
+<p>As we already suspected, both variables are significantly correlated.
+Let’s take a look the results using Spearman and Kendall methods
+instead:</p>
+<pre class="r"><code>cor.test(temperature, enzactiv, method = &quot;spearman&quot;)</code></pre>
+<pre><code>## 
+##  Spearman&#39;s rank correlation rho
+## 
+## data:  temperature and enzactiv
+## S = 2604158, p-value &lt; 2.2e-16
+## alternative hypothesis: true rho is not equal to 0
+## sample estimates:
+##       rho 
+## 0.8734878</code></pre>
+<pre class="r"><code>cor.test(temperature, enzactiv, method = &quot;kendall&quot;)</code></pre>
+<pre><code>## 
+##  Kendall&#39;s rank correlation tau
+## 
+## data:  temperature and enzactiv
+## z = 22.662, p-value &lt; 2.2e-16
+## alternative hypothesis: true tau is not equal to 0
+## sample estimates:
+##       tau 
+## 0.6793775</code></pre>
+<p>Pretty much consistent results among methods.</p>
+<p>We also may want to estimate a 95% confidence interval for our
+correlation coefficient, as a proxy of estimation quality. For that
+purpose, we will use the function <code>ci_cor</code> embedded into the
+library <code>confintr</code>.</p>
+<pre class="r"><code>ci_cor(temperature, enzactiv, method = &quot;pearson&quot;, probs = c(0.025, 0.975), type = &quot;bootstrap&quot;, R = 999, boot_type = &quot;bca&quot;)</code></pre>
+<pre><code>## 
+##  Two-sided 95% bootstrap confidence interval for the true Pearson
+##  correlation coefficient based on 999 bootstrap replications and the
+##  bca method
+## 
+## Sample estimate: 0.8656337 
+## Confidence interval:
+##      2.5%     97.5% 
+## 0.8418644 0.8838805</code></pre>
+<p>It seems that our correlation coefficient is quite consistent, as the
+difference between the lower and upper bounds of the confidence interval
+is small.</p>
 </div>
 <div id="final-thoughts" class="section level2">
 <h2>Final thoughts</h2>
-<p>aaa</p>
+<p>Linear regression and correlation are our entryway to understand
+linear relationships among linear variables. Linear regression allows us
+to assess the causal relationship between two continuous variables,
+whereas correlation examines association between a pair of variables
+without implying a causal relationship.</p>
 </div>
 <div id="session" class="section level2">
 <h2>Session</h2>
@@ -487,13 +558,16 @@ themselves.</p>
 ## attached base packages:
 ## [1] stats     graphics  grDevices utils     datasets  methods   base     
 ## 
+## other attached packages:
+## [1] confintr_0.1.2
+## 
 ## loaded via a namespace (and not attached):
 ##  [1] digest_0.6.29   R6_2.5.1        jsonlite_1.8.0  magrittr_2.0.3 
 ##  [5] evaluate_0.15   highr_0.9       stringi_1.7.6   rlang_1.0.2    
 ##  [9] cli_3.2.0       rstudioapi_0.13 jquerylib_0.1.4 bslib_0.3.1    
-## [13] rmarkdown_2.13  tools_4.1.0     stringr_1.4.0   xfun_0.30      
-## [17] yaml_2.3.5      fastmap_1.1.0   compiler_4.1.0  htmltools_0.5.2
-## [21] knitr_1.38      sass_0.4.1</code></pre>
+## [13] boot_1.3-28     rmarkdown_2.13  tools_4.1.0     stringr_1.4.0  
+## [17] xfun_0.30       yaml_2.3.5      fastmap_1.1.0   compiler_4.1.0 
+## [21] htmltools_0.5.2 knitr_1.38      sass_0.4.1</code></pre>
 </div>
 
 <!DOCTYPE html>
