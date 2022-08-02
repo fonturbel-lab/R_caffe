@@ -21,6 +21,8 @@ knitr::opts_chunk$set(
 So far, we have dealt with a continuous response variable contrasted against categorical predictors. But in many cases we have continuous predictors. For example, we may assess the effect of temperature on enzymatic activity based on an experimental trial. We know from the books that many enzymes perform better at certain temperatures, and we want to test it in our laboratory. So, let's load the example file with temperature and enzymatic activity data.
 
 ```{r data}
+library(confintr)
+
 data<-read.csv("data/08_enzactivity.csv", header = T, sep = ",")
 attach(data)
 head(data)
@@ -76,14 +78,45 @@ Good, our residuals look good. In linear models, the normality of the residuals 
 shapiro.test(resid(mod1))
 ```
 
-Great! we are good to go.
+Great! we are good to go. Our results are reliable.
 
 
 ## Correlation
 
+Well, linear regression is such a wonderful tool, but it has a very heavy underlying assumption: causality. In our last example, enzymatic activity was a consequence of temperature. But what if we don't have any reasons to assume cause-and-effect? In that case, we can assess **correlation**, which is a mathematical measurement of relationship between two continuous variables.
+
+The most common correlation method is Pearson's correlation test (a parametric one), but in case we have weird funny data, we can use the non-parametric correlations tests of Spearman or Kendall.
+
+We will use our same dataset to assess the correlation between temperature and enzymatic activity. For doing that we will use the `cor.test` function
+
+```{r corr1}
+cor.test(temperature, enzactiv, method = "pearson")
+```
+
+As we already suspected, both variables are significantly correlated. Let's take a look the results using Spearman and Kendall methods instead:
+
+```{r corr2}
+cor.test(temperature, enzactiv, method = "spearman")
+```
+
+```{r corr3}
+cor.test(temperature, enzactiv, method = "kendall")
+```
+
+Pretty much consistent results among methods.
+
+We also may want to estimate a 95% confidence interval for our correlation coefficient, as a proxy of estimation quality. For that purpose, we will use the function `ci_cor` embedded into the library `confintr`.
+
+```{r ci_cor}
+ci_cor(temperature, enzactiv, method = "pearson", probs = c(0.025, 0.975), type = "bootstrap", R = 999, boot_type = "bca")
+```
+
+It seems that our correlation coefficient is quite consistent, as the difference between the lower and upper bounds of the confidence interval is small.
+
+
 ## Final thoughts
 
-aaa
+Linear regression and correlation are our entryway to
 
 
 ## Session
