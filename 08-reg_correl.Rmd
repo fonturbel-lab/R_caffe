@@ -46,8 +46,40 @@ Let's take a look of our data:
 plot(enzactiv~temperature, col = "firebrick2", xlab = "Temperature (ºC)", ylab = "Enzymatic activity")
 ```
 
-Well, it clearly resembles a linear relationship.
+Well, it clearly resembles a linear relationship. But we are scientists and we assess hard data and not merely plots... let's make a linear model for it!
 
+```{r lm}
+mod1<-lm(enzactiv~temperature)
+summary(mod1)
+```
+
+Well, well, well... our linear relationship is significant indeed. Enzymatic activity is positively influenced by temperature, as the books said.
+
+But, what a linear model does? It looks for the linear function that fits better to our data. Let's plot it:
+
+```{r plot2}
+plot(enzactiv~temperature, xlab = "Temperature (ºC)", ylab = "Enzymatic activity")
+abline(lm(enzactiv~temperature), col = "firebrick2", lwd = 3)
+```
+
+so, let me introduce a new concept here: residuals. The difference of each data point to the trend line is a residual. A linear regression can be assessed examining how well the resulting model fits our data. One first approach is to examine R-squared, as it gets closer to 1 the regression is optimal. In this case, our R-squared value is **`r summary(mod1)$r.squared`**, which indicates a pretty decent fit. But let's take a look on our residuals:
+
+```{r resids}
+plot(density(resid(mod1))) #A density plot
+qqnorm(resid(mod1)) # A quantile normal plot - good for checking normality
+qqline(resid(mod1))
+```
+
+Good, our residuals look good. In linear models, the normality of the residuals is more important than the normality of the raw variables themselves.
+
+```{r normres}
+shapiro.test(resid(mod1))
+```
+
+Great! we are good to go.
+
+
+## Correlation
 
 ## Final thoughts
 
