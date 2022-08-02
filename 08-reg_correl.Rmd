@@ -18,20 +18,27 @@ knitr::opts_chunk$set(
 
 ## Linear regression
 
-So far, we have dealt with a continuous response variable contrasted against categorical predictors. But in many cases we have continuous predictors that
+So far, we have dealt with a continuous response variable contrasted against categorical predictors. But in many cases we have continuous predictors. For example, we may assess the effect of temperature on enzymatic activity based on an experimental trial. We know from the books that many enzymes perform better at certain temperatures, and we want to test it in our laboratory. So, let's load the example file with temperature and enzymatic activity data.
 
 ```{r data}
-#Let's load the data file and libraries required
-library(vegan)
-library(MVN)
-
-data<-read.table("data/07_manova.txt", header = T)
+data<-read.csv("data/08_enzactivity.csv", header = T, sep = ",")
 attach(data)
 head(data)
 ```
 
-Our example presents data for polluted and non-polluted sites in which a rodent species occurs. We sampled seven heavy metals (Arsenic, Copper, Cadmium, Lead, Tin, Antimony, and Zinc) at the rodent tissue (_T samples) as well as in the soil (_E samples). So, we want to know if the heavy metal load (i.e., considering all elements together as response variable) vary between polluted and non-polluted sites. Also, we want to know if male and female rodents have different heavy metal loads, and if the contact or the consumption of plants from the polluted soil have an effect on heavy metal loads.
+Before fitting a linear model, we will examine the distribution of the response variable (i.e., enzymatic activity) to assess if it follows a normal distribution:
 
+```{r norm}
+hist(enzactiv, col = "dodgerblue1")
+shapiro.test(enzactiv)
+```
+
+Well, it is more or less normal...
+
+
+### Linear relationships
+
+Linear
 
 ## Effects of the animal tissue
 
