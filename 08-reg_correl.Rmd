@@ -116,7 +116,7 @@ It seems that our correlation coefficient is quite consistent, as the difference
 
 ## Final thoughts
 
-Linear regression and correlation are our entryway to
+Linear regression and correlation are our entryway to understand linear relationships among linear variables. Linear regression allows us to assess the causal relationship between two continuous variables, whereas correlation examines association between a pair of variables without implying a causal relationship.
 
 
 ## Session
