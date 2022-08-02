@@ -26,7 +26,7 @@ This repository presents a comprehensive R course intended for self-learning and
 
 07.- MANOVA
 
-_08.- Linear regression and correlation_
+08.- Linear regression and correlation
 
 _09.- Multiple linear regression_
 
