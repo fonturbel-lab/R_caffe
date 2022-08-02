@@ -16,11 +16,9 @@ knitr::opts_chunk$set(
 )
 ```
 
-## Multivariate ANOVA
+## Linear regression
 
-Until now, we operated ANOVA tests using one or more factors (or even a covariate) against a single response variable. But, what if we have two or more response variables? Is not rare that we measure several response attributes on a study system. So, if we have multiple response variables we could perform individual ANOVA tests for each response variable, but doing this represents two problems: (1) we cannot account for the global effect based on individual tests, and (2) we would have to correct our P-values for multiple comparisons.
-
-Fortunately, there is an alternative for this: The Multivariate Analysis of Variance, aka **MANOVA**. Let's see this example data:
+So far, we have dealt with a continuous response variable contrasted against categorical predictors. But in many cases we have continuous predictors that
 
 ```{r data}
 #Let's load the data file and libraries required
