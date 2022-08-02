@@ -1,0 +1,216 @@
+---
+title: "07 - MANOVA"
+author: "Francisco E. Fonturbel"
+date: "03/July/2022"
+output: 
+  html_document:
+    includes:
+        after_body: footer.html
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	echo = TRUE,
+	message = FALSE,
+	warning = FALSE
+)
+```
+
+## Multivariate ANOVA
+
+Until now, we operated ANOVA tests using one or more factors (or even a covariate) against a single response variable. But, what if we have two or more response variables? Is not rare that we measure several response attributes on a study system. So, if we have multiple response variables we could perform individual ANOVA tests for each response variable, but doing this represents two problems: (1) we cannot account for the global effect based on individual tests, and (2) we would have to correct our P-values for multiple comparisons.
+
+Fortunately, there is an alternative for this: The Multivariate Analysis of Variance, aka **MANOVA**. Let's see this example data:
+
+```{r data}
+#Let's load the data file and libraries required
+library(vegan)
+library(MVN)
+
+data<-read.table("data/07_manova.txt", header = T)
+attach(data)
+head(data)
+```
+
+Our example presents data for polluted and non-polluted sites in which a rodent species occurs. We sampled seven heavy metals (Arsenic, Copper, Cadmium, Lead, Tin, Antimony, and Zinc) at the rodent tissue (_T samples) as well as in the soil (_E samples). So, we want to know if the heavy metal load (i.e., considering all elements together as response variable) vary between polluted and non-polluted sites. Also, we want to know if male and female rodents have different heavy metal loads, and if the contact or the consumption of plants from the polluted soil have an effect on heavy metal loads.
+
+
+## Effects of the animal tissue
+
+In this first part we will use metal concentration on the animal tissue as our response variable. For this, we must create a response vector first:
+
+```{r y_vector}
+y<-data[10:16]
+```
+
+Now, we will use the `manova` function and operate this just like a one-way ANOVA:
+
+```{r manova0}
+manova0<-manova(as.matrix(y)~Site)
+summary(manova0)
+
+boxplot(as.matrix(y)~Site, col ="darkorange2")
+```
+
+According to this result, the heavy metal loads are significantly different between polluted and non-polluted sites. While ANOVA reports the _F_ statistic, MANOVA reports Pillai trace instead. However, there are other statistics that can be used with ANOVA, we just need to specify them in the code:
+
+```{r fstats}
+summary(manova0, test="Wilks")
+summary(manova0, test="Roy")
+summary(manova0, test="Hotelling-Lawley")
+```
+
+The results are exactly the same, but we have different statistics in the report.
+
+Wait... what if we want to know which metals have different between sites? Well, this can be easily answered by using the function `summary.aov` instead:
+
+```{r aovs}
+summary.aov(manova0)
+```
+
+Awesome! with this code we can determine that Cd and Zu are not different between sites, but the other metals present significant differences.
+
+### Assumptions
+
+As happens with ANOVA, MANOVA relies on some assumptions. Let's take a look to these plots first:
+
+```{r nplot1}
+par(mfcol=c(2,2))
+hist(residuals(manova0))
+plot(manova0$residuals~manova0$fitted.values)
+qqnorm(manova0$residuals)
+qqline(manova0$residuals)
+par(mfcol=c(1,1))
+```
+
+Uhmm... it seems that our data is not normal. Let's use the `mvn` function from the `MVN` package to test it:
+
+```{r mvn1}
+multinorm<-mvn(y, mvnTest = "royston", univariatePlot = "qqplot")
+multinorm
+```
+
+So, we have some normality issues. As an alternative, there is a non-parametric version of MANOVA. We will use the function `adonis` from the `vegan` package to do this:
+
+```{r m0np}
+manova0np<-adonis(as.matrix(y)~Site)
+manova0np
+```
+
+The non-parametric test confirmed our results.
+
+### Testing the other factors
+
+Now that we know that factor _Site_ is important, let's examine the other factors:
+
+**Contact with polluted plants**
+
+```{r manova1}
+manova1<-manova(as.matrix(y)~Contact)
+summary(manova1)
+```
+
+No effect of contact.
+
+
+**Eating polluted plants**
+
+```{r manova2}
+manova2<-manova(as.matrix(y)~Eat)
+summary(manova2)
+```
+
+No effect as well.
+
+
+**Males versus females**
+
+```{r manova3}
+manova3<-manova(as.matrix(y)~Sex)
+summary(manova3)
+```
+
+And now we have a significant effect of animal sex on metal loads. Let's make a boxplot:
+
+```{r bps}
+boxplot(as.matrix(y)~Sex, col = "dodgerblue1")
+```
+
+
+### Interactions
+
+As with ANOVA, we can have more than one factor in the model and estimate their interactions:
+
+```{r manova4}
+manova4<-manova(as.matrix(y)~Site*Sex)
+summary(manova4)
+```
+
+
+## Effects on the environment
+
+Now, we will repeat the analyses using the data from soil samples instead.
+
+```{r vector-d}
+d<-data[3:9]
+```
+
+Now that we have our new response vector, we repeat the site MANOVA:
+
+```{r md}
+manovad<-manova(as.matrix(d)~Site)
+summary(manovad)
+
+boxplot(as.matrix(d)~Site, col = "firebrick1")
+```
+
+We can also examine the individual responses:
+
+```{r aovd}
+summary.aov(manovad)
+```
+
+In this case, all elements have significantly different concentrations in the soil between sites.
+
+### Testing the other factors
+
+
+**Contact with polluted plants**
+
+```{r manova5}
+manova5<-manova(as.matrix(d)~Contact)
+summary(manova5)
+```
+
+No effect of contact.
+
+
+**Eating polluted plants**
+
+```{r manova6}
+manova6<-manova(as.matrix(d)~Eat)
+summary(manova6)
+```
+
+No effect as well.
+
+
+**Males versus females**
+
+```{r manova7}
+manova7<-manova(as.matrix(d)~Sex)
+summary(manova7)
+```
+
+And no effect as well.
+
+
+## Final thoughts
+
+MANOVA is a very good alternative when we have multiple response variables and we want to assess the overall effect. In operational terms, MANOVA is operated pretty much like ANOVA. The only missing thing here are the _a posteriori_ tests, as they are not available (yet) for MANOVA.
+
+## Session
+
+```{r session, echo=TRUE}
+sessionInfo()
+```
