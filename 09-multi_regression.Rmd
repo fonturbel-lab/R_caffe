@@ -36,9 +36,14 @@ attach(data)
 head(data)
 ```
 
-So, we have information on several car brands and models, obtained from their technical specifications. In this case
+So, we have information on several car brands and models, obtained from their technical specifications. In this case, we want to know which factors determine car's efficiency in fuel use (represented by the variable mpg = miles per gallon) regarding three factors: cylinder displacement (disp), power(hp), and car's weight (wt). Let's fit a linear model for this:
 
-as
+```{r lm1}
+mod1<-lm(mpg~disp+hp++wt, data = data)
+summary(mod1)
+```
+
+As we can see here, cylinder displacement has no significant effect on gas consumption, but power and weight do have a significant effect, with negative relationships (i.e., the more powerful and heavy vehicle, the less gas efficiency).
 
 ## Final thoughts
 
