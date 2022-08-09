@@ -1,7 +1,7 @@
 ---
-title: "08 - Linear regression and correlation"
+title: "09 - Multiple linear regression"
 author: "Francisco E. Fonturbel"
-date: "02/August/2022"
+date: "09/August/2022"
 output: 
   html_document:
     includes:
@@ -16,7 +16,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-## Linear regression
+## Multiple linear regression
 
 So far, we have dealt with a continuous response variable contrasted against categorical predictors. But in many cases we have continuous predictors. For example, we may assess the effect of temperature on enzymatic activity based on an experimental trial. We know from the books that many enzymes perform better at certain temperatures, and we want to test it in our laboratory. So, let's load the example file with temperature and enzymatic activity data.
 
