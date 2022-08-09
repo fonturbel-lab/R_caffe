@@ -39,11 +39,69 @@ head(data)
 So, we have information on several car brands and models, obtained from their technical specifications. In this case, we want to know which factors determine car's efficiency in fuel use (represented by the variable mpg = miles per gallon) regarding three factors: cylinder displacement (disp), power(hp), and car's weight (wt). Let's fit a linear model for this:
 
 ```{r lm1}
-mod1<-lm(mpg~disp+hp++wt, data = data)
+mod1<-lm(mpg~disp+hp+wt, data = data)
 summary(mod1)
 ```
 
 As we can see here, cylinder displacement has no significant effect on gas consumption, but power and weight do have a significant effect, with negative relationships (i.e., the more powerful and heavy vehicle, the less gas efficiency).
+
+So, now that we now which variables are important, we may fit a second model examining the interaction between these variables:
+
+```{r lm2}
+mod2<-lm(mpg~hp*wt, data = data)
+summary(mod2)
+```
+
+Great! We now know that there is also a significant interaction between power and weight, so powerful and heavy vehicles will demand a lot of money from out pockets when filling the tank.
+
+### How good is our model?
+
+As in univariate linear regression, we may examine R-squared and residual distribution to determine how well our model describes the data.
+
+**R-squared**
+
+For the first model: 
+```{r rsq1}
+summary(mod1)$r.squared
+```
+
+For the second model: 
+```{r rsq2}
+summary(mod2)$r.squared
+```
+
+(not bad!)
+
+**Residuals**
+
+```{r resids1}
+plot(density(resid(mod1))) #A density plot
+qqnorm(resid(mod1)) # A quantile normal plot - good for checking normality
+qqline(resid(mod1))
+```
+
+Uhmmm.... are those residuals normal?
+
+```{r normres1}
+shapiro.test(resid(mod1))
+```
+
+No, they are not. Let's take a look to the second model instead:
+
+```{r resids2}
+plot(density(resid(mod2))) #A density plot
+qqnorm(resid(mod2)) # A quantile normal plot - good for checking normality
+qqline(resid(mod2))
+```
+
+Better, but are those residuals normal?
+
+```{r normres2}
+shapiro.test(resid(mod2))
+```
+
+Great, now they are normal.
+
 
 ## Final thoughts
 
