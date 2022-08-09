@@ -28,7 +28,7 @@ This repository presents a comprehensive R course intended for self-learning and
 
 08.- Linear regression and correlation
 
-_09.- Multiple linear regression_
+09.- Multiple linear regression
 
 _10.- Model averaging and regression trees_
 
