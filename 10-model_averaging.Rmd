@@ -1,5 +1,5 @@
 ---
-title: "10 - Model averaring and regression trees"
+title: "10 - Model averaging and regression trees"
 author: "Francisco E. Fonturbel"
 date: "01/September/2022"
 output: 
