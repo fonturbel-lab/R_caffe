@@ -125,7 +125,7 @@ As we can see, we have a recursive partitioning with response thresholds of the 
 
 ## Final thoughts
 
-Multiple linear regression works in the same way than linear regression with a single variable. We rely on the same assumptions but we have the flexibility to add several continuous variables to explain our response variable.
+Model averaging and regression trees allow us to determine which variables are important to explain our response variables and which does not. Both approaches are complementary and can give us a more comprehensive picture of the influence of predictor variables in our response.
 
 
 ## Session
