@@ -69,6 +69,27 @@ multiplot(corcov)
 
 As expected, we have a lot of variables and some of them are highly correlated.
 
+Before start making models, we should transform our response variables as they are proportions:
+
+```{r transf, eval=TRUE, echo=TRUE, fig.width=12, fig.height=9}
+
+#Data transforming for proportions
+tmamm07<-log(prop_thr_mammals07/(1-prop_thr_mammals07))
+tmamm17<-log(prop_thr_mammals17/(1-prop_thr_mammals17))
+tbirds07<-log(prop_thr_birds07/(1-prop_thr_birds07))
+tbirds17<-log(prop_thr_birds17/(1-prop_thr_birds17))
+trept07<-log(prop_thr_reptiles07/(1-prop_thr_reptiles07))
+trept17<-log(prop_thr_reptiles17/(1-prop_thr_reptiles17))
+tamph07<-log(prop_thr_amphibians07/(1-prop_thr_amphibians07))
+tamph17<-log(prop_thr_amphibians17/(1-prop_thr_amphibians17))
+tverteb07<-log(prop_thr_vertebrates07/(1-prop_thr_vertebrates07))
+tverteb17<-log(prop_thr_vertebrates17/(1-prop_thr_vertebrates17))
+
+#making some transformation por percentage of protected land first
+perc_prot_land<-log(perc_prot_land+1)
+
+```
+
 
 ## Final thoughts
 
