@@ -16,17 +16,13 @@ knitr::opts_chunk$set(
 )
 ```
 
-## Multiple linear regression
+## Dealing with multiple variables at once
 
-Now that we know how to fit linear models, let's try something bolder. Why limiting us to a single predictor variable? In biological sciences, many phenomena depend on two or more variables than can be used to explain our response variable. Thus, the multivariate extension or linear regression is called **Multiple linear regression**. In this case, our linear model looks like this:
+Now that we learned how to conduct multivariate regressions, it's easy to be tempted to include so many variables in our models, which creates new problems (e.g., multicollinearity caused by introducing redundant variables into the models). Fortunately, there are many approaches to deal with this kind of situations. Here we will explore model averaging and regression trees.
 
-_y = a + b1x1 + b2x2 + b3x3 + ... + bnxn_
+## Model averaging
 
-Being y the response variable, a and b's the coefficients, and x's the predictor variables in the model.
-
-So, we will use the same `lm()` function but incorporating more than one predictor variable in the formula.
-
-Let's use the `mtcars` dataset (included in R) to make an example of this
+Once we fit a model with two or more variables, we may wonder if all of those variables are important in explaining our response variable, or only a subset of those variables are really important and the remaining ones can be safely discarded. I recommend you to take a look to Burnham & Anderson's book on this matter, which is highly enlightning about this.
 
 ```{r data}
 library(confintr)
