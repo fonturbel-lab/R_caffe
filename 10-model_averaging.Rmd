@@ -1,7 +1,7 @@
 ---
-title: "09 - Multiple linear regression"
+title: "10 - Model averaring and regression trees"
 author: "Francisco E. Fonturbel"
-date: "09/August/2022"
+date: "01/September/2022"
 output: 
   html_document:
     includes:
