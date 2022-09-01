@@ -30,7 +30,7 @@ This repository presents a comprehensive R course intended for self-learning and
 
 09.- Multiple linear regression
 
-_10.- Model averaging and regression trees_
+10.- Model averaging and regression trees
 
 
 ### Part 2 :man_beard:
