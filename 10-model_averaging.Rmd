@@ -97,17 +97,22 @@ thr_mamm_2017<-lmer(tmamm17~Urbanization+Pop_density+Literacy+education_GDP+mone
 summary(thr_mamm_2017, ddf="Kenward-Roger")
 ```
 
-So, we have several variables in the models, some have significant effects but other don't. So, which variables are the most relevant in this case? We will use the `dredge` function from the `MuMIn` library to produce all possible models (yes, they are way too many to do this by hand!).
+So, we have several variables in the models, some have significant effects but other don't. So, which variables are the most relevant in this case? We will use the `dredge` function from the `MuMIn` library to produce all possible models (yes, they are way too many to do this by hand!). There are different options to rank model performance, the most common is the Akaike Information Criterion (AIC) that have lower values when models perform better. In this case we will use the Bayesian Information Criterion (BIC), which works in a similar way. We will consider only those models with a delta BIC < 5 (models with larger differences explain very little of the variance and can be discarded).
 
 
 ```{r mamm2}
 mamm3<-dredge(thr_mamm_2017, rank = BIC)
 subset(mamm3, delta <5)
-get.models(mamm3, subset = delta < 2)
-imp.mamm3<-importance(mamm3)
-barplot(t(imp.mamm3), main="Mammals 2017", col="black", xlab="Variable", ylab="Relative support")
+mamm3
 ```
 
+Now that we have our models, we see that none of them explained >80% of the variance alone (this can be found in the "weight" column), we will estimate the importance of each parameter by summing the weights of all models including a given variable and then representing it using a barplot:
+
+```{r mamm3}
+get.models(mamm3, subset = delta < 2)
+imp.mamm3<-MuMIn::sw(mamm3)
+barplot(t(imp.mamm3), main="Mammal threats", col="black", xlab=NULL, ylab="Relative support", las = 2)
+```
 
 ## Final thoughts
 
