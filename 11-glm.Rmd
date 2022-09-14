@@ -1,7 +1,7 @@
 ---
-title: "10 - Model averaging and regression trees"
+title: "11 - Generalized Linear Models and data distributions"
 author: "Francisco E. Fonturbel"
-date: "01/September/2022"
+date: "14/September/2022"
 output: 
   html_document:
     includes:
