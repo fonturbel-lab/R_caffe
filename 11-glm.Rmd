@@ -39,81 +39,15 @@ attach(data)
 head(data)
 ```
 
-We collected a huge dataset on several economic and educative metrics for 138 countries around the world and related them to the proportion of threatened species of the major vertebrate groups (I recommend you to read the paper using the link provided above if you are interested in this subject).
 
-First we should examine how our variables are correlated:
+## Generalized Linear Models in action
 
-```{r correlation, eval=TRUE, echo=TRUE, fig.width=12, fig.height=12}
-
-My_Theme = theme(
-  plot.caption = element_text(size = 14),
-  legend.text = element_text(size = 14))
-
-source("multiplot.R")
-mm<-stats::cor(data[,4:16], use="pairwise.complete.obs")
-corcov<-ggcorr(data = NULL, cor_matrix = cor(mm, use = "everything")) +
-  My_Theme
-        
-multiplot(corcov)
-```
-
-As expected, we have a lot of variables and some of them are highly correlated.
-
-Before start making models, we should transform our response variables as they are proportions:
-
-```{r transf, eval=TRUE, echo=TRUE, fig.width=12, fig.height=9}
-
-#Data transforming for proportions
-tmamm17<-log(prop_thr_mammals17/(1-prop_thr_mammals17))
-
-#making some transformation por percentage of protected land first
-perc_prot_land<-log(perc_prot_land+1)
-
-```
-
-Let's see what happens to mammals:
-
-```{r mamm1}
-thr_mamm_2017<-lmer(tmamm17~Urbanization+Pop_density+Literacy+education_GDP+money_educ+perc_prot_land+protected_area+(1 | Geography), na.action = "na.fail")
-summary(thr_mamm_2017, ddf="Kenward-Roger")
-```
-
-So, we have several variables in the models, some have significant effects but other don't. So, which variables are the most relevant in this case? We will use the `dredge` function from the `MuMIn` library to produce all possible models (yes, they are way too many to do this by hand!). There are different options to rank model performance, the most common is the Akaike Information Criterion (AIC) that have lower values when models perform better. In this case we will use the Bayesian Information Criterion (BIC), which works in a similar way. We will consider only those models with a delta BIC < 5 (models with larger differences explain very little of the variance and can be discarded).
-
-
-```{r mamm2}
-mamm3<-dredge(thr_mamm_2017, rank = BIC)
-subset(mamm3, delta <5)
-mamm3
-```
-
-Now that we have our models, we see that none of them explained >80% of the variance alone (this can be found in the "weight" column), we will estimate the importance of each parameter by summing the weights of all models including a given variable and then representing it using a barplot:
-
-```{r mamm3}
-get.models(mamm3, subset = delta < 2)
-imp.mamm3<-MuMIn::sw(mamm3)
-barplot(t(imp.mamm3), main="Mammal threats", col="black", xlab=NULL, ylab="Relative support", las = 2)
-```
-
-
-## Regression trees
-
-Another approach to explore the relative importance of several variables within a model is doing regression trees. This is a simple approach in which the response variable is followed by a classification of the predictor variables 
-
-```{r tree}
-w_tree<-tree(tmamm17~Urbanization+Pop_density+Literacy+education_GDP+money_educ+perc_prot_land+protected_area, data = data, method="class")
-summary(w_tree)
-plot(w_tree); text(w_tree)
-plot(prune.tree(w_tree))
-abline(v=3,col="red")
-```
-
-As we can see, we have a recursive partitioning with response thresholds of the predictor variables. The second plot indicates the level of significance of the partitioning process.
+AAA
 
 
 ## Final thoughts
 
-Model averaging and regression trees allow us to determine which variables are important to explain our response variables and which does not. Both approaches are complementary and can give us a more comprehensive picture of the influence of predictor variables in our response.
+aaa
 
 
 ## Session
