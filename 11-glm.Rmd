@@ -16,11 +16,11 @@ knitr::opts_chunk$set(
 )
 ```
 
-## Dealing with multiple variables at once
+## Relaxing model assumptions... open many analysis possibilities
 
-Now that we learned how to conduct multivariate regressions, it's easy to be tempted to include so many variables in our models, which creates new problems (e.g., multicollinearity caused by introducing redundant variables into the models). Fortunately, there are many approaches to deal with this kind of situations. Here we will explore model averaging and regression trees.
+In the first part of this brief R course, we dealt with different tests that have similar assumptions (e.g., normality, homocedasticity, independence) but we know well that in real life many of those assumptions cannot be met using biological data. Also, we had some models (e.g., ANOVA) that use categorical predictors and others (e.g., linear regression) that use continuous predictors, but we were unable to mix both types of predictors in one model. Also, a major limitation of those _basic_ models is that we are stuck with a normal (= Gaussian) data distribution. But fortunately there are other options.
 
-## Model averaging
+## Beyond the Gaussian distribution
 
 Once we fit a model with two or more variables, we may wonder if all of those variables are important in explaining our response variable, or only a subset of those variables are really important and the remaining ones can be safely discarded. I recommend you to take a look to Burnham & Anderson's book on this matter, which is highly enlightning about this.
 
@@ -29,18 +29,6 @@ To illustrate this point, we will use data from [Cordero et al. (2020)](https://
 ```{r data}
 library(mgcv)
 library(lme4)
-library(MASS)
-library(lmerTest)
-library(pbkrtest)
-library(MuMIn)
-library(corrplot)
-library(ggpubr)
-library(PairedData)
-library(plyr)
-library(ggplot2)
-library(GGally)
-library(tree)
-library(randomForest)
 
 data<-read.table("data/10_data_threat.txt", 
                      header=TRUE, 
