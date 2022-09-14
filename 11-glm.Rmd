@@ -24,6 +24,19 @@ In the first part of this brief R course, we dealt with different tests that hav
 
 Normal (= Gaussian) distribution is the entryway to parametric statistics, but there are many other options to consider. The Gaussian distribution works well in many cases, as it is a bell-shaped continuous distribution that can take negative and positive values. However, it is common to also have count data (e.g., counting insect individuals visiting a flower), which are integers (i.e., we cannot have half insect) and positive (no negative counts are possible). Or maybe we measure a response variable with a dichotomic response (success or failure, germinate or not germinate). In both cases, using a Gaussian distribution to analyse such kind of data is incorrect and it would lead to wrong conclusions.
 
+A common practice among people with little experience with statistical analysis is to test every data distribution available and keep the results of the one that gives the "best" results. That is totally wrong! Choosing a data distribution is not a beauty contest, we should select the data distribution appropriate to our data _a priori_.
+
+
+### Common distributions in ecology
+
+Although there are several statistical distributions, here we will list those that are commonly used in ecology:
+
+* **Gaussian (normal) distribution.** This is the most common distribution, which implies continuous data that can take positive or negative values.
+
+* **Poisson distribution.** This is the most common count distribution. Poisson is a discrete distribution with positive values and zero. Unlike the Gaussina distribution is not bell-shaped, as it is biased towards low values.
+
+* **Negative binomial distribution.** This distribution is similar to Poisson (also a count distribution with positive integer values) but 
+
 
 ## Generalized Linear Models in action
 
