@@ -22,9 +22,14 @@ In the first part of this brief R course, we dealt with different tests that hav
 
 ## Beyond the Gaussian distribution
 
-Once we fit a model with two or more variables, we may wonder if all of those variables are important in explaining our response variable, or only a subset of those variables are really important and the remaining ones can be safely discarded. I recommend you to take a look to Burnham & Anderson's book on this matter, which is highly enlightning about this.
+Normal (= Gaussian) distribution is the entryway to parametric statistics, but there are many other options to consider. The Gaussian distribution works well in many cases, as it is a bell-shaped continuous distribution that can take negative and positive values. However, it is common to also have count data (e.g., counting insect individuals visiting a flower), which are integers (i.e., we cannot have half insect) and positive (no negative counts are possible). Or maybe we measure a response variable with a dichotomic response (success or failure, germinate or not germinate). In both cases, using a Gaussian distribution to analyse such kind of data is incorrect and it would lead to wrong conclusions.
 
-To illustrate this point, we will use data from [Cordero et al. (2020)](https://www.mdpi.com/882552)
+
+## Generalized Linear Models in action
+
+AAA
+
+To illustrate this point, we will use data from [Fontúrbel et al. (2015)](https://www.mdpi.com/882552)
 
 ```{r data}
 library(mgcv)
@@ -38,11 +43,6 @@ data<-read.table("data/10_data_threat.txt",
 attach(data)
 head(data)
 ```
-
-
-## Generalized Linear Models in action
-
-AAA
 
 
 ## Final thoughts
