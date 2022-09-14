@@ -33,9 +33,15 @@ Although there are several statistical distributions, here we will list those th
 
 * **Gaussian (normal) distribution.** This is the most common distribution, which implies continuous data that can take positive or negative values.
 
+* **Binomial distribution.** This is a very simple distribution that considers two states (0 and 1) that represent categorical states for a given variable, for example is a given seed germinates or not, or if a nest gets preyed upon or survives.
+
 * **Poisson distribution.** This is the most common count distribution. Poisson is a discrete distribution with positive values and zero. Unlike the Gaussina distribution is not bell-shaped, as it is biased towards low values.
 
-* **Negative binomial distribution.** This distribution is similar to Poisson (also a count distribution with positive integer values) but 
+* **Negative binomial distribution.** This distribution is similar to Poisson (also a count distribution with positive integer values) but that presents data overdispersion. Therefore, when we have a count distribution with true overdispersion (there are tests for this), we should use the negative binomial distribution instead.
+
+* **Zero-inflated Poisson distribution.** This is also a count distribution with more zeroes than expected by the Poisson parameters. Very helpful in many biological systems in which we have a lot of zero data.
+
+* **Zero-inflated negative binomial distribution.** As above but with data overdispersion.
 
 
 ## Generalized Linear Models in action
