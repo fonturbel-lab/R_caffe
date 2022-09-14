@@ -35,7 +35,7 @@ This repository presents a comprehensive R course intended for self-learning and
 
 ### Part 2 :man_beard:
 
-_11.- Generalized Linear Models and data distributions_
+11.- Generalized Linear Models and data distributions
 
 _12.- Special distributions and Generalized Estimation Equations_
 
