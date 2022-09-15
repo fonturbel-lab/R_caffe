@@ -117,7 +117,7 @@ head(data)
 
 ## Final thoughts
 
-aaa
+Generalized Linear Models are the "parent" of ANOVAs, ANCOVAs, linear regressions, and other models. These kind of models have many advantages, such as using different probability distributions and using continuous and categorical predictors together. In the next four sessions we will explore the versatility and statistical power of these models and their application in our daily tasks in ecology.
 
 
 ## Session
