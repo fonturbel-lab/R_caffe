@@ -97,18 +97,19 @@ plot(y_dnbinom, main = "negative binomial probability distribution")
 
 ## Generalized Linear Models in action
 
-AAA
+During my PhD, I've used camera traps to assesss the visitation rates of _Dromiciops gliroides_ and _Sephanoides sephaniodes_ to several mistletoe plants. Our response variables were, of course, count variables that should not be analyzed using a Gaussian distribution. In this case we measured some continuous variables in two environments (native forest and Eucalyptus plantation, a categorical variable). So, how can we perform a proper analysis for this?
 
 To illustrate this point, we will use data from [Fontúrbel et al. (2015)](https://besjournals.onlinelibrary.wiley.com/doi/abs/10.1111/1365-2745.12443)
 
 ```{r data}
 library(mgcv)
 library(lme4)
+library(AER)
 
-data<-read.table("data/10_data_threat.txt", 
+data<-read.csv("data/11_mistletoe_data.csv", 
                      header=TRUE, 
-                     sep="\t",
-                     dec=",",
+                     sep=";",
+                     dec=".",
                      na.strings="NA")
 attach(data)
 head(data)
