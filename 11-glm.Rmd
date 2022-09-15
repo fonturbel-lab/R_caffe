@@ -102,7 +102,7 @@ During my PhD, I've used camera traps to assesss the visitation rates of _Dromic
 To illustrate this point, we will use data from [Fontúrbel et al. (2015)](https://besjournals.onlinelibrary.wiley.com/doi/abs/10.1111/1365-2745.12443)
 
 ```{r data}
-library(mgcv)
+library(MASS)
 library(lme4)
 library(AER)
 
@@ -114,6 +114,43 @@ data<-read.csv("data/11_mistletoe_data.csv",
 attach(data)
 head(data)
 ```
+
+
+So, our response variables are the columns _dg_visits_ and _ss_visits_ in the dataset that we just loaded. How they look like? let's make simple histograms:
+
+```{r hist}
+hist(dg_visits, main = "Dromiciops gliroides visits", col = "dodgerblue2", xlab = "Visits")
+hist(ss_visits, main = "Sephanoides sephaniodes visits", col = "chocolate2", xlab = "Visits")
+```
+
+Clearly this analysis deserves a count distribution. Our first option may be a Poisson distribution, let's give it a try:
+
+```{r poisson_mod}
+model1<-glm(dg_visits ~ temp_std + hum_std + lum_std + s250clasif, family = poisson, data=data)
+summary(model1)
+
+model2<-glm(ss_visits ~ temp_std + hum_std + lum_std + s250clasif, family = poisson, data=data)
+summary(model2)
+```
+
+Great! we have interesting results, but we need to test for overdispersion first. We will use the `dispersiontest` function from the `AER` library.
+
+```{r overdisp}
+dispersiontest(model1)
+dispersiontest(model2)
+```
+
+Doh! we have data overdispersion in both cases. We should use a negative binomial distribution instead:
+
+```{r nb_mod}
+model1nb<-glm.nb(dg_visits ~ temp_std + hum_std + lum_std + s250clasif, data=data)
+summary(model1nb)
+
+model2nb<-glm.nb(ss_visits ~ temp_std + hum_std + lum_std + s250clasif, data=data)
+summary(model2nb)
+```
+
+We obtained different results after changing the distribution from Poisson to Negative binomial. So, it is important to use the adequate distribution to obtain reliable results.
 
 
 ## Final thoughts
