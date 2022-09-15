@@ -16,7 +16,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-## Relaxing model assumptions... open many analysis possibilities
+## Relaxing model assumptions... to open many analysis possibilities
 
 In the first part of this brief R course, we dealt with different tests that have similar assumptions (e.g., normality, homocedasticity, independence) but we know well that in real life many of those assumptions cannot be met using biological data. Also, we had some models (e.g., ANOVA) that use categorical predictors and others (e.g., linear regression) that use continuous predictors, but we were unable to mix both types of predictors in one model. Also, a major limitation of those _basic_ models is that we are stuck with a normal (= Gaussian) data distribution. But fortunately there are other options.
 
@@ -32,6 +32,12 @@ A common practice among people with little experience with statistical analysis 
 Although there are several statistical distributions, here we will list those that are commonly used in ecology:
 
 * **Gaussian (normal) distribution.** This is the most common distribution, which implies continuous data that can take positive or negative values.
+
+```{r ndist}
+x<-rnorm(500)
+plot(density(x), main = "Gaussian distribution")
+```
+
 
 * **Binomial distribution.** This is a very simple distribution that considers two states (0 and 1) that represent categorical states for a given variable, for example is a given seed germinates or not, or if a nest gets preyed upon or survives.
 
