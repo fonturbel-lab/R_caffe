@@ -34,16 +34,61 @@ Although there are several statistical distributions, here we will list those th
 * **Gaussian (normal) distribution.** This is the most common distribution, which implies continuous data that can take positive or negative values.
 
 ```{r ndist}
-x<-rnorm(500)
-plot(density(x), main = "Gaussian distribution")
+xnor<-rnorm(500)
+plot(density(xnor), main = "Gaussian distribution")
 ```
 
 
 * **Binomial distribution.** This is a very simple distribution that considers two states (0 and 1) that represent categorical states for a given variable, for example is a given seed germinates or not, or if a nest gets preyed upon or survives.
 
+```{r bdist}
+xb <- 1:80
+
+# n = 80, p = 0.2
+plot(pbinom(xb, size = 80, prob = 0.2), type = "s", lwd = 2,
+     main = "Binomial probability function",
+     xlab = "Number of success events", ylab = "F(x)")
+
+# n = 80, p = 0.3
+lines(pbinom(xb, size = 80, prob = 0.3), type = "s",
+      lwd = 2, col = 2)
+
+# n = 80, p = 0.4
+lines(pbinom(xb, size = 80, prob = 0.4), type = "s",
+      lwd = 2, col = 3)
+
+# Añadimos una leyenda
+legend("bottomright", legend = c("80  0.2", "80  0.3", "80  0.4"),
+       title = "n     p", title.adj = 0.85,
+       lty = 1, col = 1:3, lwd = 2, box.lty = 0)
+```
+
+
 * **Poisson distribution.** This is the most common count distribution. Poisson is a discrete distribution with positive values and zero. Unlike the Gaussina distribution is not bell-shaped, as it is biased towards low values.
 
+```{r pdist}
+x <- 0:50
+lambda <- 5
+plot(dpois(x, lambda), type = "h", lwd = 2,
+     main = "Poisson probability function",
+     ylab = "P(X = x)", xlab = "Number of events")
+lambda <- 10
+lines(dpois(x, lambda), type = "h", lwd = 2, col = rgb(1,0,0, 0.7))
+lambda <- 20
+lines(dpois(x, lambda), type = "h", lwd = 2, col = rgb(0, 1, 0, 0.7))
+legend("topright", legend = c("5", "10", "20"),
+       title = expression(lambda), title.adj = 0.75,
+       lty = 1, col = 1:3, lwd = 2, box.lty = 0)
+```
+
 * **Negative binomial distribution.** This distribution is similar to Poisson (also a count distribution with positive integer values) but that presents data overdispersion. Therefore, when we have a count distribution with true overdispersion (there are tests for this), we should use the negative binomial distribution instead.
+
+```{r nbdist}
+x_dnbinom <- seq(0, 100, by = 1)
+y_dnbinom <- dnbinom(x_dnbinom, size = 100, prob = 0.5)
+plot(y_dnbinom, main = "negative binomial probability distribution")
+```
+
 
 * **Zero-inflated Poisson distribution.** This is also a count distribution with more zeroes than expected by the Poisson parameters. Very helpful in many biological systems in which we have a lot of zero data.
 
