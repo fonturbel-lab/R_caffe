@@ -20,9 +20,12 @@ knitr::opts_chunk$set(
 
 
 
+
 ## Zero-inflated distributions
 
-These are an special version of Poisson and negative binomial distributions in which we have an excess of zeroes (i.e., from what we expect)
+These are an special version of Poisson and negative binomial distributions in which we have an excess of zeroes creating a deviation towards zero in the observed distribution. In many biological systems we face this problem, as capture / record events are rare. For example, when we set traps for capturing a given animal, in most cases the trapping success is lower than 20%. Thus, we will have a lot of zeroes in our data, and therefore the conclusions from our GLM models may not be entirely reliable.
+
+In the past session we introduced different data distributions, but now we'll see zero-inflated models in action.
 
 
 ## Generalized Linear Models in action
