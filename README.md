@@ -37,7 +37,7 @@ This repository presents a comprehensive R course intended for self-learning and
 
 11.- Generalized Linear Models and data distributions
 
-_12.- Special distributions and Generalized Estimation Equations_
+12.- Generalized Estimation Equations and special distributions
 
 _13.- Generalized Additive Models_
 
