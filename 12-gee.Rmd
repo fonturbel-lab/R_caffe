@@ -1,0 +1,165 @@
+---
+title: "11 - Generalized Linear Models and data distributions"
+author: "Francisco E. Fonturbel"
+date: "14/September/2022"
+output: 
+  html_document:
+    includes:
+        after_body: footer.html
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	echo = TRUE,
+	message = FALSE,
+	warning = FALSE
+)
+```
+
+## Relaxing model assumptions... to open many analysis possibilities
+
+In the first part of this brief R course, we dealt with different tests that have similar assumptions (e.g., normality, homocedasticity, independence) but we know well that in real life many of those assumptions cannot be met using biological data. Also, we had some models (e.g., ANOVA) that use categorical predictors and others (e.g., linear regression) that use continuous predictors, but we were unable to mix both types of predictors in one model. Also, a major limitation of those _basic_ models is that we are stuck with a normal (= Gaussian) data distribution. But fortunately there are other options.
+
+## Beyond the Gaussian distribution
+
+Normal (= Gaussian) distribution is the entryway to parametric statistics, but there are many other options to consider. The Gaussian distribution works well in many cases, as it is a bell-shaped continuous distribution that can take negative and positive values. However, it is common to also have count data (e.g., counting insect individuals visiting a flower), which are integers (i.e., we cannot have half insect) and positive (no negative counts are possible). Or maybe we measure a response variable with a dichotomic response (success or failure, germinate or not germinate). In both cases, using a Gaussian distribution to analyse such kind of data is incorrect and it would lead to wrong conclusions.
+
+A common practice among people with little experience with statistical analysis is to test every data distribution available and keep the results of the one that gives the "best" results. That is totally wrong! Choosing a data distribution is not a beauty contest, we should select the data distribution appropriate to our data _a priori_.
+
+
+### Common distributions in ecology
+
+Although there are several statistical distributions, here we will list those that are commonly used in ecology:
+
+**Gaussian (normal) distribution.** This is the most common distribution, which implies continuous data that can take positive or negative values.
+
+```{r ndist}
+xnor<-rnorm(500)
+plot(density(xnor), main = "Gaussian distribution")
+```
+
+
+**Binomial distribution.** This is a very simple distribution that considers two states (0 and 1) that represent categorical states for a given variable, for example is a given seed germinates or not, or if a nest gets preyed upon or survives.
+
+```{r bdist}
+xb <- 1:80
+
+# n = 80, p = 0.2
+plot(pbinom(xb, size = 80, prob = 0.2), type = "s", lwd = 2,
+     main = "Binomial probability function",
+     xlab = "Number of success events", ylab = "F(x)")
+
+# n = 80, p = 0.3
+lines(pbinom(xb, size = 80, prob = 0.3), type = "s",
+      lwd = 2, col = 2)
+
+# n = 80, p = 0.4
+lines(pbinom(xb, size = 80, prob = 0.4), type = "s",
+      lwd = 2, col = 3)
+
+# Añadimos una leyenda
+legend("bottomright", legend = c("80  0.2", "80  0.3", "80  0.4"),
+       title = "n     p", title.adj = 0.85,
+       lty = 1, col = 1:3, lwd = 2, box.lty = 0)
+```
+
+
+**Poisson distribution.** This is the most common count distribution. Poisson is a discrete distribution with positive values and zero. Unlike the Gaussina distribution is not bell-shaped, as it is biased towards low values.
+
+```{r pdist}
+x <- 0:50
+lambda <- 5
+plot(dpois(x, lambda), type = "h", lwd = 2,
+     main = "Poisson probability function",
+     ylab = "P(X = x)", xlab = "Number of events")
+lambda <- 10
+lines(dpois(x, lambda), type = "h", lwd = 2, col = rgb(1,0,0, 0.7))
+lambda <- 20
+lines(dpois(x, lambda), type = "h", lwd = 2, col = rgb(0, 1, 0, 0.7))
+legend("topright", legend = c("5", "10", "20"),
+       title = expression(lambda), title.adj = 0.75,
+       lty = 1, col = 1:3, lwd = 2, box.lty = 0)
+```
+
+**Negative binomial distribution.** This distribution is similar to Poisson (also a count distribution with positive integer values) but that presents data overdispersion. Therefore, when we have a count distribution with true overdispersion (there are tests for this), we should use the negative binomial distribution instead.
+
+```{r nbdist}
+x_dnbinom <- seq(0, 100, by = 1)
+y_dnbinom <- dnbinom(x_dnbinom, size = 100, prob = 0.5)
+plot(y_dnbinom, main = "negative binomial probability distribution")
+```
+
+
+**Zero-inflated Poisson distribution.** This is also a count distribution with more zeroes than expected by the Poisson parameters. Very helpful in many biological systems in which we have a lot of zero data.
+
+**Zero-inflated negative binomial distribution.** As above but with data overdispersion.
+
+
+## Generalized Linear Models in action
+
+During my PhD, I've used camera traps to assesss the visitation rates of _Dromiciops gliroides_ and _Sephanoides sephaniodes_ to several mistletoe plants. Our response variables were, of course, count variables that should not be analyzed using a Gaussian distribution. In this case we measured some continuous variables in two environments (native forest and Eucalyptus plantation, a categorical variable). So, how can we perform a proper analysis for this?
+
+To illustrate this point, we will use data from [Fontúrbel et al. (2015)](https://besjournals.onlinelibrary.wiley.com/doi/abs/10.1111/1365-2745.12443)
+
+```{r data}
+library(MASS)
+library(lme4)
+library(AER)
+
+data<-read.csv("data/11_mistletoe_data.csv", 
+                     header=TRUE, 
+                     sep=";",
+                     dec=".",
+                     na.strings="NA")
+attach(data)
+head(data)
+```
+
+
+So, our response variables are the columns _dg_visits_ and _ss_visits_ in the dataset that we just loaded. How they look like? let's make simple histograms:
+
+```{r hist}
+hist(dg_visits, main = "Dromiciops gliroides visits", col = "dodgerblue2", xlab = "Visits")
+hist(ss_visits, main = "Sephanoides sephaniodes visits", col = "chocolate2", xlab = "Visits")
+```
+
+Clearly this analysis deserves a count distribution. Our first option may be a Poisson distribution, let's give it a try:
+
+```{r poisson_mod}
+model1<-glm(dg_visits ~ temp_std + hum_std + lum_std + s250clasif, family = poisson, data=data)
+summary(model1)
+
+model2<-glm(ss_visits ~ temp_std + hum_std + lum_std + s250clasif, family = poisson, data=data)
+summary(model2)
+```
+
+Great! we have interesting results, but we need to test for overdispersion first. We will use the `dispersiontest` function from the `AER` library.
+
+```{r overdisp}
+dispersiontest(model1)
+dispersiontest(model2)
+```
+
+Doh! we have data overdispersion in both cases. We should use a negative binomial distribution instead:
+
+```{r nb_mod}
+model1nb<-glm.nb(dg_visits ~ temp_std + hum_std + lum_std + s250clasif, data=data)
+summary(model1nb)
+
+model2nb<-glm.nb(ss_visits ~ temp_std + hum_std + lum_std + s250clasif, data=data)
+summary(model2nb)
+```
+
+We obtained different results after changing the distribution from Poisson to Negative binomial. So, it is important to use the adequate distribution to obtain reliable results.
+
+
+## Final thoughts
+
+Generalized Linear Models are the "parent" of ANOVAs, ANCOVAs, linear regressions, and other models. These kind of models have many advantages, such as using different probability distributions and using continuous and categorical predictors together. In the next four sessions we will explore the versatility and statistical power of these models and their application in our daily tasks in ecology.
+
+
+## Session
+
+```{r session, echo=TRUE}
+sessionInfo()
+```
