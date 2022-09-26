@@ -16,9 +16,11 @@ knitr::opts_chunk$set(
 )
 ```
 
-## Relaxing model assumptions even further
+# Relaxing model assumptions even further
 
+Generalized Linear Models relax some assumptions (e.g., a normal distribution) and allow us to use count data or presence/absence data instead. In this opportunity, we will go beyond and relax other assumptions to properly analyze real life data.
 
+In this opportunity, we will (1) compare regular GLMs with their zero-inflated alter-egos, and (2) use Generalized Estimation Equations (GEE) that are a variation of GLMs relaxing the assumption of variance homogeneity.
 
 
 ## Zero-inflated distributions
@@ -27,17 +29,16 @@ These are an special version of Poisson and negative binomial distributions in w
 
 In the past session we introduced different data distributions, but now we'll see zero-inflated models in action.
 
+a
 
-## Generalized Linear Models in action
-
-During my PhD, I've used camera traps to assesss the visitation rates of _Dromiciops gliroides_ and _Sephanoides sephaniodes_ to several mistletoe plants. Our response variables were, of course, count variables that should not be analyzed using a Gaussian distribution. In this case we measured some continuous variables in two environments (native forest and Eucalyptus plantation, a categorical variable). So, how can we perform a proper analysis for this?
 
 To illustrate this point, we will use data from [Fontúrbel et al. (2015)](https://besjournals.onlinelibrary.wiley.com/doi/abs/10.1111/1365-2745.12443)
 
 ```{r data}
 library(MASS)
 library(lme4)
-library(AER)
+library(geepack)
+library(pscl)
 
 data<-read.csv("data/11_mistletoe_data.csv", 
                      header=TRUE, 
@@ -84,6 +85,10 @@ summary(model2nb)
 ```
 
 We obtained different results after changing the distribution from Poisson to Negative binomial. So, it is important to use the adequate distribution to obtain reliable results.
+
+## Generalized Estimation Equations
+
+xxx
 
 
 ## Final thoughts
