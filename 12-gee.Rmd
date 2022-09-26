@@ -27,12 +27,7 @@ In this opportunity, we will (1) compare regular GLMs with their zero-inflated a
 
 These are an special version of Poisson and negative binomial distributions in which we have an excess of zeroes creating a deviation towards zero in the observed distribution. In many biological systems we face this problem, as capture / record events are rare. For example, when we set traps for capturing a given animal, in most cases the trapping success is lower than 20%. Thus, we will have a lot of zeroes in our data, and therefore the conclusions from our GLM models may not be entirely reliable.
 
-In the past session we introduced different data distributions, but now we'll see zero-inflated models in action.
-
-a
-
-
-To illustrate this point, we will use data from [Fontúrbel et al. (2015)](https://besjournals.onlinelibrary.wiley.com/doi/abs/10.1111/1365-2745.12443)
+In the past session we introduced different data distributions, but now we'll see zero-inflated models in action. To illustrate this session, we will use data from [Fontúrbel et al. (2015)](https://besjournals.onlinelibrary.wiley.com/doi/abs/10.1111/1365-2745.12443), which is the same we used on the past session. Remeber that our response variables are camera trap records from two species:  _Dromiciops gliroides_ and _Sephanoides sephaniodes_, in which we have a lot of zeroes.
 
 ```{r data}
 library(MASS)
@@ -49,42 +44,36 @@ attach(data)
 head(data)
 ```
 
+Let's try a Poisson GLM for _D. gliroides_ visits:
 
-So, our response variables are the columns _dg_visits_ and _ss_visits_ in the dataset that we just loaded. How they look like? let's make simple histograms:
-
-```{r hist}
-hist(dg_visits, main = "Dromiciops gliroides visits", col = "dodgerblue2", xlab = "Visits")
-hist(ss_visits, main = "Sephanoides sephaniodes visits", col = "chocolate2", xlab = "Visits")
-```
-
-Clearly this analysis deserves a count distribution. Our first option may be a Poisson distribution, let's give it a try:
-
-```{r poisson_mod}
+```{r poisson_dg}
 model1<-glm(dg_visits ~ temp_std + hum_std + lum_std + s250clasif, family = poisson, data=data)
 summary(model1)
+```
 
-model2<-glm(ss_visits ~ temp_std + hum_std + lum_std + s250clasif, family = poisson, data=data)
+Now, we will repeat the same GLM but using a zero-inflated poisson distribution instead:
+
+```{r zero_dg}
+model1zi<-zeroinfl(dg_visits ~ temp_std + hum_std + lum_std + s250clasif, data=data, dist = "poisson")
+summary(model1zi)
+```
+
+And now, let's try a negative binomial GLM for _S. sephaniodes_ visits:
+
+```{r nb_ss}
+model2<-glm.nb(ss_visits ~ temp_std + hum_std + lum_std + s250clasif, data=data)
 summary(model2)
 ```
 
-Great! we have interesting results, but we need to test for overdispersion first. We will use the `dispersiontest` function from the `AER` library.
+Now, we will repeat the same GLM but using a zero-inflated ndegative binomial distribution instead:
 
-```{r overdisp}
-dispersiontest(model1)
-dispersiontest(model2)
+```{r zero_dg}
+model2zi<-zeroinfl(ss_visits ~ temp_std + hum_std + lum_std + s250clasif, data=data, dist = "negbin")
+summary(model2zi)
 ```
 
-Doh! we have data overdispersion in both cases. We should use a negative binomial distribution instead:
+Despite there are no significant terms, the estimates change when we use zero-inflated distributions instead.
 
-```{r nb_mod}
-model1nb<-glm.nb(dg_visits ~ temp_std + hum_std + lum_std + s250clasif, data=data)
-summary(model1nb)
-
-model2nb<-glm.nb(ss_visits ~ temp_std + hum_std + lum_std + s250clasif, data=data)
-summary(model2nb)
-```
-
-We obtained different results after changing the distribution from Poisson to Negative binomial. So, it is important to use the adequate distribution to obtain reliable results.
 
 ## Generalized Estimation Equations
 
