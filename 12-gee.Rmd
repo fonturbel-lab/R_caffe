@@ -77,6 +77,16 @@ There are many approaches to deal with non-normal data, but when our data has he
 
 To illustrate this point we will use the _dietox_ example data file from the `pscl` package.
 
+```{r geemod}
+data(dietox)
+dietox$Cu     <- as.factor(dietox$Cu)
+mf <- formula(Weight ~ Cu * (Time + I(Time^2) + I(Time^3)))
+gee1 <- geeglm(mf, data=dietox, id=Pig, family=poisson("identity"), corstr="ar1")
+summary(gee1)
+```
+
+As you can see, GEE models operate in a similar way than GLM models and produce similar outputs as well.
+
 
 ## Final thoughts
 
