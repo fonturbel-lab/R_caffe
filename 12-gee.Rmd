@@ -90,7 +90,7 @@ As you can see, GEE models operate in a similar way than GLM models and produce 
 
 ## Final thoughts
 
-Relaxing other assumptions allow us to properly analyze other kind of data. 
+Relaxing other assumptions allow us to properly analyze other kind of data. On the one hand, zero-inflated models allow to fit Poisson and negative binomial GLMs when we have an excess of zeroes in out dataset, correcting the estimates and P-values. On the other hand, GEE work in a similar way than GLMs but are able to operate with heterogeneous variances, which represent a major assumption violation in most linear models.
 
 
 ## Session
