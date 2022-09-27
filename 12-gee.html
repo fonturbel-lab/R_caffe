@@ -365,7 +365,7 @@ pre code {
 <h1 class="title toc-ignore">12 - Generalized Estimation Equations and
 special distributions</h1>
 <h4 class="author">Francisco E. Fonturbel</h4>
-<h4 class="date">14/September/2022</h4>
+<h4 class="date">26/September/2022</h4>
 
 </div>
 
@@ -544,12 +544,65 @@ obtain reliable results.</p>
 </div>
 <div id="generalized-estimation-equations" class="section level2">
 <h2>Generalized Estimation Equations</h2>
-<p>xxx</p>
+<p>There are many approaches to deal with non-normal data, but when our
+data has heterogeneous variances we are quite swamped with our data
+analysis, as homocedasticity is one of the main assumptions of most
+statistical tests. Fortunately, there is an option to deal with
+heterocedasticity: Generalized Estimation Equations (GEE for short). GEE
+models allow us to indicate a correlation structure and obtain reliable
+estimates.</p>
+<p>To illustrate this point we will use the <em>dietox</em> example data
+file from the <code>pscl</code> package.</p>
+<pre class="r"><code>data(dietox)
+dietox$Cu     &lt;- as.factor(dietox$Cu)
+mf &lt;- formula(Weight ~ Cu * (Time + I(Time^2) + I(Time^3)))
+gee1 &lt;- geeglm(mf, data=dietox, id=Pig, family=poisson(&quot;identity&quot;), corstr=&quot;ar1&quot;)
+summary(gee1)</code></pre>
+<pre><code>## 
+## Call:
+## geeglm(formula = mf, family = poisson(&quot;identity&quot;), data = dietox, 
+##     id = Pig, corstr = &quot;ar1&quot;)
+## 
+##  Coefficients:
+##                     Estimate    Std.err    Wald Pr(&gt;|W|)    
+## (Intercept)       21.8578678  0.6931445 994.416  &lt; 2e-16 ***
+## CuCu035            0.5267337  0.9413606   0.313    0.576    
+## CuCu175            0.0427835  1.0196474   0.002    0.967    
+## Time               2.8851574  0.3602572  64.138 1.11e-15 ***
+## I(Time^2)          0.6140424  0.0701643  76.589  &lt; 2e-16 ***
+## I(Time^3)         -0.0262948  0.0038218  47.338 5.98e-12 ***
+## CuCu035:Time      -0.4054243  0.6371250   0.405    0.525    
+## CuCu175:Time       0.8569407  0.6156244   1.938    0.164    
+## CuCu035:I(Time^2)  0.0182863  0.1154326   0.025    0.874    
+## CuCu175:I(Time^2) -0.0960713  0.1107997   0.752    0.386    
+## CuCu035:I(Time^3)  0.0005467  0.0059896   0.008    0.927    
+## CuCu175:I(Time^3)  0.0026996  0.0056502   0.228    0.633    
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## Correlation structure = ar1 
+## Estimated Scale Parameters:
+## 
+##             Estimate Std.err
+## (Intercept)   0.7752  0.1416
+##   Link = identity 
+## 
+## Estimated Correlation Parameters:
+##       Estimate  Std.err
+## alpha   0.9572 0.009788
+## Number of clusters:   72  Maximum cluster size: 12</code></pre>
+<p>As you can see, GEE models operate in a similar way than GLM models
+and produce similar outputs as well.</p>
 </div>
 <div id="final-thoughts" class="section level2">
 <h2>Final thoughts</h2>
 <p>Relaxing other assumptions allow us to properly analyze other kind of
-data.</p>
+data. On the one hand, zero-inflated models allow to fit Poisson and
+negative binomial GLMs when we have an excess of zeroes in out dataset,
+correcting the estimates and P-values. On the other hand, GEE work in a
+similar way than GLMs but are able to operate with heterogeneous
+variances, which represent a major assumption violation in most linear
+models.</p>
 </div>
 <div id="session" class="section level2">
 <h2>Session</h2>
