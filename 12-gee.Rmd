@@ -73,7 +73,9 @@ The results change and we have only one significant factor in this case. Thus, u
 
 ## Generalized Estimation Equations
 
-xxx
+There are many approaches to deal with non-normal data, but when our data has heterogeneous variances we are quite swamped with our data analysis, as homocedasticity is one of the main assumptions of most statistical tests. Fortunately, there is an option to deal with heterocedasticity: Generalized Estimation Equations (GEE for short). GEE models allow us to indicate a correlation structure and obtain reliable estimates.
+
+To illustrate this point we will use the _dietox_ example data file from the `pscl` package.
 
 
 ## Final thoughts
