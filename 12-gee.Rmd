@@ -27,7 +27,7 @@ In this opportunity, we will (1) compare regular GLMs with their zero-inflated a
 
 These are an special version of Poisson and negative binomial distributions in which we have an excess of zeroes creating a deviation towards zero in the observed distribution. In many biological systems we face this problem, as capture / record events are rare. For example, when we set traps for capturing a given animal, in most cases the trapping success is lower than 20%. Thus, we will have a lot of zeroes in our data, and therefore the conclusions from our GLM models may not be entirely reliable.
 
-In the past session we introduced different data distributions, but now we'll see zero-inflated models in action. To illustrate this session, we will use data from [Fontúrbel et al. (2015)](https://besjournals.onlinelibrary.wiley.com/doi/abs/10.1111/1365-2745.12443), which is the same we used on the past session. Remeber that our response variables are camera trap records from two species:  _Dromiciops gliroides_ and _Sephanoides sephaniodes_, in which we have a lot of zeroes.
+In the past session we introduced different data distributions, but now we'll see zero-inflated models in action. To illustrate this we will use the _bioChemists_ dataset included in the `pscl` package.
 
 ```{r data}
 library(MASS)
@@ -35,44 +35,40 @@ library(lme4)
 library(geepack)
 library(pscl)
 
-data<-read.csv("data/11_mistletoe_data.csv", 
-                     header=TRUE, 
-                     sep=";",
-                     dec=".",
-                     na.strings="NA")
-attach(data)
-head(data)
+data("bioChemists", package = "pscl")
 ```
 
-Let's try a Poisson GLM for _D. gliroides_ visits:
+Now, let's make a regular GLM with this dataset:
 
-```{r poisson_dg}
-model1<-glm(dg_visits ~ temp_std + hum_std + lum_std + s250clasif, family = poisson, data=data)
+```{r m1}
+model1 <- glm(art ~ ., data = bioChemists, family = poisson)
 summary(model1)
 ```
 
-Now, we will repeat the same GLM but using a zero-inflated poisson distribution instead:
+Wow, we have a lot of significant terms in those results.
 
-```{r zero_dg}
-model1zi<-zeroinfl(dg_visits ~ temp_std + hum_std + lum_std + s250clasif, data=data, dist = "poisson")
+What about running this same dataset with a zero-inflated Poisson distribution instead:
+
+```{r m1zi}
+model1zi <- zeroinfl(art ~ . | ., data = bioChemists, dist = "poisson")
 summary(model1zi)
 ```
 
-And now, let's try a negative binomial GLM for _S. sephaniodes_ visits:
+As we can see, some of the results change. Let's try the same models but using a negative binomial distribution instead of a Poisson distribution:
 
-```{r nb_ss}
-model2<-glm.nb(ss_visits ~ temp_std + hum_std + lum_std + s250clasif, data=data)
+```{r m2}
+model2 <- glm.nb(art ~ ., data = bioChemists)
 summary(model2)
 ```
 
-Now, we will repeat the same GLM but using a zero-inflated ndegative binomial distribution instead:
+OK, some terms are significant. So, how the zero-inflated version of this model would look like?
 
-```{r zero_dg}
-model2zi<-zeroinfl(ss_visits ~ temp_std + hum_std + lum_std + s250clasif, data=data, dist = "negbin")
+```{r m2zi}
+model2zi <- zeroinfl(art ~ . | ., data = bioChemists, dist = "negbin")
 summary(model2zi)
 ```
 
-Despite there are no significant terms, the estimates change when we use zero-inflated distributions instead.
+The results change and we have only one significant factor in this case. Thus, using the correct distribution to our data is crucial to obtain reliable results.
 
 
 ## Generalized Estimation Equations
@@ -82,7 +78,7 @@ xxx
 
 ## Final thoughts
 
-Generalized Linear Models are the "parent" of ANOVAs, ANCOVAs, linear regressions, and other models. These kind of models have many advantages, such as using different probability distributions and using continuous and categorical predictors together. In the next four sessions we will explore the versatility and statistical power of these models and their application in our daily tasks in ecology.
+Relaxing other assumptions allow us to properly analyze other kind of data. 
 
 
 ## Session
