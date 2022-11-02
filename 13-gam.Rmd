@@ -18,22 +18,12 @@ knitr::opts_chunk$set(
 
 # Non-linear models
 
-Generalized Linear Models relax some assumptions (e.g., a normal distribution) and allow us to use count data or presence/absence data instead. In this opportunity, we will go beyond and relax other assumptions to properly analyze real life data.
+Generalized Linear Models relax some assumptions but assume that predictor variables have a **linear** relationship with the response variable. But what if our response variable is not linear? Fortunately, we have a non-linear approach called Generalized Additive Models, in which we can use linear and non-linear predictors in the same model.
 
-In this opportunity, we will (1) compare regular GLMs with their zero-inflated alter-egos, and (2) use Generalized Estimation Equations (GEE) that are a variation of GLMs relaxing the assumption of variance homogeneity.
-
-
-## Zero-inflated distributions
-
-These are an special version of Poisson and negative binomial distributions in which we have an excess of zeroes creating a deviation towards zero in the observed distribution. In many biological systems we face this problem, as capture / record events are rare. For example, when we set traps for capturing a given animal, in most cases the trapping success is lower than 20%. Thus, we will have a lot of zeroes in our data, and therefore the conclusions from our GLM models may not be entirely reliable.
-
-In the past session we introduced different data distributions, but now we'll see zero-inflated models in action. To illustrate this we will use the _bioChemists_ dataset included in the `pscl` package.
+To illustrate this lesson, we will use country-scale data from the United Nations report in education and human development.
 
 ```{r data}
-library(MASS)
-library(lme4)
-library(geepack)
-library(pscl)
+library(mgcv)
 
 data("bioChemists", package = "pscl")
 ```
