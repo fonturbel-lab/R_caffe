@@ -141,9 +141,18 @@ gratia::draw(mod_gam2)
 ```
 
 
+### An alternative visualization
+
+Now we will use a 2D smooth to visualize our model:
+
+```{r vis2d}
+vis.gam(mod_gam2, type = 'response', plot.type = 'contour')
+```
+
+
 ## Final thoughts
 
-Relaxing other assumptions allow us to properly analyze other kind of data. On the one hand, zero-inflated models allow to fit Poisson and negative binomial GLMs when we have an excess of zeroes in out dataset, correcting the estimates and P-values. On the other hand, GEE work in a similar way than GLMs but are able to operate with heterogeneous variances, which represent a major assumption violation in most linear models.
+GAM model allow us to include non-linear predictors using a _spline_ function. We can mix linear and non-linear predictors within the same model. Including non-linear terms as splines significantly improve the fit of the model, leading to more reliable results.
 
 
 ## Session
