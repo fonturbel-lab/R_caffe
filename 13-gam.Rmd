@@ -1,7 +1,7 @@
 ---
-title: "12 - Generalized Estimation Equations and special distributions"
+title: "13 - Generalized Additive Models"
 author: "Francisco E. Fonturbel"
-date: "26/September/2022"
+date: "2/November/2022"
 output: 
   html_document:
     includes:
@@ -16,7 +16,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-# Relaxing model assumptions even further
+# Non-linear models
 
 Generalized Linear Models relax some assumptions (e.g., a normal distribution) and allow us to use count data or presence/absence data instead. In this opportunity, we will go beyond and relax other assumptions to properly analyze real life data.
 
