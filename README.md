@@ -39,7 +39,7 @@ This repository presents a comprehensive R course intended for self-learning and
 
 12.- Generalized Estimation Equations and special distributions
 
-_13.- Generalized Additive Models_
+13.- Generalized Additive Models
 
 _14.- Mixed-effects Generalized Linear/Additive Models_
 
