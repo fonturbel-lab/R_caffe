@@ -25,6 +25,8 @@ To illustrate this lesson, we will use country-scale data from the United Nation
 ```{r data}
 library(mgcv)
 library(ggplot2)
+library(ggeffects)
+library(gratia)
 source("multiplot.R")
 
 data<-read.csv("data/13_UN_data.csv", 
@@ -131,8 +133,11 @@ Well, the GAM model is significantly better than the GLM model.
 As in GLM, we can fit multiple predictors in GAM, let's see an example:
 
 ```{r gam2}
-mod_gam2 = gam(Overall ~ s(Income) + s(Edu) + s(Health), data = data)
+mod_gam2 = gam(Overall ~ s(Income) + s(Edu) + s(Health) + Health, data = data)
 summary(mod_gam2)
+
+plot(ggeffects::ggpredict(mod_gam2), facets = TRUE)
+gratia::draw(mod_gam2)
 ```
 
 
