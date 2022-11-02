@@ -25,7 +25,12 @@ To illustrate this lesson, we will use country-scale data from the United Nation
 ```{r data}
 library(mgcv)
 
-data("bioChemists", package = "pscl")
+data<-read.csv("data/13_UN_data.csv", 
+                     header=TRUE, 
+                     sep=",",
+                     dec=".",
+                     na.strings="NA")
+attach(data)
 ```
 
 Now, let's make a regular GLM with this dataset:
