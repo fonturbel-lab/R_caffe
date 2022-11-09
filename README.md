@@ -41,7 +41,7 @@ This repository presents a comprehensive R course intended for self-learning and
 
 13.- Generalized Additive Models
 
-_14.- Mixed-effects Generalized Linear/Additive Models_
+14.- Mixed-effects Generalized Linear/Additive Models
 
 _15.- Spatially-explicit Generalized Linear/Additive Models_
 
