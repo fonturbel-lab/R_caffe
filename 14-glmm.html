@@ -385,14 +385,11 @@ library(lme4)
 library(MASS)
 library(lmerTest)
 library(pbkrtest)
-library(MuMIn)
-library(corrplot)
 library(ggpubr)
 library(PairedData)
 library(plyr)
 library(ggplot2)
 library(GGally)
-source(&quot;multiplot.R&quot;)
 
 data&lt;-read.table(&quot;data/10_data_threat.txt&quot;, 
                      header=TRUE, 
@@ -400,6 +397,10 @@ data&lt;-read.table(&quot;data/10_data_threat.txt&quot;,
                      dec=&quot;,&quot;,
                      na.strings=&quot;NA&quot;)
 attach(data)
+
+#Data transforming for proportions
+tmamm07&lt;-log(prop_thr_mammals07/(1-prop_thr_mammals07))
+tmamm17&lt;-log(prop_thr_mammals17/(1-prop_thr_mammals17))
 
 ##Some ggplot2 grooming
 My_Theme = theme(
@@ -412,12 +413,156 @@ My_Theme = theme(
   panel.grid.major = element_blank(),
   panel.grid.minor = element_blank(),
   panel.background = element_rect(fill = &quot;white&quot;))</code></pre>
-<p>aaaaa</p>
+<div id="including-random-effects-in-our-models" class="section level2">
+<h2>Including random effects in our models</h2>
+<p>Let’s use the 2017 threatened mammal data as an example. We will use
+a Gaussian model to examine the proportion of threatened mammals species
+(previously transformed as it is a proportion variable) to relate it to
+several anthropogenic variables that we obtained from CIA’s world
+factbook. In this case, we will use <em>geography</em> (continent or
+island) as a random factor, as responses in islands are very different
+than in continents.</p>
+<pre class="r"><code>thr_mamm_2017&lt;-lmer(tmamm17~Urbanization+Pop_density+education_GDP+perc_prot_land+protected_area+(1 | Geography), na.action = &quot;na.fail&quot;)
+summary(thr_mamm_2017, ddf=&quot;Kenward-Roger&quot;)</code></pre>
+<pre><code>## Linear mixed model fit by REML. t-tests use Kenward-Roger&#39;s method [
+## lmerModLmerTest]
+## Formula: 
+## tmamm17 ~ Urbanization + Pop_density + education_GDP + perc_prot_land +  
+##     protected_area + (1 | Geography)
+## 
+## REML criterion at convergence: 357.5
+## 
+## Scaled residuals: 
+##     Min      1Q  Median      3Q     Max 
+## -3.7382 -0.4511 -0.0002  0.5899  2.9016 
+## 
+## Random effects:
+##  Groups    Name        Variance Std.Dev.
+##  Geography (Intercept) 0.4476   0.6690  
+##  Residual              0.5470   0.7396  
+## Number of obs: 138, groups:  Geography, 2
+## 
+## Fixed effects:
+##                  Estimate Std. Error         df t value Pr(&gt;|t|)  
+## (Intercept)    -1.123e+00  5.322e-01  1.445e+00  -2.111   0.2160  
+## Urbanization   -5.220e-01  2.979e-01  1.310e+02  -1.752   0.0821 .
+## Pop_density     3.786e-05  1.164e-04  1.317e+02   0.325   0.7454  
+## education_GDP  -8.284e+00  3.256e+00  1.310e+02  -2.544   0.0121 *
+## perc_prot_land -1.997e-02  8.332e-03  1.310e+02  -2.397   0.0179 *
+## protected_area  4.673e-07  3.863e-07  1.311e+02   1.210   0.2286  
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## Correlation of Fixed Effects:
+##             (Intr) Urbnzt Pp_dns ed_GDP prc_p_
+## Urbanizatin -0.257                            
+## Pop_density -0.065 -0.148                     
+## educatn_GDP -0.259 -0.117  0.083              
+## prc_prt_lnd -0.080 -0.168  0.095  0.011       
+## protected_r  0.003 -0.151  0.069  0.066 -0.102
+## fit warnings:
+## Some predictor variables are on very different scales: consider rescaling</code></pre>
+<p>We obtained a familiar GLM output, with some new information. Before
+the effect summary we have the estimations of the random effects,
+showing the variance associated to them. The larger the variance, the
+more important the random factor effects. When we have very low
+variances we may discard the random effects and conduct a regular GLM
+instead. When this happens, we usually receive a warning message saying
+that we have singular fit in our model (wich is not a problem per
+se).</p>
+</div>
+<div id="works-for-gam-too" class="section level2">
+<h2>Works for GAM too!</h2>
+<p>Let’s fit the same model above but using some of the predictors as
+splines (i.e., non-linear terms). GAMM models are implemented in the
+<code>mgcv</code> package.</p>
+<pre class="r"><code>thr_mamm_2017s&lt;-gamm(tmamm17~Urbanization+s(Pop_density)+s(education_GDP)+perc_prot_land+protected_area, random=list(Geography=~1), data=data)
+summary(thr_mamm_2017s$gam)</code></pre>
+<pre><code>## 
+## Family: gaussian 
+## Link function: identity 
+## 
+## Formula:
+## tmamm17 ~ Urbanization + s(Pop_density) + s(education_GDP) + 
+##     perc_prot_land + protected_area
+## 
+## Parametric coefficients:
+##                  Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept)    -1.515e+00  3.836e-01  -3.950 0.000127 ***
+## Urbanization   -5.200e-01  2.967e-01  -1.753 0.082008 .  
+## perc_prot_land -1.991e-02  8.297e-03  -2.399 0.017827 *  
+## protected_area  4.611e-07  3.845e-07   1.199 0.232681    
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## Approximate significance of smooth terms:
+##                  edf Ref.df     F p-value  
+## s(Pop_density)     1      1 0.148  0.7012  
+## s(education_GDP)   1      1 6.481  0.0121 *
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## R-sq.(adj) =  0.0625   
+##   Scale est. = 0.527     n = 138</code></pre>
+<pre class="r"><code>summary(thr_mamm_2017s$lme)</code></pre>
+<pre><code>## Linear mixed-effects model fit by maximum likelihood
+##   Data: strip.offset(mf) 
+##        AIC      BIC    logLik
+##   329.1928 358.4654 -154.5964
+## 
+## Random effects:
+##  Formula: ~Xr - 1 | g
+##  Structure: pdIdnot
+##                  Xr1          Xr2          Xr3          Xr4          Xr5
+## StdDev: 0.0002530382 0.0002530382 0.0002530382 0.0002530382 0.0002530382
+##                  Xr6          Xr7          Xr8
+## StdDev: 0.0002530382 0.0002530382 0.0002530382
+## 
+##  Formula: ~Xr.0 - 1 | g.0 %in% g
+##  Structure: pdIdnot
+##                Xr.01        Xr.02        Xr.03        Xr.04        Xr.05
+## StdDev: 4.060616e-05 4.060616e-05 4.060616e-05 4.060616e-05 4.060616e-05
+##                Xr.06        Xr.07        Xr.08
+## StdDev: 4.060616e-05 4.060616e-05 4.060616e-05
+## 
+##  Formula: ~1 | Geography %in% g.0 %in% g
+##         (Intercept)  Residual
+## StdDev:   0.4602405 0.7259459
+## 
+## Fixed effects:  y ~ X - 1 
+##                           Value Std.Error  DF   t-value p-value
+## X(Intercept)         -1.5151743 0.3865166 131 -3.920075  0.0001
+## XUrbanization        -0.5200413 0.2989787 131 -1.739392  0.0843
+## Xperc_prot_land      -0.0199072 0.0083600 131 -2.381250  0.0187
+## Xprotected_area       0.0000005 0.0000004 131  1.190005  0.2362
+## Xs(Pop_density)Fx1    0.0255267 0.0668877 131  0.381635  0.7034
+## Xs(education_GDP)Fx1 -0.1613808 0.0638682 131 -2.526777  0.0127
+##  Correlation: 
+##                      X(Int) XUrbnz Xprc__ Xprtc_ X(P_)F
+## XUrbanization        -0.406                            
+## Xperc_prot_land      -0.100 -0.168                     
+## Xprotected_area       0.033 -0.151 -0.102              
+## Xs(Pop_density)Fx1   -0.006 -0.149  0.095  0.070       
+## Xs(education_GDP)Fx1  0.038 -0.117  0.011  0.066  0.082
+## 
+## Standardized Within-Group Residuals:
+##          Min           Q1          Med           Q3          Max 
+## -3.760071104 -0.468479270 -0.003958182  0.594062451  3.000310166 
+## 
+## Number of Observations: 138
+## Number of Groups: 
+##                         g                g.0 %in% g Geography %in% g.0 %in% g 
+##                         1                         1                         2</code></pre>
+<p>Please notice that GAMM models contain two objects: a <em>gam</em>
+and a <em>lme</em> object. As you can see above, they present different
+information.</p>
+</div>
 <div id="final-thoughts" class="section level2">
 <h2>Final thoughts</h2>
-<p>GLMM models allow us to include random effects in our models to
-account for covariates, variation sources, and repeated measures. This
-applies for GAM models as well.</p>
+<p>GLMM models allow us to include random effects in our GLM models
+(using all the possible distributions that we learned in the past
+sessions) to account for covariates, variation sources, and repeated
+measures. This applies for GAM models as well.</p>
 </div>
 <div id="session" class="section level2">
 <h2>Session</h2>
@@ -439,33 +584,32 @@ applies for GAM models as well.</p>
 ## other attached packages:
 ##  [1] GGally_2.1.2     plyr_1.8.7       PairedData_1.1.1 lattice_0.20-45 
 ##  [5] mvtnorm_1.1-3    gld_2.6.4        ggpubr_0.4.0     ggplot2_3.3.5   
-##  [9] corrplot_0.92    MuMIn_1.46.0     pbkrtest_0.5.1   lmerTest_3.1-3  
-## [13] MASS_7.3-56      lme4_1.1-29      Matrix_1.4-1     mgcv_1.8-40     
-## [17] nlme_3.1-157    
+##  [9] pbkrtest_0.5.1   lmerTest_3.1-3   MASS_7.3-56      lme4_1.1-29     
+## [13] Matrix_1.4-1     mgcv_1.8-40      nlme_3.1-157    
 ## 
 ## loaded via a namespace (and not attached):
-##  [1] sass_0.4.1          tidyr_1.2.0         jsonlite_1.8.0     
-##  [4] splines_4.1.0       carData_3.0-5       bslib_0.3.1        
-##  [7] assertthat_0.2.1    lmom_2.8            stats4_4.1.0       
-## [10] yaml_2.3.5          numDeriv_2016.8-1.1 pillar_1.7.0       
-## [13] backports_1.4.1     glue_1.6.2          digest_0.6.29      
-## [16] RColorBrewer_1.1-3  ggsignif_0.6.3      minqa_1.2.4        
-## [19] colorspace_2.0-3    htmltools_0.5.2     pkgconfig_2.0.3    
-## [22] broom_0.8.0         purrr_0.3.4         scales_1.2.0       
-## [25] tibble_3.1.6        proxy_0.4-26        generics_0.1.2     
-## [28] car_3.0-12          ellipsis_0.3.2      withr_2.5.0        
-## [31] cli_3.2.0           magrittr_2.0.3      crayon_1.5.1       
-## [34] evaluate_0.15       fansi_1.0.3         rstatix_0.7.0      
-## [37] class_7.3-20        tools_4.1.0         lifecycle_1.0.1    
-## [40] stringr_1.4.0       munsell_0.5.0       compiler_4.1.0     
-## [43] jquerylib_0.1.4     e1071_1.7-9         rlang_1.0.2        
-## [46] grid_4.1.0          nloptr_2.0.0        rstudioapi_0.13    
-## [49] rmarkdown_2.13      boot_1.3-28         gtable_0.3.0       
-## [52] reshape_0.8.9       abind_1.4-5         DBI_1.1.2          
-## [55] R6_2.5.1            knitr_1.38          dplyr_1.0.8        
-## [58] fastmap_1.1.0       utf8_1.2.2          stringi_1.7.6      
-## [61] parallel_4.1.0      Rcpp_1.0.8.3        vctrs_0.4.0        
-## [64] tidyselect_1.1.2    xfun_0.30</code></pre>
+##  [1] Rcpp_1.0.8.3        tidyr_1.2.0         class_7.3-20       
+##  [4] assertthat_0.2.1    digest_0.6.29       utf8_1.2.2         
+##  [7] R6_2.5.1            backports_1.4.1     evaluate_0.15      
+## [10] e1071_1.7-9         pillar_1.7.0        rlang_1.0.2        
+## [13] rstudioapi_0.13     minqa_1.2.4         car_3.0-12         
+## [16] nloptr_2.0.0        jquerylib_0.1.4     rmarkdown_2.13     
+## [19] splines_4.1.0       stringr_1.4.0       munsell_0.5.0      
+## [22] proxy_0.4-26        broom_0.8.0         compiler_4.1.0     
+## [25] numDeriv_2016.8-1.1 xfun_0.30           pkgconfig_2.0.3    
+## [28] htmltools_0.5.2     tidyselect_1.1.2    tibble_3.1.6       
+## [31] lmom_2.8            reshape_0.8.9       fansi_1.0.3        
+## [34] crayon_1.5.1        dplyr_1.0.8         withr_2.5.0        
+## [37] grid_4.1.0          jsonlite_1.8.0      gtable_0.3.0       
+## [40] lifecycle_1.0.1     DBI_1.1.2           magrittr_2.0.3     
+## [43] scales_1.2.0        cli_3.2.0           stringi_1.7.6      
+## [46] carData_3.0-5       ggsignif_0.6.3      bslib_0.3.1        
+## [49] ellipsis_0.3.2      generics_0.1.2      vctrs_0.4.0        
+## [52] boot_1.3-28         RColorBrewer_1.1-3  tools_4.1.0        
+## [55] glue_1.6.2          purrr_0.3.4         abind_1.4-5        
+## [58] parallel_4.1.0      fastmap_1.1.0       yaml_2.3.5         
+## [61] colorspace_2.0-3    rstatix_0.7.0       knitr_1.38         
+## [64] sass_0.4.1</code></pre>
 </div>
 </div>
 
