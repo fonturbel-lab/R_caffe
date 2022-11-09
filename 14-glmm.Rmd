@@ -18,21 +18,29 @@ knitr::opts_chunk$set(
 
 # Models with fixed and random effects
 
-Generalized Linear Models relax some assumptions but assume that predictor variables have a **linear** relationship with the response variable. But what if our response variable is not linear? Fortunately, we have a non-linear approach called Generalized Additive Models, in which we can use linear and non-linear predictors in the same model.
+So far, we have operated fixed effects in our Generalized models. A fixed effect is a fully controled and known variable, but in nature we have many variation sources that we cannot control or from which we cannot evaluate all levels. Thus variation sources are known as **random effects** and we can include them into the models to take them into account, but not as predictors but as covariates.
 
-To illustrate this lesson, we will use country-scale data from the United Nations report in education and human development.
+To illustrate this lesson, we will use (again) the data of [https://www.mdpi.com/2071-1050/12/21/9252](Cordero et al. 2020).
 
 ```{r data}
 library(mgcv)
+library(lme4)
+library(MASS)
+library(lmerTest)
+library(pbkrtest)
+library(MuMIn)
+library(corrplot)
+library(ggpubr)
+library(PairedData)
+library(plyr)
 library(ggplot2)
-library(ggeffects)
-library(gratia)
+library(GGally)
 source("multiplot.R")
 
-data<-read.csv("data/13_UN_data.csv", 
+data<-read.table("data/10_data_threat.txt", 
                      header=TRUE, 
-                     sep=",",
-                     dec=".",
+                     sep="\t",
+                     dec=",",
                      na.strings="NA")
 attach(data)
 
