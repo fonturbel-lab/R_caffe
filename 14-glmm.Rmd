@@ -1,0 +1,162 @@
+---
+title: "13 - Generalized Additive Models"
+author: "Francisco E. Fonturbel"
+date: "2/November/2022"
+output: 
+  html_document:
+    includes:
+        after_body: footer.html
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	echo = TRUE,
+	message = FALSE,
+	warning = FALSE
+)
+```
+
+# Non-linear models
+
+Generalized Linear Models relax some assumptions but assume that predictor variables have a **linear** relationship with the response variable. But what if our response variable is not linear? Fortunately, we have a non-linear approach called Generalized Additive Models, in which we can use linear and non-linear predictors in the same model.
+
+To illustrate this lesson, we will use country-scale data from the United Nations report in education and human development.
+
+```{r data}
+library(mgcv)
+library(ggplot2)
+library(ggeffects)
+library(gratia)
+source("multiplot.R")
+
+data<-read.csv("data/13_UN_data.csv", 
+                     header=TRUE, 
+                     sep=",",
+                     dec=".",
+                     na.strings="NA")
+attach(data)
+
+##Some ggplot2 grooming
+My_Theme = theme(
+  axis.title.x = element_text(size = 20,face="bold"),
+  axis.text.x = element_text(size = 16),
+  axis.text.y = element_text(size = 16),
+  axis.title.y = element_text(size = 20,face="bold"),
+  legend.text = element_text(size = 14),
+  legend.title = element_text(size = 14,face="bold"),
+  panel.grid.major = element_blank(),
+  panel.grid.minor = element_blank(),
+  panel.background = element_rect(fill = "white"))
+```
+
+How our variables look like? Let's use `ggplot` to make some awesome plots:
+
+```{r plots, echo=TRUE, message=FALSE, warning=FALSE}
+a1<-ggplot(data=data, aes(x=HDI, y=Overall)) +
+  geom_point(color="red") +
+  geom_smooth(size=1, span = 0.5, method = "loess") + labs(x="Education", y="Overall") +
+  theme_classic() +
+  My_Theme
+a2<-ggplot(data=data, aes(x=Edu, y=Overall)) +
+  geom_point(color="red") +
+  geom_smooth(size=1, span = 0.5, method = "loess") + labs(x="HDI", y="Overall") +
+  theme_classic() +
+  My_Theme
+a3<-ggplot(data=data, aes(x=Health, y=Overall)) +
+  geom_point(color="red") +
+  geom_smooth(size=1, span = 0.5, method = "loess") + labs(x="Health", y="Overall") +
+  theme_classic() +
+  My_Theme
+a4<-ggplot(data=data, aes(x=Health, y=Income)) +
+  geom_point(color="red") +
+  geom_smooth(size=1, span = 0.5, method = "loess") + labs(x="Income", y="Overall") +
+  theme_classic() +
+  My_Theme
+a5<-ggplot(data=data, aes(x=Health, y=Interest)) +
+  geom_point(color="red") +
+  geom_smooth(size=1, span = 0.5, method = "loess") + labs(x="Interest", y="Overall") +
+  theme_classic() +
+  My_Theme
+a6<-ggplot(data=data, aes(x=Health, y=Support)) +
+  geom_point(color="red") +
+  geom_smooth(size=1, span = 0.5, method = "loess") + labs(x="Support", y="Overall") +
+  theme_classic() +
+  My_Theme
+multiplot(a1, a2, a3, a4, a5, a6, cols = 2)
+```
+
+As we can see, those predictor variables are not quite linear...
+
+## Comparing GLM vs GAM performance
+
+Linear model:
+
+```{r glm}
+mod_lm = gam(Overall ~ Income, data = data)
+summary(mod_lm)
+```
+
+Non-linear model:
+
+```{r gam}
+mod_gam1 = gam(Overall ~ s(Income, bs = "cr"), data = data)
+summary(mod_gam1)
+
+plot(mod_gam1)
+```
+
+**Linear model performance:**
+
+```{r lmp}
+AIC(mod_lm)
+summary(mod_lm)$r.sq
+```
+
+**Non-linear model performance:**
+
+```{r nlmp}
+AIC(mod_gam1)
+summary(mod_gam1)$r.sq
+```
+
+As we can see, the GAM model has a better performance than the GLM model. Let's make a formal test using `anova`:
+
+```{r anova}
+anova(mod_lm, mod_gam1, test = "Chisq")
+```
+
+Well, the GAM model is significantly better than the GLM model.
+
+
+## Using multiple predictors
+
+As in GLM, we can fit multiple predictors in GAM, let's see an example:
+
+```{r gam2}
+mod_gam2 = gam(Overall ~ s(Income) + s(Edu) + s(Health) + Health, data = data)
+summary(mod_gam2)
+
+plot(ggeffects::ggpredict(mod_gam2), facets = TRUE)
+gratia::draw(mod_gam2)
+```
+
+
+### An alternative visualization
+
+Now we will use a 2D smooth to visualize our model:
+
+```{r vis2d}
+vis.gam(mod_gam2, type = 'response', plot.type = 'contour')
+```
+
+
+## Final thoughts
+
+GAM model allow us to include non-linear predictors using a _spline_ function. We can mix linear and non-linear predictors within the same model. Including non-linear terms as splines significantly improve the fit of the model, leading to more reliable results.
+
+
+## Session
+
+```{r session, echo=TRUE}
+sessionInfo()
+```
