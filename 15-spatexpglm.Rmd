@@ -23,27 +23,22 @@ Organisms in nature are rarely distributed in regular arrangements. We usually f
 To illustrate this lesson, we will use (again) the data of [Fontúrbek et al. 2015](https://besjournals.onlinelibrary.wiley.com/doi/full/10.1111/1365-2745.12443).
 
 ```{r data}
+library(spdep)
+library(spatstat)
 library(mgcv)
-library(lme4)
-library(MASS)
-library(lmerTest)
-library(pbkrtest)
-library(ggpubr)
-library(PairedData)
-library(plyr)
+library(nortest)
+library(gstat)
+library(ncf)
+library(mpmcorrelogram)
 library(ggplot2)
-library(GGally)
 
-data<-read.table("data/10_data_threat.txt", 
+data<-read.csv("data/11_mistletoe_data.csv", 
                      header=TRUE, 
-                     sep="\t",
-                     dec=",",
+                     sep=";",
+                     dec=".",
                      na.strings="NA")
 attach(data)
-
-#Data transforming for proportions
-tmamm07<-log(prop_thr_mammals07/(1-prop_thr_mammals07))
-tmamm17<-log(prop_thr_mammals17/(1-prop_thr_mammals17))
+head(data)
 
 ##Some ggplot2 grooming
 My_Theme = theme(
