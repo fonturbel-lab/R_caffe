@@ -167,7 +167,20 @@ As we can see, GAM models outsmart the other models!
 Finally, let's examine Mantel correlograms to see if such reduction in spatial autocorrelation is significant:
 
 ```{r mantelc}
+mdist<-dist(xy)
+mrcss<-dist(res_cs_s)
+mrcs<-dist(res_cs)
+mrgcs<-dist(res_gcs)
+mpm_css<-mpmcorrelogram(mrcss,mdist,method="pearson",permutations=1000)
+mpm_cs<-mpmcorrelogram(mrcs,mdist,method="pearson",permutations=1000)
+mpm_gcs<-mpmcorrelogram(mrgcs,mdist,method="pearson",permutations=1000)
 
+###Plot
+par(mfrow=c(2,2))
+plot(mpm_css, xlab="Distance classes",main="Residuals standard GLM")
+plot(mpm_cs, xlab="Distance classes",main="Residuals ac GLM")
+plot(mpm_gcs, xlab="Distance classes",main="Residuals GAM with spline")
+par(mfrow=c(1,1))
 ```
 
 
