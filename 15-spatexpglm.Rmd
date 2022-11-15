@@ -16,11 +16,11 @@ knitr::opts_chunk$set(
 )
 ```
 
-# Models with fixed and random effects
+# Including the spatial structure in our models
 
-So far, we have operated fixed effects in our Generalized models. A fixed effect is a fully controled and known variable, but in nature we have many variation sources that we cannot control or from which we cannot evaluate all levels. Thus variation sources are known as **random effects** and we can include them into the models to take them into account, but not as predictors but as covariates.
+Organisms in nature are rarely distributed in regular arrangements. We usually found plants or animals forming clusters in high-quality microhabitats or randomly distributed in some areas. Such arrangement pattern is called _spatial structure_ and it is from remarkable importance in ecology. When we collect field data, we may obtain geographic coordinates from our sampling sites / units and therefore conduct sptially-explicit models, including the relative location of each unit as a covariate.
 
-To illustrate this lesson, we will use (again) the data of [Cordero et al. 2020](https://www.mdpi.com/2071-1050/12/21/9252).
+To illustrate this lesson, we will use (again) the data of [Fontúrbek et al. 2015](https://besjournals.onlinelibrary.wiley.com/doi/full/10.1111/1365-2745.12443).
 
 ```{r data}
 library(mgcv)
