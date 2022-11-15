@@ -40,6 +40,9 @@ data<-read.csv("data/11_mistletoe_data.csv",
 attach(data)
 head(data)
 
+x<-data$UTM_E
+y<-data$UTM_N
+
 ##Some ggplot2 grooming
 My_Theme = theme(
   axis.title.x = element_text(size = 20,face="bold"),
@@ -54,28 +57,15 @@ My_Theme = theme(
 ```
 
 
-## Including random effects in our models
+## The spatial covariate approach
 
-Let's use the 2017 threatened mammal data as an example. We will use a Gaussian model to examine the proportion of threatened mammals species (previously transformed as it is a proportion variable) to relate it to several anthropogenic variables that we obtained from CIA's world factbook. In this case, we will use _geography_ (continent or island) as a random factor, as responses in islands are very different than in continents.
+The simplest approach to conduct a spatially-explicit model is to 
 
 ```{r model1}
-thr_mamm_2017<-lmer(tmamm17~Urbanization+Pop_density+education_GDP+perc_prot_land+protected_area+(1 | Geography), na.action = "na.fail")
-summary(thr_mamm_2017, ddf="Kenward-Roger")
+
 ```
 
-We obtained a familiar GLM output, with some new information. Before the effect summary we have the estimations of the random effects, showing the variance associated to them. The larger the variance, the more important the random factor effects. When we have very low variances we may discard the random effects and conduct a regular GLM instead. When this happens, we usually receive a warning message saying that we have singular fit in our model (wich is not a problem per se).
 
-## Works for GAM too!
-
-Let's fit the same model above but using some of the predictors as splines (i.e., non-linear terms). GAMM models are implemented in the `mgcv` package.
-
-```{r model2}
-thr_mamm_2017s<-gamm(tmamm17~Urbanization+s(Pop_density)+s(education_GDP)+perc_prot_land+protected_area, random=list(Geography=~1), data=data)
-summary(thr_mamm_2017s$gam)
-summary(thr_mamm_2017s$lme)
-```
-
-Please notice that GAMM models contain two objects: a _gam_ and a _lme_ object. As you can see above, they present different information.
 
 
 ## Final thoughts
