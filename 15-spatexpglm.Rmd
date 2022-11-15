@@ -57,16 +57,49 @@ My_Theme = theme(
 ```
 
 
-## The spatial covariate approach
+## The spatial autocovariate approach
 
-The simplest approach to conduct a spatially-explicit model is to 
+The simplest approach to conduct a spatially-explicit model is to create a new variable upon geographic coordinates (ideally in UTM format) and then including it into the model. The steps for creating this autocovariate are as follows:
 
-```{r model1}
+```{r acov}
+xy<-cbind(x,y)
+ac1a<-autocov_dist(crop_size, xy, nbs=1500, style="W", type="one")
+plot(ac1a ~ crop_size, pch=16, asp=1)
 
+nb<-dnearneigh(xy, 0, 1500)
+lw<-nb2listw(nb, style="W")
+ac1b<-lag(lw, crop_size)
+all.equal(ac1b, ac1a)
 ```
 
+And the `glm` model including the autocovariate looks like this:
 
+```{r model1}
+glm_cs<-glm(crop_size ~ temp + hum + lum + ac1b, data=data, family="poisson")
+summary(glm_cs)
+```
 
+Now we will conduct the same model withour the spatial term for comparison purposes:
+
+```{r model2}
+glm_cs_s<-glm(crop_size ~ temp + hum + lum, data=data, family="poisson")
+summary(glm_cs_s)
+```
+
+Comparing model performance:
+
+```{r comp1}
+AIC(glm_cs)
+AIC(glm_cs_s)
+comp1<-anova(glm_cs,glm_cs_s)
+comp1
+```
+
+So, the spatially-explicit model has a slight improvement in fit compared to the non spatially-explicit model.
+
+## The GAM approach
+
+Taking advantage of
 
 ## Final thoughts
 
