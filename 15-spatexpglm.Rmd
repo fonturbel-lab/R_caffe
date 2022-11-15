@@ -147,6 +147,30 @@ qqline(res_gcs)
 
 And what about residual spatial autocorrelation in the model?
 
+```{r correlogs}
+###Regular GLM
+cr_res_css<-spline.correlog(x=x,y=y,z=res_cs_s, resamp=1000)
+###autocov GLM
+cr_res_cs<-spline.correlog(x=x,y=y,z=res_cs, resamp=1000)
+###GAM
+cr_res_gcs<-spline.correlog(x=x,y=y,z=res_gcs, resamp=1000)
+###plots
+par(mfrow=c(2,2))
+plot(cr_res_css, main = "Standard GLM")
+plot(cr_res_cs, main = "Autocov GLM")
+plot(cr_res_gcs, main = "GAM")
+par(mfrow=c(1,1))
+```
+
+As we can see, GAM models outsmart the other models!
+
+Finally, let's examine Mantel correlograms to see if such reduction in spatial autocorrelation is significant:
+
+```{r mantelc}
+
+```
+
+
 ## Final thoughts
 
 GLMM models allow us to include random effects in our GLM models (using all the possible distributions that we learned in the past sessions) to account for covariates, variation sources, and repeated measures. This applies for GAM models as well.
