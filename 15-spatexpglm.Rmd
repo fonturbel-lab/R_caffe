@@ -187,7 +187,7 @@ Again, the GAM model has the better performance as it has no significant autocor
 
 ## Final thoughts
 
-Spatially-explicit models allow us to
+Spatially-explicit models allow us to include spatial structure information into our models. Instead of fighting it and trying to keep spatial structure controlled and out of the reach of our models, we can embrace it and examine it as part of our data, which results very informative. From many approaches available, here we compared the classic spatial autocovariate and the GAM approaches. The GAM approach outperformed the autocovariate approach, significantly improving model results.
 
 
 ## Session
