@@ -1,0 +1,95 @@
+---
+title: "15 - Spatially-explicit Generalized Linear/Additive Models"
+author: "Francisco E. Fonturbel"
+date: "15/November/2022"
+output: 
+  html_document:
+    includes:
+        after_body: footer.html
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	echo = TRUE,
+	message = FALSE,
+	warning = FALSE
+)
+```
+
+# Models with fixed and random effects
+
+So far, we have operated fixed effects in our Generalized models. A fixed effect is a fully controled and known variable, but in nature we have many variation sources that we cannot control or from which we cannot evaluate all levels. Thus variation sources are known as **random effects** and we can include them into the models to take them into account, but not as predictors but as covariates.
+
+To illustrate this lesson, we will use (again) the data of [Cordero et al. 2020](https://www.mdpi.com/2071-1050/12/21/9252).
+
+```{r data}
+library(mgcv)
+library(lme4)
+library(MASS)
+library(lmerTest)
+library(pbkrtest)
+library(ggpubr)
+library(PairedData)
+library(plyr)
+library(ggplot2)
+library(GGally)
+
+data<-read.table("data/10_data_threat.txt", 
+                     header=TRUE, 
+                     sep="\t",
+                     dec=",",
+                     na.strings="NA")
+attach(data)
+
+#Data transforming for proportions
+tmamm07<-log(prop_thr_mammals07/(1-prop_thr_mammals07))
+tmamm17<-log(prop_thr_mammals17/(1-prop_thr_mammals17))
+
+##Some ggplot2 grooming
+My_Theme = theme(
+  axis.title.x = element_text(size = 20,face="bold"),
+  axis.text.x = element_text(size = 16),
+  axis.text.y = element_text(size = 16),
+  axis.title.y = element_text(size = 20,face="bold"),
+  legend.text = element_text(size = 14),
+  legend.title = element_text(size = 14,face="bold"),
+  panel.grid.major = element_blank(),
+  panel.grid.minor = element_blank(),
+  panel.background = element_rect(fill = "white"))
+```
+
+
+## Including random effects in our models
+
+Let's use the 2017 threatened mammal data as an example. We will use a Gaussian model to examine the proportion of threatened mammals species (previously transformed as it is a proportion variable) to relate it to several anthropogenic variables that we obtained from CIA's world factbook. In this case, we will use _geography_ (continent or island) as a random factor, as responses in islands are very different than in continents.
+
+```{r model1}
+thr_mamm_2017<-lmer(tmamm17~Urbanization+Pop_density+education_GDP+perc_prot_land+protected_area+(1 | Geography), na.action = "na.fail")
+summary(thr_mamm_2017, ddf="Kenward-Roger")
+```
+
+We obtained a familiar GLM output, with some new information. Before the effect summary we have the estimations of the random effects, showing the variance associated to them. The larger the variance, the more important the random factor effects. When we have very low variances we may discard the random effects and conduct a regular GLM instead. When this happens, we usually receive a warning message saying that we have singular fit in our model (wich is not a problem per se).
+
+## Works for GAM too!
+
+Let's fit the same model above but using some of the predictors as splines (i.e., non-linear terms). GAMM models are implemented in the `mgcv` package.
+
+```{r model2}
+thr_mamm_2017s<-gamm(tmamm17~Urbanization+s(Pop_density)+s(education_GDP)+perc_prot_land+protected_area, random=list(Geography=~1), data=data)
+summary(thr_mamm_2017s$gam)
+summary(thr_mamm_2017s$lme)
+```
+
+Please notice that GAMM models contain two objects: a _gam_ and a _lme_ object. As you can see above, they present different information.
+
+
+## Final thoughts
+
+GLMM models allow us to include random effects in our GLM models (using all the possible distributions that we learned in the past sessions) to account for covariates, variation sources, and repeated measures. This applies for GAM models as well.
+
+
+## Session
+
+```{r session, echo=TRUE}
+sessionInfo()
+```
