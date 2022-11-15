@@ -109,6 +109,44 @@ AIC(gam_cs)
 
 This approach is much easier as we don't need to create a coviate and including coordinates as a spline term largely reduced model's AIC value.
 
+## Examining residuals
+
+One key goal of conducting spatially-explicit models is to improve residual distribution and properly deal with spatial autocorrelation,
+
+How residuals look like?
+
+```{r resids}
+###Regular GLM
+res_cs_s<-residuals(glm_cs_s)
+fres_cs_s<-fitted(glm_cs_s)
+###autocov GLM
+res_cs<-residuals(glm_cs)
+fres_cs<-fitted(glm_cs)
+###GAM
+res_gcs<-residuals(gam_cs)
+fres_gcs<-fitted(gam_cs)
+
+###Plotting residuals
+par(mfrow=c(3,3))
+plot(res_cs_s ~ fres_cs_s, xlab="Fitted values", ylab="Residuals", main="Residuals standard GLM")
+abline(h=0)
+plot(res_cs ~ fres_cs, xlab="Fitted values", ylab="Residuals", main="Residuals autocov GLM")
+abline(h=0)
+plot(res_gcs ~ fres_gcs, xlab="Fitted values", ylab="Residuals", main="GAM with spline")
+abline(h=0)
+hist(res_cs_s, xlab="Values", ylab="Frequency", main="Residuals standard GLM")
+hist(res_cs, xlab="Values", ylab="Frequency", main="Residuals ac GLM")
+hist(res_gcs, xlab="Values", ylab="Frequency", main="Residuals GAM with spline")
+qqnorm(res_cs_s, main="Residuals standard GLM")
+qqline(res_cs_s)
+qqnorm(res_cs, main="Residuals ac GLM")
+qqline(res_cs)
+qqnorm(res_gcs, main="Residuals GAM with spline")
+qqline(res_gcs)
+```
+
+And what about residual spatial autocorrelation in the model?
+
 ## Final thoughts
 
 GLMM models allow us to include random effects in our GLM models (using all the possible distributions that we learned in the past sessions) to account for covariates, variation sources, and repeated measures. This applies for GAM models as well.
