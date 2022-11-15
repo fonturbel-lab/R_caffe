@@ -99,7 +99,15 @@ So, the spatially-explicit model has a slight improvement in fit compared to the
 
 ## The GAM approach
 
-Taking advantage of
+Taking advantage of GAM models, we can include the X,Y coordinates as a splie term in the model:
+
+```{r model3}
+gam_cs<-gam(crop_size ~ temp + hum + lum+s(x,y),data=data,family=poisson)
+summary(gam_cs)
+AIC(gam_cs)
+```
+
+This approach is much easier as we don't need to create a coviate and including coordinates as a spline term largely reduced model's AIC value.
 
 ## Final thoughts
 
