@@ -48,13 +48,13 @@ This repository presents a comprehensive R course intended for self-learning and
 
 ### Part 3 :older_adult:
 
-_16.- Basic time series analysis_
+_16.- ANOSIM and SIMPER_
 
-_17.- ANOSIM and SIMPER_
+_17.- PCA and nMDS_
 
-_18.- PCA and nMDS_
+_18.- Biodiversity analysis in R_
 
-_19.- Biodiversity analysis in R_
+_19.- Basic time series analysis_
 
 _20.- Circular statistics_
 
