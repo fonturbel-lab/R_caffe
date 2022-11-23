@@ -18,17 +18,17 @@ knitr::opts_chunk$set(
 
 ## How to analyze species composition?
 
-Dealing with biodiversity data is somewhat different than dealing with the usual stuff that we are used to. .
+Dealing with biodiversity data is somewhat different than dealing with the usual stuff that we are used to. Some authors use standard approaches (e.g., ANOVA) to compare species composition among sites, but this is not correct as in this case the identity of the species matters, and traditional methods cannot consider them.
 
 ```{r data}
 library(confintr)
 
-data<-read.csv("data/08_enzactivity.csv", header = T, sep = ",")
+data<-read.csv("data/16_bryophytes.csv", header = T, sep = ";")
 attach(data)
 head(data)
 ```
 
-aaaa
+We will use the data of [Riffo-Donoso et al. 2021](https://www.sciencedirect.com/science/article/pii/S0378112721005569) to illustrate this. This dataset contains bryophyte presence-absence data for three sampling years, comparing four habitat conditions and four substrates.
 
 
 ## Final thoughts
