@@ -32,7 +32,7 @@ We will use the data of [Riffo-Donoso et al. 2021](https://www.sciencedirect.com
 
 ## Analysis of Similarities (ANOSIM)
 
-When we have species presence/absence or relative abundance data with two or more groups and at least three replicates per group, we can use the Analysis of Similarities (ANOSIM) to test for spècies composition differences. ANOSIM is a non-parametric approach that uses a similarity metric (e.g., Jaccard or Bray-Curtis)
+When we have species presence/absence or relative abundance data with two or more groups and at least three replicates per group, we can use the Analysis of Similarities (ANOSIM) to test for spècies composition differences. ANOSIM is a non-parametric approach that uses a similarity metric (e.g., Jaccard or Bray-Curtis) to compare species similarity within and between groups (following the same logic than ANOVA). The resulting statistics (R) is not a proportional value as it is calculated upon rankings (and it should not be interpreted as a linear scale of difference). The significance of  
 
 
 ## Final thoughts
