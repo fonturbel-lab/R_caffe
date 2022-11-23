@@ -23,29 +23,43 @@ Dealing with biodiversity data is somewhat different than dealing with the usual
 ```{r data}
 library(vegan)
 
-data<-read.csv("data/16_bryophytes.csv", header = T, sep = ";")
+data<-read.table("data/16_bird_data.txt", 
+                     header=TRUE, 
+                     sep="\t", dec=".", 
+                     na.strings="NA")
 attach(data)
 head(data)
 ```
 
-We will use the data of [Riffo-Donoso et al. 2021](https://www.sciencedirect.com/science/article/pii/S0378112721005569) to illustrate this. This dataset contains bryophyte presence-absence data for three sampling years, comparing four habitat conditions and four substrates.
+We will use the data of [Fontúrbel et al. 2020](https://www.sciencedirect.com/science/article/pii/S1470160X20308013) to illustrate this. This dataset contains bird abundance data for camera trap and point count data, comparing four habitat conditions.
 
 ## Analysis of Similarities (ANOSIM)
 
 When we have species presence/absence or relative abundance data with two or more groups and at least three replicates per group, we can use the Analysis of Similarities (ANOSIM) to test for spècies composition differences. ANOSIM is a non-parametric approach that uses a similarity metric (e.g., Jaccard or Bray-Curtis) to compare species similarity within and between groups (following the same logic than ANOVA). The resulting statistics (R) is not a proportional value as it is calculated upon rankings (and it should not be interpreted as a linear scale of difference). The significance of this test is estimated using permutations (P value is the number of times that the randomized R value is equal or greater than the real R value, divided by the number of permutations).
 
-```{r anosim}
+```{r anosim1}
 #Extract the columns with species data in a separate object
-bspecies<-data[,4:78]
+birds<-data[,3:22]
 
 #Creating a distance matrix
-distspp<-vegdist(bspecies)
+birdist<-vegdist(birds)
 
-#ANOSIM per year
-bryocomp<-anosim(distspp, data$year, permutations = 999, distance = "bray")
+#ANOSIM per habitat
+forestbirds<-anosim(birdist, data$Habitat, permutations = 999, distance = "bray")
+summary(forestbirds)
+plot(forestbirds, xlab="Condition", ylab="Rank distance")
 ```
 
 
+So, there is no difference among habitat conditions. What about sampling approaches?
+
+```{r anosim2}
+sampbirds<-anosim(birdist, data$Sample, permutations = 999, distance = "bray")
+summary(sampbirds)
+plot(sampbirds, xlab="Sampling method", ylab="Rank distance")
+```
+
+In this case, we found a significant difference, in which point counts are different from camera traps.
 
 ## Final thoughts
 
