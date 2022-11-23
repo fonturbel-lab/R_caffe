@@ -67,7 +67,8 @@ In this case, we found a significant difference, in which point counts are diffe
 In the second case, we found a significant difference in the ANOSIM test. But, which species account for such differences? In this case, we can use the Similarity Percentages (SIMPER) test, also implemented in the `vegan` package.
 
 ```{r simper}
-simper(birds, data$Sample, permutations = 999)
+simbirds<-simper(birds, group = data$Sample, permutations = 999)
+summary(simbirds, digits = "3")
 ```
 
 
