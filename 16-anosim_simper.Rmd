@@ -35,7 +35,7 @@ We will use the data of [Fontúrbel et al. 2020](https://www.sciencedirect.com/s
 
 ## Analysis of Similarities (ANOSIM)
 
-When we have species presence/absence or relative abundance data with two or more groups and at least three replicates per group, we can use the Analysis of Similarities (ANOSIM) to test for spècies composition differences. ANOSIM is a non-parametric approach that uses a similarity metric (e.g., Jaccard or Bray-Curtis) to compare species similarity within and between groups (following the same logic than ANOVA). The resulting statistics (R) is not a proportional value as it is calculated upon rankings (and it should not be interpreted as a linear scale of difference). The significance of this test is estimated using permutations (P value is the number of times that the randomized R value is equal or greater than the real R value, divided by the number of permutations).
+When we have species presence/absence or relative abundance data with two or more groups and at least three replicates per group, we can use the Analysis of Similarities (ANOSIM) to test for species composition differences. ANOSIM is a non-parametric approach that uses a similarity metric (e.g., Jaccard or Bray-Curtis) to compare species similarity within and between groups (following the same logic than ANOVA). The resulting statistics (R) is not a proportional value as it is calculated upon rankings (and it should not be interpreted as a linear scale of difference). The significance of this test is estimated using permutations (P value is the number of times that the randomized R value is equal or greater than the real R value, divided by the number of permutations). ANOSIM is implemented in the `vegan` package.
 
 ```{r anosim1}
 #Extract the columns with species data in a separate object
@@ -61,9 +61,20 @@ plot(sampbirds, xlab="Sampling method", ylab="Rank distance")
 
 In this case, we found a significant difference, in which point counts are different from camera traps.
 
+
+## Which species explain the differences?
+
+In the second case, we found a significant difference in the ANOSIM test. But, which species account for such differences? In this case, we can use the Similarity Percentages (SIMPER) test, also implemented in the `vegan` package.
+
+```{r simper}
+simper(birds, data$Sample, permutations = 999)
+```
+
+
+
 ## Final thoughts
 
-Linear regression and correlation are our entryway to understand linear relationships among linear variables. Linear regression allows us to assess the causal relationship between two continuous variables, whereas correlation examines association between a pair of variables without implying a causal relationship.
+ANOSIM and SIMPER are simple tests to test for species composition differences and provide an actual hypothesis test with a proper P value. This approach is more appropriate to analyze species composition data rather than other approaches, such as ANOVA, which may be giving unreliable results.
 
 
 ## Session
