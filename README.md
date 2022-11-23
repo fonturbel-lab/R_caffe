@@ -48,7 +48,7 @@ This repository presents a comprehensive R course intended for self-learning and
 
 ### Part 3 :older_adult:
 
-_16.- ANOSIM and SIMPER_
+16.- ANOSIM and SIMPER
 
 _17.- PCA and nMDS_
 
