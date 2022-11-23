@@ -1,0 +1,126 @@
+---
+title: "16 - ANOSIM and SIMPER"
+author: "Francisco E. Fonturbel"
+date: "23/November/2022"
+output: 
+  html_document:
+    includes:
+        after_body: footer.html
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	echo = TRUE,
+	message = FALSE,
+	warning = FALSE
+)
+```
+
+## Linear regression
+
+So far, we have dealt with a continuous response variable contrasted against categorical predictors. But in many cases we have continuous predictors. For example, we may assess the effect of temperature on enzymatic activity based on an experimental trial. We know from the books that many enzymes perform better at certain temperatures, and we want to test it in our laboratory. So, let's load the example file with temperature and enzymatic activity data.
+
+```{r data}
+library(confintr)
+
+data<-read.csv("data/08_enzactivity.csv", header = T, sep = ",")
+attach(data)
+head(data)
+```
+
+Before fitting a linear model, we will examine the distribution of the response variable (i.e., enzymatic activity) to assess if it follows a normal distribution:
+
+```{r norm}
+hist(enzactiv, col = "dodgerblue1")
+shapiro.test(enzactiv)
+```
+
+Well, it is more or less normal...
+
+
+### Linear relationships
+
+Linear models are very common in science, as many of the relationships that we assume that variables increase or decrease along other predictors, resembling a linear function _y = ax + b_
+
+Let's take a look of our data:
+
+```{r plot1}
+plot(enzactiv~temperature, col = "firebrick2", xlab = "Temperature (ºC)", ylab = "Enzymatic activity")
+```
+
+Well, it clearly resembles a linear relationship. But we are scientists and we assess hard data and not merely plots... let's make a linear model for it!
+
+```{r lm}
+mod1<-lm(enzactiv~temperature)
+summary(mod1)
+```
+
+Well, well, well... our linear relationship is significant indeed. Enzymatic activity is positively influenced by temperature, as the books said.
+
+But, what a linear model does? It looks for the linear function that fits better to our data. Let's plot it:
+
+```{r plot2}
+plot(enzactiv~temperature, xlab = "Temperature (ºC)", ylab = "Enzymatic activity")
+abline(lm(enzactiv~temperature), col = "firebrick2", lwd = 3)
+```
+
+so, let me introduce a new concept here: residuals. The difference of each data point to the trend line is a residual. A linear regression can be assessed examining how well the resulting model fits our data. One first approach is to examine R-squared, as it gets closer to 1 the regression is optimal. In this case, our R-squared value is **`r summary(mod1)$r.squared`**, which indicates a pretty decent fit. But let's take a look on our residuals:
+
+```{r resids}
+plot(density(resid(mod1))) #A density plot
+qqnorm(resid(mod1)) # A quantile normal plot - good for checking normality
+qqline(resid(mod1))
+```
+
+Good, our residuals look good. In linear models, the normality of the residuals is more important than the normality of the raw variables themselves.
+
+```{r normres}
+shapiro.test(resid(mod1))
+```
+
+Great! we are good to go. Our results are reliable.
+
+
+## Correlation
+
+Well, linear regression is such a wonderful tool, but it has a very heavy underlying assumption: causality. In our last example, enzymatic activity was a consequence of temperature. But what if we don't have any reasons to assume cause-and-effect? In that case, we can assess **correlation**, which is a mathematical measurement of relationship between two continuous variables.
+
+The most common correlation method is Pearson's correlation test (a parametric one), but in case we have weird funny data, we can use the non-parametric correlations tests of Spearman or Kendall.
+
+We will use our same dataset to assess the correlation between temperature and enzymatic activity. For doing that we will use the `cor.test` function
+
+```{r corr1}
+cor.test(temperature, enzactiv, method = "pearson")
+```
+
+As we already suspected, both variables are significantly correlated. Let's take a look the results using Spearman and Kendall methods instead:
+
+```{r corr2}
+cor.test(temperature, enzactiv, method = "spearman")
+```
+
+```{r corr3}
+cor.test(temperature, enzactiv, method = "kendall")
+```
+
+Pretty much consistent results among methods.
+
+We also may want to estimate a 95% confidence interval for our correlation coefficient, as a proxy of estimation quality. For that purpose, we will use the function `ci_cor` embedded into the library `confintr`.
+
+```{r ci_cor}
+ci_cor(temperature, enzactiv, method = "pearson", probs = c(0.025, 0.975), type = "bootstrap", R = 999, boot_type = "bca")
+```
+
+It seems that our correlation coefficient is quite consistent, as the difference between the lower and upper bounds of the confidence interval is small.
+
+
+## Final thoughts
+
+Linear regression and correlation are our entryway to understand linear relationships among linear variables. Linear regression allows us to assess the causal relationship between two continuous variables, whereas correlation examines association between a pair of variables without implying a causal relationship.
+
+
+## Session
+
+```{r session, echo=TRUE}
+sessionInfo()
+```
