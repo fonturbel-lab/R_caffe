@@ -1,7 +1,7 @@
 ---
-title: "16 - ANOSIM and SIMPER"
+title: "17 - PCA and nMDS"
 author: "Francisco E. Fonturbel"
-date: "23/November/2022"
+date: "04/January/2023"
 output: 
   html_document:
     includes:
@@ -16,7 +16,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-## How to analyze species composition?
+## Dealing with multiple variables at once
 
 Dealing with biodiversity data is somewhat different than dealing with the usual stuff that we are used to. Some authors use standard approaches (e.g., ANOVA) to compare species composition among sites, but this is not correct as in this case the identity of the species matters, and traditional methods cannot consider them.
 
