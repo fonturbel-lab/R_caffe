@@ -1,0 +1,85 @@
+---
+title: "16 - ANOSIM and SIMPER"
+author: "Francisco E. Fonturbel"
+date: "23/November/2022"
+output: 
+  html_document:
+    includes:
+        after_body: footer.html
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	echo = TRUE,
+	message = FALSE,
+	warning = FALSE
+)
+```
+
+## How to analyze species composition?
+
+Dealing with biodiversity data is somewhat different than dealing with the usual stuff that we are used to. Some authors use standard approaches (e.g., ANOVA) to compare species composition among sites, but this is not correct as in this case the identity of the species matters, and traditional methods cannot consider them.
+
+```{r data}
+library(vegan)
+
+data<-read.table("data/16_bird_data.txt", 
+                     header=TRUE, 
+                     sep="\t", dec=".", 
+                     na.strings="NA")
+attach(data)
+head(data)
+```
+
+We will use the data of [Fontúrbel et al. 2020](https://www.sciencedirect.com/science/article/pii/S1470160X20308013) to illustrate this. This dataset contains bird abundance data for camera trap and point count data, comparing four habitat conditions.
+
+## Analysis of Similarities (ANOSIM)
+
+When we have species presence/absence or relative abundance data with two or more groups and at least three replicates per group, we can use the Analysis of Similarities (ANOSIM) to test for species composition differences. ANOSIM is a non-parametric approach that uses a similarity metric (e.g., Jaccard or Bray-Curtis) to compare species similarity within and between groups (following the same logic than ANOVA). The resulting statistics (R) is not a proportional value as it is calculated upon rankings (and it should not be interpreted as a linear scale of difference). The significance of this test is estimated using permutations (P value is the number of times that the randomized R value is equal or greater than the real R value, divided by the number of permutations). ANOSIM is implemented in the `vegan` package.
+
+```{r anosim1}
+#Extract the columns with species data in a separate object
+birds<-data[,3:22]
+
+#Creating a distance matrix
+birdist<-vegdist(birds)
+
+#ANOSIM per habitat
+forestbirds<-anosim(birdist, data$Habitat, permutations = 999, distance = "bray")
+summary(forestbirds)
+plot(forestbirds, xlab="Condition", ylab="Rank distance")
+```
+
+
+So, there is no difference among habitat conditions. What about sampling approaches?
+
+```{r anosim2}
+sampbirds<-anosim(birdist, data$Sample, permutations = 999, distance = "bray")
+summary(sampbirds)
+plot(sampbirds, xlab="Sampling method", ylab="Rank distance")
+```
+
+In this case, we found a significant difference, in which point counts are different from camera traps.
+
+
+## Which species explain the differences?
+
+In the second case, we found a significant difference in the ANOSIM test. But, which species account for such differences? In this case, we can use the Similarity Percentages (SIMPER) test, also implemented in the `vegan` package.
+
+```{r simper}
+simbirds<-simper(birds, group = data$Sample, permutations = 999)
+summary(simbirds, digits = "3")
+```
+
+
+
+## Final thoughts
+
+ANOSIM and SIMPER are simple tests to test for species composition differences and provide an actual hypothesis test with a proper P value. This approach is more appropriate to analyze species composition data rather than other approaches, such as ANOVA, which may be giving unreliable results.
+
+
+## Session
+
+```{r session, echo=TRUE}
+sessionInfo()
+```
