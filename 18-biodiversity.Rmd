@@ -89,9 +89,159 @@ specpool(animal.dt)
 
 Here we have three of the most common indices: Chao1, Jackknife, and Bootstrap. We can simply average them (which is 28.43 species) and compare this expected species richness against the observed species richness (22 species). So, sampling effectiveness is 22 / 28.43 = 0.77, meaning that we sampled about 77% of the insect species present in this crop.
 
+## Rank-abundance curves
+
+Within biological communities is quite common to found very abundant species (the dominant ones) and others that are present in low abundances (also known as rare species). If we have quantitative data, we can estimate a relative abundance of those species and order them from the most abundant to the least:
+
+```{r rank-ab, echo=TRUE, message=FALSE, warning=FALSE}
+rab.pol<-rankabundance(animal.dt)
+rab.pol
+
+rankabunplot(rab.pol, scale='abundance')
+```
+
+As we can see, there are some abundant species that dominate the community, and many others that occur in low abundances.
+
+Let's compare this between pan traps placed at the border or the center of the crop:
+
+**Border**
+```{r rank-border}
+rab.bor<-rankabundance(animal.dt, y=env.dt, factor="posicion", level="border")
+rab.bor
+
+rankabunplot(rab.bor, scale='abundance')
+```
+
+**Center**
+```{r rank-center}
+rab.cen<-rankabundance(animal.dt, y=env.dt, factor="posicion", level="center")
+rab.cen
+
+rankabunplot(rab.cen, scale='abundance')
+```
+
+We can observe that different insect species dominate in the crop's border or the center.
+
+
+And now let's compare insect diversity by pan-trap color:
+
+**White**
+```{r rank-w}
+rab.w<-rankabundance(animal.dt, y=env.dt, factor="color", level="white")
+rab.w
+
+rankabunplot(rab.w, scale='abundance')
+```
+
+**Yellow**
+```{r rank-y}
+rab.y<-rankabundance(animal.dt, y=env.dt, factor="color", level="yellow")
+rab.y
+
+rankabunplot(rab.y, scale='abundance')
+```
+
+**Blue**
+```{r rank-b}
+rab.b<-rankabundance(animal.dt, y=env.dt, factor="color", level="blue")
+rab.b
+
+rankabunplot(rab.b, scale='abundance')
+```
+
+Impressive! there are huge differences in dominance. We may go back to lesson 16 and apply an ANOSIM test to this data (or simply read Solange's paper in full).
+
+
+## Species diversity
+
+Now, we will use the `diversityresult` function to estimate species richness, species diversity (based on the Shannon index, H'), and eveness (based on the Pielou index, J). For each element, we can extact only one comparison level (border vs center, or different colors), and order them into a table below:
+
+```{r diversity, echo=TRUE}
+#Spp richness
+div_s<-diversityresult(animal.dt, y=NULL, index="richness", method="pooled", digits=3)
+
+##By trap location
+div_sb<-diversityresult(animal.dt, y=env.dt, factor="posicion", level="border", index="richness", method="pooled", sortit=TRUE, digits=3)
+div_sc<-diversityresult(animal.dt, y=env.dt, factor="posicion", level="center", index="richness", method="pooled", sortit=TRUE, digits=3)
+
+##By colors
+div_sw<-diversityresult(animal.dt, y=env.dt, factor="color", level="white", index="richness", method="pooled", sortit=TRUE, digits=3)
+div_sy<-diversityresult(animal.dt, y=env.dt, factor="color", level="yellow", index="richness", method="pooled", sortit=TRUE, digits=3)
+div_sb<-diversityresult(animal.dt, y=env.dt, factor="color", level="blue", index="richness", method="pooled", sortit=TRUE, digits=3)
+
+#Overall diversity
+div_all<-diversityresult(animal.dt, y=NULL, index="Shannon", method="mean", digits=3)
+
+##By trap location
+div_border<-diversityresult(animal.dt, y=env.dt, factor="posicion", level="border", index="Shannon", method="mean", sortit=TRUE, digits=3)
+div_center<-diversityresult(animal.dt, y=env.dt, factor="posicion", level="center", index="Shannon", method="mean", sortit=TRUE, digits=3)
+
+##By colors
+div_w<-diversityresult(animal.dt, y=env.dt, factor="color", level="white", index="Shannon", method="mean", sortit=TRUE, digits=3)
+div_y<-diversityresult(animal.dt, y=env.dt, factor="color", level="yellow", index="Shannon", method="mean", sortit=TRUE, digits=3)
+div_b<-diversityresult(animal.dt, y=env.dt, factor="color", level="blue", index="Shannon", method="mean", sortit=TRUE, digits=3)
+
+#Evenness
+div_ev<-diversityresult(animal.dt, y=NULL, index="Eevenness", method="mean", digits=3)
+
+##By trap location
+div_eb<-diversityresult(animal.dt, y=env.dt, factor="posicion", level="border", index="Eevenness", method="mean", sortit=TRUE, digits=3)
+div_ec<-diversityresult(animal.dt, y=env.dt, factor="posicion", level="center", index="Eevenness", method="mean", sortit=TRUE, digits=3)
+
+##By colors
+div_ew<-diversityresult(animal.dt, y=env.dt, factor="color", level="white", index="Eevenness", method="mean", sortit=TRUE, digits=3)
+div_ey<-diversityresult(animal.dt, y=env.dt, factor="color", level="yellow", index="Eevenness", method="mean", sortit=TRUE, digits=3)
+div_eb<-diversityresult(animal.dt, y=env.dt, factor="color", level="blue", index="Eevenness", method="mean", sortit=TRUE, digits=3)
+```
+
+#### Species richness
+
+| Comparison | S |
+| ---------- | -- |
+| Overall | `r div_s` |
+|  |  |
+| Border | `r div_sb` |
+| Center | `r div_sc` |
+|  |  |
+| White | `r div_sw` |
+| Yellow | `r div_sy` |
+| Blue | `r div_sb` |
+
+#### Diversity
+
+
+| Comparison | H' |
+| ---------- | -- |
+| Overall | `r div_all` |
+|  |  |
+| Border | `r div_border` |
+| Center | `r div_center` |
+|  |  |
+| White | `r div_w` |
+| Yellow | `r div_y` |
+| Blue | `r div_b` |
+
+
+#### Evenness
+
+| Comparison | E |
+| ---------- | -- |
+| Overall | `r div_ev` |
+|  |  |
+| Border | `r div_eb` |
+| Center | `r div_ec` |
+|  |  |
+| White | `r div_ew` |
+| Yellow | `r div_ey` |
+| Blue | `r div_eb` |
+
+
+While we can calculate this by hand, with a pencil, a piece of papers, and a simple calculator (as I did 20 years ago when was an undergraduate student), this procedure simplifies such calculations, particularly when we have too many species.
+
+
 ## Final thoughts
 
-a
+Biodiversity analysis in R is simple and straightforward.
 
 
 ## Session
