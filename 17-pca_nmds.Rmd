@@ -95,7 +95,7 @@ Some people use this visual interpretation to group variables, for example those
 
 ## Non-metric multidimensional scaling (nMDS)
 
-The non-metric multidimensional scaling works in a similar philosophy than `PCA`, grouping variables using an ordination algorithm. Usually we apply `nMDS` together with `ANOSIM` to visualize species composition differences (but it can be used with any kind of variables that have at least two discrete groups).
+The non-metric multidimensional scaling works in a similar philosophy than `PCA`, grouping variables using an ordination algorithm. Usually we apply `nMDS` together with `ANOSIM` to visualize species composition differences (but it can be used with any kind of variables that have at least two discrete groups). As ANOSIM, nMDS requires replicated data (at least three replicates per group).
 
 Let's remember our last lesson and conduct an `ANOSIM` test to compare plant species composition among the same three forest stands above.
 
@@ -110,46 +110,6 @@ plantdist<-vegdist(plant.dt)
   
 plant.anosim<-anosim(plantdist, plants$grid, permutations = 999, distance = "bray")
 summary(plant.anosim)
-
-plant.mds<-metaMDS(plantdist, distance = "bray")
-plant.mds
-
-plant.scores<-as.data.frame(scores(plant.mds))
-plant.scores$site<-rownames(plant.scores)
-plant.scores$grid<-plants$grid
-
-grp.G1 <- plant.scores[plant.scores$grid == "G1", ][chull(plant.scores[plant.scores$grid == 
-    "G1", c("NMDS1", "NMDS2")]), ]  # hull values for Native habitat
-grp.G2 <- plant.scores[plant.scores$grid == "G2", ][chull(plant.scores[plant.scores$grid == 
-    "G2", c("NMDS1", "NMDS2")]), ]  # hull values for Secondary habitat
-grp.G3 <- plant.scores[plant.scores$grid == "G3", ][chull(plant.scores[plant.scores$grid == 
-    "G3", c("NMDS1", "NMDS2")]), ]  # hull values for Logged habitat
-
-hull.plant <- rbind(grp.G1, grp.G2, grp.G3)  #combine groups
-
-plant.nmds.plot<-ggplot() + 
-  geom_polygon(data=hull.plant,aes(x=NMDS1,y=NMDS2,fill=grid,group=grid),alpha=0.30) + # add the convex hulls
-  geom_point(data=plant.scores,aes(x=NMDS1,y=NMDS2,shape=grid,colour=grid),size=4) + # add the point markers
-  coord_equal() +
-  scale_fill_startrek() +
-  scale_color_startrek() +
-  theme_bw() + 
-  labs(x="nMDS 1", y="nMDS 2") +
-  theme(axis.text.x = element_text(size = 16),  # remove x-axis text
-        axis.text.y = element_text(size = 16), # remove y-axis text
-        axis.ticks = element_blank(),  # remove axis ticks
-        axis.title.x = element_text(size=18), # remove x-axis labels
-        axis.title.y = element_text(size=18), # remove y-axis labels
-        panel.background = element_blank(), 
-        panel.grid.major = element_blank(),  #remove major-grid labels
-        panel.grid.minor = element_blank(),  #remove minor-grid labels
-        plot.background = element_blank(),
-        legend.title = element_blank(),
-        legend.text = element_text(size = 16))
-plant.nmds.plot
-
-#Obtaining nMDS stress
-plant.mds$stress
 ```
 
 Our ANOSIM results show that species composition diffents among forest stands, but how can we represent it in a nice plot?
@@ -197,10 +157,11 @@ plant.nmds.plot
 plant.mds$stress
 ```
 
+Well, this very cute plot is an abstract representation of species composition differences. Each forest stand is represented by one polygon (I used different colors on purpose), the larger overlap among polygons the more similar species composition is, so when polygons do not overlap we have different species compositions. Below the plot we present a stress value. In nMDS, stress represents how well the ordination explains our data. Stress values range from to 0 to 1, being values ≤0.3 acceptable, ≤ 0.2 are good, and ≤0.1 are very good. Ordinations with stress values between 0.3 and 0.5 are doubtful, and those >0.5 are simply useless.
 
 ## Final thoughts
 
-PCA and nMDS
+PCA and nMDS are powerful visual tools to complement our formal hypothesis-testing analysis but also to explore our dataset in advance and see (in a nice graph) how our data behaves and help deciding which analysis approach will be used.
 
 
 ## Session
