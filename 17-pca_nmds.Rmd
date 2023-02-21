@@ -18,7 +18,7 @@ knitr::opts_chunk$set(
 
 ## Dealing with multiple variables at once
 
-Dealing with biodiversity data is somewhat different than dealing with the usual stuff that we are used to. Some authors use standard approaches (e.g., ANOVA) to compare species composition among sites, but this is not correct as in this case the identity of the species matters, and traditional methods cannot consider them.
+Dealing with biodiversity data is somewhat different than dealing with the usual stuff that we are (now) used to. Besides formal tests, there are some multivariate tests that allow us to conduct a visual exploration of our data, instead than testing an hypothesis.
 
 ```{r data}
 library(vegan)
