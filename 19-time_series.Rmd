@@ -1,0 +1,60 @@
+---
+title: "19 - Time series analysis"
+author: "Francisco E. Fonturbel"
+date: "21/February/2023"
+output: 
+  html_document:
+    includes:
+        after_body: footer.html
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	echo = TRUE,
+	message = FALSE,
+	warning = FALSE
+)
+```
+
+## A very basic introduction to Time series analysis (TSA)
+
+Today we will learn how to analyze and make sense of our biodiversity data (after long campaigns in the field collecting data... really exhausting). The `BiodiversityR` package contains many useful functions to run biodiversity analysis (the first time that you load this package may be asked to install XQuartz).
+
+
+```{r data, message=FALSE, warning=FALSE}
+#Loading required packages
+library(dplyr)
+library(ggplot2)
+library(ggsci)
+library(ggpubr)
+library(vegan)
+library(BiodiversityR)
+library(Rarefy)
+
+#Loading work data
+data = read.csv("data/18_canola.csv",
+                   header=TRUE,
+                   sep=",")
+
+attach(data)
+
+animal.dt<-data[,5:26]
+env.dt<-data[,3:4]
+
+env.dt$posicion<-as.factor(env.dt$posicion)
+env.dt$color<-as.factor(env.dt$color)
+```
+
+
+
+
+## Final thoughts
+
+Biodiversity analysis in R is simple and straightforward. Here I presented only a few options, but I highly encourage you to explore the `BiodiversityR` package a little bit further on your own.
+
+
+## Session
+
+```{r session, echo=TRUE}
+sessionInfo()
+```
