@@ -73,6 +73,64 @@ plot(zoncan,ylab='Chincol abundance (Canelo)')
 plot(zonnot,ylab='Chincol abundance (Notro)')
 ```
 
+Holy Molly! a lot of data! Let's unify habitat data by species:
+
+```{r unify}
+aphspi<-cbind(aphspiC,aphspiN)
+carbar<-cbind(carbarC,carbarN)
+elaalb<-cbind(elaalbC,elaalbN)
+phrpat<-cbind(phrpatC,phrpatN)
+troaed<-cbind(troaedC,troaedN)
+turfal<-cbind(turfalC,turfalN)
+zoncap<-cbind(zoncapC,zoncapN)
+```
+
+And convert them in TSA objects:
+
+```{r tsa_unif}
+rayadito<-ts(aphspi, start=c(2003, 1), end=c(2015, 12), frequency=12)
+jilguero<-ts(carbar, start=c(2003, 1), end=c(2015, 12), frequency=12)
+fiofio<-ts(elaalb, start=c(2003, 1), end=c(2015, 12), frequency=12)
+cometocino<-ts(phrpat, start=c(2003, 1), end=c(2015, 12), frequency=12)
+chercan<-ts(troaed, start=c(2003, 1), end=c(2015, 12), frequency=12)
+zorzal<-ts(turfal, start=c(2003, 1), end=c(2015, 12), frequency=12)
+chincol<-ts(zoncap, start=c(2003, 1), end=c(2015, 12), frequency=12)
+```
+
+And plot them again:
+
+```{r plot_unif}
+plot(rayadito, main="Aphrastura spinicauda")
+plot(jilguero, main="Carduelis barbata")
+plot(fiofio, main="Elaenia albiceps")
+plot(cometocino, main="Phrygilus patagonicus")
+plot(chercan, main="Troglodytes aedon")
+plot(zorzal, main="Turdus falcklandii")
+plot(chincol, main="Zonotrichia capensis")
+```
+
+
+## Autocorrelation functions
+
+As we dealt with spatial autocorrelation on lesson 15, in TSA we will deal with temporal autocorrelation, that has the same principle (the shorter the measurement interval, the more similar a variable would be). In this case, we will estimate the autocorrelation function (ACF) for each variable:
+
+```{r acf}
+acf(as.vector(aphcan),lag.max=36, main="ACF Rayadito Canelo")
+acf(as.vector(aphnot),lag.max=36, main="ACF Rayadito Notro")
+acf(as.vector(carcan),lag.max=36, main="ACF Jilguero Canelo")
+acf(as.vector(carnot),lag.max=36, main="ACF Jilguero Notro")
+acf(as.vector(elacan),lag.max=36, main="ACF Fiofio Canelo")
+acf(as.vector(elanot),lag.max=36, main="ACF Fiofio Notro")
+acf(as.vector(phrcan),lag.max=36, main="ACF Cometocino Canelo")
+acf(as.vector(phrnot),lag.max=36, main="ACF Cometocino Notro")
+acf(as.vector(trocan),lag.max=36, main="ACF Chercan Canelo")
+acf(as.vector(tronot),lag.max=36, main="ACF Chercan Notro")
+acf(as.vector(turcan),lag.max=36, main="ACF Zorzal Canelo")
+acf(as.vector(turnot),lag.max=36, main="ACF Zorzal Notro")
+acf(as.vector(zoncan),lag.max=36, main="ACF Chincol Canelo")
+acf(as.vector(zonnot),lag.max=36, main="ACF Chincol Notro")
+```
+
 
 ## Final thoughts
 
