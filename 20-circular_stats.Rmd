@@ -99,6 +99,8 @@ clock24.plot(activ_table$A,clock, rp.type="p",poly.col="#0000FF99",lwd=4,line.co
 
 ```
 
+Very impressive, right?
+
 
 ## Formal tests
 
@@ -120,7 +122,7 @@ rayleigh.test(n_a)
 
 ## Final thoughts
 
-aaa
+Circular statistics are a different way to assess temporal data. As you may see in the example, it would be absurd to use ANOVA tests or GLM models in this case. What we need is an appropriate tool that takes time circularity into account. Of course there are much more in circular statistics than I presented here, and fortunately there are many good books that you can read if you want to explore this subject further.
 
 
 ## Session
