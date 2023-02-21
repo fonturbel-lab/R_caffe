@@ -1,7 +1,7 @@
 ---
-title: "17 - PCA and nMDS"
+title: "18 - Biodiversity analysis"
 author: "Francisco E. Fonturbel"
-date: "04/January/2023"
+date: "21/February/2023"
 output: 
   html_document:
     includes:
