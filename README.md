@@ -52,7 +52,7 @@ This repository presents a comprehensive R course intended for self-learning and
 
 17.- PCA and nMDS
 
-_18.- Biodiversity analysis in R_
+18.- Biodiversity analysis in R
 
 _19.- Basic time series analysis_
 
