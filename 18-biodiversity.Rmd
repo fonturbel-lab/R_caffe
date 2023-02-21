@@ -18,10 +18,10 @@ knitr::opts_chunk$set(
 
 ## Using R to conduct biodiversity analysis
 
-Today we will learn how to analyze and make sense of our biodiversity data (after long campaigns in the field collecting data... really exhausting)
+Today we will learn how to analyze and make sense of our biodiversity data (after long campaigns in the field collecting data... really exhausting). The `BiodiversityR` package contains many useful functions to run biodiversity analysis (the first time that you load this package may be asked to install XQuartz).
 
 
-```{r data}
+```{r data, message=FALSE, warning=FALSE}
 #Loading required packages
 library(dplyr)
 library(ggplot2)
@@ -32,7 +32,7 @@ library(BiodiversityR)
 library(Rarefy)
 
 #Loading work data
-data = read.csv("data/data_cn.csv",
+data = read.csv("data/18_canola.csv",
                    header=TRUE,
                    sep=",")
 
@@ -65,109 +65,13 @@ My_Theme2 = theme(
 
 Today we will use some data of [Jaques et al. 2023](https://www.mdpi.com/2073-4395/13/2/552) as a working example. This dataset contains data of insect pollinator in a canola crop (the one with the yellow flowers), comparing pan trap color and position effects in the diversity of insects captured.
 
-## Analysis of Principal Components (PCA)
+## Rarefaction curves
 
-The Analysis of Principal Components reduces many variables to a few dimensions (usually two or three) calllen "principal components" that are orthologous (i.e., independent) from each other. Principal components are always arranged from the one that explains most of the data variance to the least. Each principal component has an associated eigenvector that is a proxy of its importance, usually eigenvalues >1 are meaningful.
-
-```{r str_pca, echo=FALSE, message=FALSE, warning=FALSE}
-cols<-c(7,32,42,44,45)
-habstr <- data [, cols]
-
-#Now the PCA
-pc1 <- prcomp(habstr, scale. = T)
-summary(pc1)
-
-#PCA eigenvalues
-R<-cor(habstr)
-miEig<-eigen(R)
-miEig
-
-#PCA plots
-#biplot(pc1)
-
-
-#habdata2<-dudi.pca(habstr, center = TRUE, scale=TRUE, scan=FALSE)
-#coul <- c("blue", "green", "orange", "red")
-#s.class(habdata2$li, fac=data$grid, cpoint = 1, col = coul)
-
-#s.corcircle(habdata2$co, lab = names(habstr), full = FALSE, box = TRUE)
-
-fviz_pca_biplot(pc1, label="var", habillage=data$grid,addEllipses=TRUE, ellipse.level=0.95)
-```
-
-The resulting plot shows each forest stand (G1, G2, and G3) and the arrows represent the variables and their relative contribution to the first to principal components (PC1 and PC2).
-
-Some people use this visual interpretation to group variables, for example those with larger contributions to PC1 in one group and those with larger contributions to PC2 in other group, and name the groups according to the type of variables involved (it requires some imagination sometimes). Also, we can use the PCA scores as surrogate variables to simplify our analyses in case we don't want to include that many variables in one model, for example.
-
-## Non-metric multidimensional scaling (nMDS)
-
-The non-metric multidimensional scaling works in a similar philosophy than `PCA`, grouping variables using an ordination algorithm. Usually we apply `nMDS` together with `ANOSIM` to visualize species composition differences (but it can be used with any kind of variables that have at least two discrete groups). As ANOSIM, nMDS requires replicated data (at least three replicates per group).
-
-Let's remember our last lesson and conduct an `ANOSIM` test to compare plant species composition among the same three forest stands above.
-
-
-```{r anosim, echo=TRUE, fig.width=8}
-plants = read.csv("data/17_data_plants.csv",
-                   header=TRUE,
-                   sep=",")
-  
-plant.dt<-plants[,2:24]
-plantdist<-vegdist(plant.dt)
-  
-plant.anosim<-anosim(plantdist, plants$grid, permutations = 999, distance = "bray")
-summary(plant.anosim)
-```
-
-Our ANOSIM results show that species composition diffents among forest stands, but how can we represent it in a nice plot?
-
-
-```{r nmds, echo=TRUE, fig.width=8}
-plant.mds<-metaMDS(plantdist, distance = "bray")
-plant.mds
-
-plant.scores<-as.data.frame(scores(plant.mds))
-plant.scores$site<-rownames(plant.scores)
-plant.scores$grid<-plants$grid
-
-grp.G1 <- plant.scores[plant.scores$grid == "G1", ][chull(plant.scores[plant.scores$grid == 
-    "G1", c("NMDS1", "NMDS2")]), ]  # hull values for Native habitat
-grp.G2 <- plant.scores[plant.scores$grid == "G2", ][chull(plant.scores[plant.scores$grid == 
-    "G2", c("NMDS1", "NMDS2")]), ]  # hull values for Secondary habitat
-grp.G3 <- plant.scores[plant.scores$grid == "G3", ][chull(plant.scores[plant.scores$grid == 
-    "G3", c("NMDS1", "NMDS2")]), ]  # hull values for Logged habitat
-
-hull.plant <- rbind(grp.G1, grp.G2, grp.G3)  #combine groups
-
-plant.nmds.plot<-ggplot() + 
-  geom_polygon(data=hull.plant,aes(x=NMDS1,y=NMDS2,fill=grid,group=grid),alpha=0.30) + # add the convex hulls
-  geom_point(data=plant.scores,aes(x=NMDS1,y=NMDS2,shape=grid,colour=grid),size=4) + # add the point markers
-  coord_equal() +
-  scale_fill_startrek() +
-  scale_color_startrek() +
-  theme_bw() + 
-  labs(x="nMDS 1", y="nMDS 2") +
-  theme(axis.text.x = element_text(size = 16),  # remove x-axis text
-        axis.text.y = element_text(size = 16), # remove y-axis text
-        axis.ticks = element_blank(),  # remove axis ticks
-        axis.title.x = element_text(size=18), # remove x-axis labels
-        axis.title.y = element_text(size=18), # remove y-axis labels
-        panel.background = element_blank(), 
-        panel.grid.major = element_blank(),  #remove major-grid labels
-        panel.grid.minor = element_blank(),  #remove minor-grid labels
-        plot.background = element_blank(),
-        legend.title = element_blank(),
-        legend.text = element_text(size = 16))
-plant.nmds.plot
-
-#Obtaining nMDS stress
-plant.mds$stress
-```
-
-Well, this very cute plot is an abstract representation of species composition differences. Each forest stand is represented by one polygon (I used different colors on purpose), the larger overlap among polygons the more similar species composition is, so when polygons do not overlap we have different species compositions. Below the plot we present a stress value. In nMDS, stress represents how well the ordination explains our data. Stress values range from to 0 to 1, being values ≤0.3 acceptable, ≤ 0.2 are good, and ≤0.1 are very good. Ordinations with stress values between 0.3 and 0.5 are doubtful, and those >0.5 are simply useless.
+a
 
 ## Final thoughts
 
-PCA and nMDS are powerful visual tools to complement our formal hypothesis-testing analysis but also to explore our dataset in advance and see (in a nice graph) how our data behaves and help deciding which analysis approach will be used.
+a
 
 
 ## Session
