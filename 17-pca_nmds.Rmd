@@ -20,55 +20,73 @@ knitr::opts_chunk$set(
 
 Dealing with biodiversity data is somewhat different than dealing with the usual stuff that we are (now) used to. Besides formal tests, there are some multivariate tests that allow us to conduct a visual exploration of our data, instead than testing an hypothesis.
 
-```{r data}
-library(vegan)
 
-data<-read.table("data/16_bird_data.txt", 
-                     header=TRUE, 
-                     sep="\t", dec=".", 
-                     na.strings="NA")
+```{r data}
+library(dplyr)
+library(ggplot2)
+library(ggsci)
+library(ggpubr)
+library(vegan)
+library(ade4)
+library(ecodist)
+library("factoextra")
+
+#Loading work data
+data = read.csv("data/17_monito_hab.csv",
+                   header=TRUE,
+                   sep=",")
 attach(data)
 head(data)
 ```
 
-We will use the data of [Fontúrbel et al. 2020](https://www.sciencedirect.com/science/article/pii/S1470160X20308013) to illustrate this. This dataset contains bird abundance data for camera trap and point count data, comparing four habitat conditions.
+```{r grooming, include=FALSE, warning=FALSE, message=FALSE}
+#Enabling multiplot capabilities
+source("multiplot.R")
 
-## Analysis of Similarities (ANOSIM)
-
-When we have species presence/absence or relative abundance data with two or more groups and at least three replicates per group, we can use the Analysis of Similarities (ANOSIM) to test for species composition differences. ANOSIM is a non-parametric approach that uses a similarity metric (e.g., Jaccard or Bray-Curtis) to compare species similarity within and between groups (following the same logic than ANOVA). The resulting statistics (R) is not a proportional value as it is calculated upon rankings (and it should not be interpreted as a linear scale of difference). The significance of this test is estimated using permutations (P value is the number of times that the randomized R value is equal or greater than the real R value, divided by the number of permutations). ANOSIM is implemented in the `vegan` package.
-
-```{r anosim1}
-#Extract the columns with species data in a separate object
-birds<-data[,3:22]
-
-#Creating a distance matrix
-birdist<-vegdist(birds)
-
-#ANOSIM per habitat
-forestbirds<-anosim(birdist, data$Habitat, permutations = 999, distance = "bray")
-summary(forestbirds)
-plot(forestbirds, xlab="Condition", ylab="Rank distance")
+##Some ggplot2 grooming
+My_Theme2 = theme(
+  axis.title.x = element_text(size = 20,face="bold"),
+  axis.text.x = element_text(size = 16),
+  axis.text.y = element_text(size = 16),
+  axis.title.y = element_text(size = 20,face="bold"),
+  legend.text = element_text(size = 14),
+  legend.title = element_text(size = 14,face="bold"),
+  panel.grid.major = element_blank(),
+  panel.grid.minor = element_blank(),
+  panel.background = element_rect(fill = "white"),
+  plot.title = element_text(size = 20,face="bold"))
 ```
 
+Today we will use some data of [Gonzalez-Ancin et al. 2022](https://www.cambridge.org/core/journals/oryx/article/intermediate-levels-of-wood-extraction-may-facilitate-coexistence-of-an-endemic-arboreal-marsupial-and-indigenous-communities/7E08676B30B1C4392BF34522D495EDB2) as a working example. This dataset contains habitat structure variables of three forests stands in which we captured _Dromiciops gliroides_ nearby the Pucatrihue bay.
 
-So, there is no difference among habitat conditions. What about sampling approaches?
+## Analysis of Principal Components (PCA)
 
-```{r anosim2}
-sampbirds<-anosim(birdist, data$Sample, permutations = 999, distance = "bray")
-summary(sampbirds)
-plot(sampbirds, xlab="Sampling method", ylab="Rank distance")
-```
+The Analysis of Principal Components reduces many variables to a few dimensions (usually two or three) calllen "principal components" that are orthologous (i.e., independent) from each other. Principal components are always arranged from the one that explains most of the data variance to the least. Each principal component has an associated eigenvector that is a proxy of its importance, usually eigenvalues >1 are meaningful.
 
-In this case, we found a significant difference, in which point counts are different from camera traps.
+```{r str_pca, echo=FALSE, message=FALSE, warning=FALSE}
+cols<-c(7,32,42,44,45)
+habstr <- data [, cols]
+
+#Now the PCA
+pc1 <- prcomp(habstr, scale. = T)
+summary(pc1)
+
+#PCA eigenvalues
+R<-cor(habstr)
+miEig<-eigen(R)
+miEig
+
+#PCA plots
+#biplot(pc1)
 
 
-## Which species explain the differences?
+#habdata2<-dudi.pca(habstr, center = TRUE, scale=TRUE, scan=FALSE)
+#coul <- c("blue", "green", "orange", "red")
+#s.class(habdata2$li, fac=data$grid, cpoint = 1, col = coul)
 
-In the second case, we found a significant difference in the ANOSIM test. But, which species account for such differences? In this case, we can use the Similarity Percentages (SIMPER) test, also implemented in the `vegan` package.
+#s.corcircle(habdata2$co, lab = names(habstr), full = FALSE, box = TRUE)
 
-```{r simper}
-simbirds<-simper(birds, group = data$Sample, permutations = 999)
-summary(simbirds, digits = "3")
+fviz_pca_biplot(pc1, label="var", habillage=data$grid,addEllipses=TRUE, ellipse.level=0.95)
 ```
 
 
