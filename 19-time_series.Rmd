@@ -226,7 +226,7 @@ The output of those models is a little difficult to interpret at first, but afte
 
 ## Final thoughts
 
-Time Series Analysis is a powerful tool to work with measurements repeated in time.
+Time Series Analysis is a powerful tool to work with measurements repeated in time. Here I presented the tip of the iceberg, the most basic analyses, but there is a lot more than can be done in this subject. Usually, the main limitation is gathering a large dataset (at least 5 years of data) to make robust inferences from it. Of course that the software will drop some results with a few points in time, but the interpretation of it may be wrong, so please take a note of caution on it: TSA with insufficient data may be misleading.
 
 
 ## Session
