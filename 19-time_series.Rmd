@@ -136,7 +136,7 @@ It's common to find regular "waves" of autocorrelation, as they are given by sea
 
 ## Decomposing time series data
 
-This is my favorite part! 
+This is my favorite part! We can decompose a time series data into four elements: the data itself, the seasonal variation, the trend, and the remainder (error). We also can plot the variation within each month across years, and annual variation across sampling years. We will use only two species as an example here:
 
 ```{r decomp}
 #Rayadito-Canelo
@@ -152,76 +152,7 @@ fit.aphnot<-stl(aphnot, "periodic")
 plot(fit.aphnot, main="Rayadito-Notro")
 monthplot(aphnot, main="Rayadito-Notro")
 seasonplot(aphnot, main="Rayadito-Notro")
-##
-#Jilguero-Canelo
-decompose(carcan)
-fit.carcan<-stl(carcan, "periodic")
-plot(fit.carcan, main="Jilguero-Canelo")
-monthplot(carcan, main="Jilguero-Canelo")
-seasonplot(carcan, main="Jilguero-Canelo")
-##
-#Jilguero-Notro
-decompose(carnot)
-fit.carnot<-stl(carnot, "periodic")
-plot(fit.carnot, main="Jilguero-Notro")
-monthplot(carnot, main="Jilguero-Notro")
-seasonplot(carnot, main="Jilguero-Notro")
-##
-#Fiofio-Canelo
-decompose(elacan)
-fit.elacan<-stl(elacan, "periodic")
-plot(fit.elacan, main="Fiofio-Canelo")
-monthplot(elacan, main="Fiofio-Canelo")
-seasonplot(elacan, main="Fiofio-Canelo")
-##
-#Fiofio-Notro
-decompose(elanot)
-fit.elanot<-stl(elanot, "periodic")
-plot(fit.elanot, main="Fiofio-Notro")
-monthplot(elanot, main="Fiofio-Notro")
-seasonplot(elanot, main="Fiofio-Notro")
-##
-#Cometocino-Canelo
-decompose(phrcan)
-fit.phrcan<-stl(phrcan, "periodic")
-plot(fit.phrcan, main="Cometocino-Canelo")
-monthplot(phrcan, main="Cometocino-Canelo")
-seasonplot(phrcan, main="Cometocino-Canelo")
-##
-#Cometocino-Notro
-decompose(phrnot)
-fit.phrnot<-stl(phrnot, "periodic")
-plot(fit.phrnot, main="Cometocino-Notro")
-monthplot(phrnot, main="Cometocino-Notro")
-seasonplot(phrnot, main="Cometocino-Notro")
-##
-#Chercan-Canelo
-decompose(trocan)
-fit.trocan<-stl(trocan, "periodic")
-plot(fit.trocan, main="Chercan-Canelo")
-monthplot(trocan, main="Chercan-Canelo")
-seasonplot(trocan, main="Chercan-Canelo")
-##
-#Chercan-Notro
-decompose(tronot)
-fit.tronot<-stl(tronot, "periodic")
-plot(fit.tronot, main="Chercan-Notro")
-monthplot(tronot, main="Chercan-Notro")
-seasonplot(tronot, main="Chercan-Notro")
-##
-#Zorzal-Canelo
-decompose(turcan)
-fit.turcan<-stl(turcan, "periodic")
-plot(fit.turcan, main="Zorzal-Canelo")
-monthplot(turcan, main="Zorzal-Canelo")
-seasonplot(turcan, main="Zorzal-Canelo")
-##
-#Zorzal-Notro
-decompose(turnot)
-fit.turnot<-stl(turnot, "periodic")
-plot(fit.turnot, main="Zorzal-Notro")
-monthplot(turnot, main="Zorzal-Notro")
-seasonplot(turnot, main="Zorzal-Notro")
+
 ##
 #Chincol-Canelo
 decompose(zoncan)
