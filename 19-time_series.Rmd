@@ -171,6 +171,19 @@ seasonplot(zonnot, main="Chincol-Notro")
 
 Very useful information indeed, with a bunch of applications for population ecology, conservation biology, wildlife management, etc.
 
+### Cross-correlation functions
+
+The cross-correlation functions (CCF) allows us to examine the variation of one variable in function of other. In the case of the example, how the abundances of two bird species vary in time or the same species in two habitats, let's take a look on a couple of examples:
+
+```{r ccf}
+ccf(aphcan, aphnot)
+var.test(aphcan, aphnot)
+
+ccf(zoncan, zonnot)
+var.test(zoncan, zonnot)
+```
+
+
 ## ARIMA models
 
 Autoregressive integrated moving average (aka ARIMA) are intended to be used with time series data as they account for seasonality and temporal autocorrelation. Below we will compare one species in two habitats as an example using ARIMA models of first order. ARIMA could be decomposed in AR-I-MA and 0 or 1 indicate if each component (autoregressive, integrated, or moving average) is present or not in the model. A detailed explanation of these models is beyond the scope of this lesson, but there are many good books on this subject.
@@ -208,10 +221,12 @@ acf(as.vector(window(rstandard(m1.aphnot),start=c(2003,2))), lag.max=36)
 hist(window(rstandard(m1.aphnot),start=c(2003,2)), xlab='Standardized Residuals')
 ```
 
+The output of those models is a little difficult to interpret at first, but after some reading and practice everything makes sense.
+
 
 ## Final thoughts
 
-aaa
+Time Series Analysis is a powerful tool to work with measurements repeated in time.
 
 
 ## Session
