@@ -91,6 +91,64 @@ fviz_pca_biplot(pc1, label="var", habillage=data$grid,addEllipses=TRUE, ellipse.
 
 The resulting plot shows each forest stand (G1, G2, and G3) and the arrows represent the variables and their relative contribution to the first to principal components (PC1 and PC2).
 
+## Non-metric multidimensional scaling (nMDS)
+
+s
+
+
+```{r anosim, eval=FALSE, fig.width=8, include=FALSE}
+plants = read.csv("data/data_plants.csv",
+                   header=TRUE,
+                   sep=",")
+  
+plant.dt<-plants[,2:24]
+plantdist<-vegdist(plant.dt)
+  
+plant.anosim<-anosim(plantdist, plants$grid, permutations = 999, distance = "bray")
+summary(plant.anosim)
+plot(plant.anosim, xlab="Grid", ylab="Rank distance")
+
+plant.mds<-metaMDS(plantdist, distance = "bray")
+plant.mds
+
+plant.scores<-as.data.frame(scores(plant.mds))
+plant.scores$site<-rownames(plant.scores)
+plant.scores$grid<-plants$grid
+
+grp.G1 <- plant.scores[plant.scores$grid == "G1", ][chull(plant.scores[plant.scores$grid == 
+    "G1", c("NMDS1", "NMDS2")]), ]  # hull values for Native habitat
+grp.G2 <- plant.scores[plant.scores$grid == "G2", ][chull(plant.scores[plant.scores$grid == 
+    "G2", c("NMDS1", "NMDS2")]), ]  # hull values for Secondary habitat
+grp.G3 <- plant.scores[plant.scores$grid == "G3", ][chull(plant.scores[plant.scores$grid == 
+    "G3", c("NMDS1", "NMDS2")]), ]  # hull values for Logged habitat
+
+hull.plant <- rbind(grp.G1, grp.G2, grp.G3)  #combine groups
+
+plant.nmds.plot<-ggplot() + 
+  geom_polygon(data=hull.plant,aes(x=NMDS1,y=NMDS2,fill=grid,group=grid),alpha=0.30) + # add the convex hulls
+  geom_point(data=plant.scores,aes(x=NMDS1,y=NMDS2,shape=grid,colour=grid),size=4) + # add the point markers
+  coord_equal() +
+  scale_fill_startrek() +
+  scale_color_startrek() +
+  theme_bw() + 
+  labs(x="nMDS 1", y="nMDS 2") +
+  theme(axis.text.x = element_text(size = 16),  # remove x-axis text
+        axis.text.y = element_text(size = 16), # remove y-axis text
+        axis.ticks = element_blank(),  # remove axis ticks
+        axis.title.x = element_text(size=18), # remove x-axis labels
+        axis.title.y = element_text(size=18), # remove y-axis labels
+        panel.background = element_blank(), 
+        panel.grid.major = element_blank(),  #remove major-grid labels
+        panel.grid.minor = element_blank(),  #remove minor-grid labels
+        plot.background = element_blank(),
+        legend.title = element_blank(),
+        legend.text = element_text(size = 16))
+plant.nmds.plot
+
+#Obtaining nMDS stress
+plant.mds$stress
+```
+
 ## Final thoughts
 
 PCA and nMDS
