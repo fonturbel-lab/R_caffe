@@ -136,7 +136,7 @@ It's common to find regular "waves" of autocorrelation, as they are given by sea
 
 ## Decomposing time series data
 
-This is my favorite part! We can decompose a time series data into four elements: the data itself, the seasonal variation, the trend, and the remainder (error). We also can plot the variation within each month across years, and annual variation across sampling years. We will use only two species as an example here:
+This is my favorite part! We can decompose a time series data into four elements: the data itself, the seasonal variation, the trend, and the remainder (error). We also can plot the variation within each month across years, and annual variation across sampling years. We will use only two species (one resident and one migratory) as an example here:
 
 ```{r decomp}
 #Rayadito-Canelo
@@ -169,6 +169,7 @@ monthplot(zonnot, main="Chincol-Notro")
 seasonplot(zonnot, main="Chincol-Notro")
 ```
 
+Very useful information indeed, with a bunch of applications for population ecology, conservation biology, wildlife management, etc.
 
 ## Final thoughts
 
