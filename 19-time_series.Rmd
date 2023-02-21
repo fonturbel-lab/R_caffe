@@ -23,26 +23,14 @@ Today we will learn how to analyze and make sense of our biodiversity data (afte
 
 ```{r data, message=FALSE, warning=FALSE}
 #Loading required packages
-library(dplyr)
-library(ggplot2)
-library(ggsci)
-library(ggpubr)
-library(vegan)
-library(BiodiversityR)
-library(Rarefy)
+library(TSA)
+library(forecast)
+library(astsa)
 
 #Loading work data
-data = read.csv("data/18_canola.csv",
-                   header=TRUE,
-                   sep=",")
-
+data<-read.table("data/19_bird_data.txt", header=T)
 attach(data)
-
-animal.dt<-data[,5:26]
-env.dt<-data[,3:4]
-
-env.dt$posicion<-as.factor(env.dt$posicion)
-env.dt$color<-as.factor(env.dt$color)
+names(data)
 ```
 
 
