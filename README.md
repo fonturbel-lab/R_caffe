@@ -56,10 +56,7 @@ This repository presents a comprehensive R course intended for self-learning and
 
 19.- Basic time series analysis
 
-_20.- Circular statistics_
-
-
-(lessons in _italics_ are not public yet, please be patient)
+20.- Circular statistics
 
 
 This first edition (c) 2022 is composed by 20 lessons, but more lessons are expected to be added in the near future (have any suggestions? please let me know).
