@@ -18,7 +18,7 @@ knitr::opts_chunk$set(
 
 ## A very basic introduction to Time series analysis (TSA)
 
-Today we will learn how to analyze and make sense of our biodiversity data (after long campaigns in the field collecting data... really exhausting). The `BiodiversityR` package contains many useful functions to run biodiversity analysis (the first time that you load this package may be asked to install XQuartz).
+When we measure the same variable (whichever it is) many times in different times (e.g., daily temperature, monthly moth abundance, yearly inflation) we can build a times series dataset, allowing to conduct very interesting analyses. With TSA we can assess trends without the noise of temporal variation (e.g., seasons) in our data, and therefore making more robust inferences.
 
 
 ```{r data, message=FALSE, warning=FALSE}
@@ -33,7 +33,45 @@ attach(data)
 names(data)
 ```
 
+We will use now an unpublished dataset of bird abundance in two habitat types (notro and canelo forests) with monthly records for 12 year (yeah, a lot of work).
 
+First, we need to convert each variable into a TSA object:
+
+```{r objects}
+aphcan<-ts(aphspiC, start=c(2003, 1), end=c(2015, 12), frequency=12)
+aphnot<-ts(aphspiN, start=c(2003, 1), end=c(2015, 12), frequency=12)
+carcan<-ts(carbarC, start=c(2003, 1), end=c(2015, 12), frequency=12)
+carnot<-ts(carbarN, start=c(2003, 1), end=c(2015, 12), frequency=12)
+elacan<-ts(elaalbC, start=c(2003, 1), end=c(2015, 12), frequency=12)
+elanot<-ts(elaalbN, start=c(2003, 1), end=c(2015, 12), frequency=12)
+phrcan<-ts(phrpatC, start=c(2003, 1), end=c(2015, 12), frequency=12)
+phrnot<-ts(phrpatN, start=c(2003, 1), end=c(2015, 12), frequency=12)
+trocan<-ts(troaedC, start=c(2003, 1), end=c(2015, 12), frequency=12)
+tronot<-ts(troaedN, start=c(2003, 1), end=c(2015, 12), frequency=12)
+turcan<-ts(turfalC, start=c(2003, 1), end=c(2015, 12), frequency=12)
+turnot<-ts(turfalN, start=c(2003, 1), end=c(2015, 12), frequency=12)
+zoncan<-ts(zoncapC, start=c(2003, 1), end=c(2015, 12), frequency=12)
+zonnot<-ts(zoncapN, start=c(2003, 1), end=c(2015, 12), frequency=12)
+```
+
+Now that we have those object, we can plot each variable:
+
+```{r plots_hab}
+plot(aphcan,ylab='Rayadito abundance (Canelo)')
+plot(aphnot,ylab='Rayadito abundance (Notro)')
+plot(carcan,ylab='Jilguero abundance (Canelo)')
+plot(carnot,ylab='Jilguero abundance (Notro)')
+plot(elacan,ylab='Fiofio abundance (Canelo)')
+plot(elanot,ylab='Fiofio abundance (Notro)')
+plot(phrcan,ylab='Cometocino abundance (Canelo)')
+plot(phrnot,ylab='Cometocino abundance (Notro)')
+plot(trocan,ylab='Chercan abundance (Canelo)')
+plot(tronot,ylab='Chercan abundance (Notro)')
+plot(turcan,ylab='Zorzal abundance (Canelo)')
+plot(turnot,ylab='Zorzal abundance (Notro)')
+plot(zoncan,ylab='Chincol abundance (Canelo)')
+plot(zonnot,ylab='Chincol abundance (Notro)')
+```
 
 
 ## Final thoughts
