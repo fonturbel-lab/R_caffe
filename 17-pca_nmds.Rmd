@@ -91,9 +91,11 @@ fviz_pca_biplot(pc1, label="var", habillage=data$grid,addEllipses=TRUE, ellipse.
 
 The resulting plot shows each forest stand (G1, G2, and G3) and the arrows represent the variables and their relative contribution to the first to principal components (PC1 and PC2).
 
+Some people use this visual interpretation to group variables, for example those with larger contributions to PC1 in one group and those with larger contributions to PC2 in other group, and name the groups according to the type of variables involved (it requires some imagination sometimes). Also, we can use the PCA scores as surrogate variables to simplify our analyses in case we don't want to include that many variables in one model, for example.
+
 ## Non-metric multidimensional scaling (nMDS)
 
-s
+The non-metric multidimensional scaling
 
 
 ```{r anosim, eval=FALSE, fig.width=8, include=FALSE}
