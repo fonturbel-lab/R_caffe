@@ -32,6 +32,77 @@ activ<-read.table("data/20_activity.txt", header= T)
 
 Here I'll reuse part of the script and data of a public repository co-authored with Javier Cuadra (a former student). If you want to take a look on the complete material that we prepared, just click [HERE](https://github.com/fonturbel-lab/AnimActivity).
 
+In this example dataset we have a lot of activity data of _Sephanoides sephaniodes_ gathered using camera traps for Javier's dissertation (the paper is available [here](https://link.springer.com/article/10.1007/s10530-021-02519-2)).
+
+Before we start, we need to convert our hour data into radians using the following formula:
+
+$$
+rad=time*2*{\pi}
+$$
+**Important:** Prior to transform time data to radians you must convert your time figures to a number.
+
+```{r radian, echo=TRUE}
+radian <- activ$Time_2*2*pi
+data <- radian[activ$Condition == "A"]
+```
+
+## Rose diagrams
+
+A simple representation of activity data is the rose diagram, which is obtained using the function `rose.diag` to represent a circular dataset into a 24h clock.
+
+```{r rose_diag, echo=TRUE, eval=TRUE, fig.width=8}
+rose.diag(n_a, bin = 24, col = "lightblue", main = "Rose diagram", 
+          prop = 2)
+```
+
+## Frequency plots
+
+A more elaborated representation of activity periods than the rose diagram is the frequency plot. On a frequency plot, the lenght of each bar is proportional to .
+
+To make a decent frequency plot we need to arrange our data in a table with frequency of records per hour. We'll load a new file (ready to go) as example.
+
+Then, we will use the `clock24.plot` function of the `plotrix` package.
+
+```{r freq_plot, echo=TRUE, eval=TRUE, fig.width=8}
+#Loading new data file
+activ_table<-read.table("./data/records_hour.txt", header= T)
+
+#Making the plot
+clock<-c(0:23) 
+clock24.plot(activ_table$A,clock, minutes=T, label.prop=c(1.15,1.15),show.grid.labels = 3,  show.grid=T, grid.bg="white", grid.left=T,grid.col="black",rad.col="black", rp.type="r",lwd=5,line.col="blue",lty=1, main="",add=F)
+```
+
+Another way to represent the frequency plot is with the magnitudes represented by the positions of the vertices of the polygon. In this plot, the positions of the vertices indicate the frequency of the records.
+
+```{r freq_plot2, echo=TRUE, eval=TRUE, fig.width=8}
+
+#Making the plot
+clock<-c(0:23) 
+mi.azul <- rgb(0, 0, 1, 0.6) # "#0000FF99"
+clock24.plot(activ_table$A,clock,minutes=T,label.prop=c(1.15,1.15),show.grid.labels = 3, rp.type="s",point.symbols=16,point.col="#0000FF99",add=F)
+clock24.plot(activ_table$A,clock, rp.type="p",poly.col="#0000FF99",lwd=4,line.col="#0000FF99",lty=1, main="",add=T) 
+
+
+```
+
+
+## Formal tests
+
+Now that we have made such beautiful rose diagrams and frequency plots, we maybe will be interested into test some hypotheses about activity patterns. The most simple question here will be if animal activity is homogeneous or not along the day. Of course our _null hypothesis_ will be that animal activity is uniform along the day (like a faculty researcher, for example). The `circular` package has two common tests to do that: Rao's test fpr homogeneity of angular data (`rao.test` function), and Rayleight test of Unifortmity (`rayleigh.test` function). Both tests do basically the same, the difference is that Rayleigh test needs only one `circular.class` element whereas Rao's test need two samples to be compared.
+
+Let's see how they work:
+
+```{r rr_tests, echo=TRUE, eval=TRUE, fig.width=8}
+#Rao's test
+x <- rvonmises(100, circular(0), kappa=10)
+y <- rvonmises(100, circular(0), kappa=10)
+
+rao.test(x, y)
+
+#Rayleigh's test
+rayleigh.test(n_a)
+```
+
 
 ## Final thoughts
 
