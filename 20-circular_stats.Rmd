@@ -16,24 +16,21 @@ knitr::opts_chunk$set(
 )
 ```
 
-## A very basic introduction to Time series analysis (TSA)
+## Circular statistics: a matter of time
 
-When we measure the same variable (whichever it is) many times in different times (e.g., daily temperature, monthly moth abundance, yearly inflation) we can build a times series dataset, allowing to conduct very interesting analyses. With TSA we can assess trends without the noise of temporal variation (e.g., seasons) in our data, and therefore making more robust inferences.
+When we consider time as a variable we face a little big problem: the beginning and the end points are the same. When we run from point A to point B, we get farther from the start point and near to the end point (let's call it "linear data"). But, what if we run around a tree or a fountain? in this case the finishing point will be the same in which we started (let's call it "circular data"). the same happens with time... 00:01 h and 23:59 h seems far away but are quite close indeed (only two minutes away). So, using data analysis approaches intended for linear data to analyze circular data is, of course, a gross mistake. And that is why circular statistics exist.
 
 
 ```{r data, message=FALSE, warning=FALSE}
 #Loading required packages
-library(TSA)
-library(forecast)
-library(astsa)
+library("circular")
+library("plotrix")
 
-#Loading work data
-data<-read.table("data/19_bird_data.txt", header=T)
-attach(data)
-names(data)
+#Loading an example dataset
+activ<-read.table("data/20_activity.txt", header= T)
 ```
 
-
+Here I'll reuse part of the script and data of a public repository co-authored with Javier Cuadra (a former student). If you want to take a look on the complete material that we prepared, just click [HERE](https://github.com/fonturbel-lab/AnimActivity).
 
 
 ## Final thoughts
