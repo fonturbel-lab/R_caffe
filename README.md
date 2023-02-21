@@ -54,7 +54,7 @@ This repository presents a comprehensive R course intended for self-learning and
 
 18.- Biodiversity analysis in R
 
-_19.- Basic time series analysis_
+19.- Basic time series analysis
 
 _20.- Circular statistics_
 
