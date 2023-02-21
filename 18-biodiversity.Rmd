@@ -67,7 +67,27 @@ Today we will use some data of [Jaques et al. 2023](https://www.mdpi.com/2073-43
 
 ## Rarefaction curves
 
-a
+How well sampled was our crop? To answer this question we may represent the cumulative number of species in function of the number of samples (pan traps) analyzed:
+
+```{r raref, echo=TRUE, message=FALSE, warning=FALSE}
+raref_bb<-rare_alpha(animal.dt, method="hill", random=999, fun_div='speciesdiv', args=a, mean=TRUE)
+
+plot(raref_bb[,1],ylab="Species (cumulative)",xlab="Number of sampling units",type="l", ylim=range(raref_bb,na.rm=TRUE))
+lines(raref_bb[,2],lty=2)
+lines(raref_bb[,3],lty=2)
+```
+
+When we open our first flask, all insects in there are new because we are starting from zero species. Then, we open the second flask we found many new species but some are repeated from the first flask. And if we continue to adding sampling units, the number of new species found decreases. When the rarefaction curve gets **asymptotic** (i.e., no now species are found despite adding more sampling units) we can say that our sampling was complete. In this case, of course, we were unable to capture the whole insect diversity at the canola crop.
+
+So, how can we know how many species are "missing"? Fortunately, many people devoted a lot of time to answer this questions two decades ago and we have many indices of expected species richness, for example:
+
+```{r expS, echo=TRUE, message=FALSE, warning=FALSE}
+animal.dt<-data[,5:26]
+estimateR(animal.dt)
+specpool(animal.dt)
+```
+
+Here we have three of the most common indices: Chao1, Jackknife, and Bootstrap. We can simply average them (which is 28.43 species) and compare this expected species richness against the observed species richness (22 species). So, sampling effectiveness is 22 / 28.43 = 0.77, meaning that we sampled about 77% of the insect species present in this crop.
 
 ## Final thoughts
 
