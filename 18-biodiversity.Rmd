@@ -241,7 +241,7 @@ While we can calculate this by hand, with a pencil, a piece of papers, and a sim
 
 ## Final thoughts
 
-Biodiversity analysis in R is simple and straightforward.
+Biodiversity analysis in R is simple and straightforward. Here I presented only a few options, but I highly encourage you to explore the `BiodiversityR` package a little bit further on your own.
 
 
 ## Session
