@@ -171,9 +171,46 @@ seasonplot(zonnot, main="Chincol-Notro")
 
 Very useful information indeed, with a bunch of applications for population ecology, conservation biology, wildlife management, etc.
 
+## ARIMA models
+
+Autoregressive integrated moving average (aka ARIMA) are intended to be used with time series data as they account for seasonality and temporal autocorrelation. Below we will compare one species in two habitats as an example using ARIMA models of first order. ARIMA could be decomposed in AR-I-MA and 0 or 1 indicate if each component (autoregressive, integrated, or moving average) is present or not in the model. A detailed explanation of these models is beyond the scope of this lesson, but there are many good books on this subject.
+
+```{r arima}
+##Rayadito-Canelo
+m1.aphcan=arima(aphcan,order=c(1,1,1),seasonal=list(order=c(0,1,1), period=12))
+m1.aphcan
+#Diagnostico del modelo ARIMA
+tsdiag(m1.aphcan)
+Box.test(m1.aphcan$residuals,lag=1)
+#Para calcular la significancia del coeficiente "ma1" hacemos esto:
+(1-pnorm(abs(m1.aphcan$coef)/sqrt(diag(m1.aphcan$var.coef))))*2
+# Diagnostico: Residuales del modelo ARIMA(0,1,1) (0,1,1)12
+plot(window(rstandard(m1.aphcan),start=c(2003,2)), ylab='Standardized Residuals',type='o')
+abline(h=0)
+# ACF e histograma de los residuales del ARIMA
+acf(as.vector(window(rstandard(m1.aphcan),start=c(2003,2))), lag.max=36)
+hist(window(rstandard(m1.aphcan),start=c(2003,2)), xlab='Standardized Residuals')
+##
+##Rayadito-Notro
+m1.aphnot=arima(aphnot,order=c(1,1,1),seasonal=list(order=c(0,1,1), period=12))
+m1.aphnot
+#Diagnostico del modelo ARIMA
+tsdiag(m1.aphnot)
+Box.test(m1.aphnot$residuals,lag=1)
+#Para calcular la significancia del coeficiente "ma1" hacemos esto:
+(1-pnorm(abs(m1.aphnot$coef)/sqrt(diag(m1.aphnot$var.coef))))*2
+# Diagnostico: Residuales del modelo ARIMA(0,1,1) (0,1,1)12
+plot(window(rstandard(m1.aphnot),start=c(2003,2)), ylab='Standardized Residuals',type='o')
+abline(h=0)
+# ACF e histograma de los residuales del ARIMA
+acf(as.vector(window(rstandard(m1.aphnot),start=c(2003,2))), lag.max=36)
+hist(window(rstandard(m1.aphnot),start=c(2003,2)), xlab='Standardized Residuals')
+```
+
+
 ## Final thoughts
 
-Biodiversity analysis in R is simple and straightforward. Here I presented only a few options, but I highly encourage you to explore the `BiodiversityR` package a little bit further on your own.
+aaa
 
 
 ## Session
