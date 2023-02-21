@@ -50,7 +50,7 @@ This repository presents a comprehensive R course intended for self-learning and
 
 16.- ANOSIM and SIMPER
 
-_17.- PCA and nMDS_
+17.- PCA and nMDS
 
 _18.- Biodiversity analysis in R_
 
