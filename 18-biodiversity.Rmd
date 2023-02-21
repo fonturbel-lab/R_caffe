@@ -16,27 +16,33 @@ knitr::opts_chunk$set(
 )
 ```
 
-## Dealing with multiple variables at once
+## Using R to conduct biodiversity analysis
 
-Dealing with biodiversity data is somewhat different than dealing with the usual stuff that we are (now) used to. Besides formal tests, there are some multivariate tests that allow us to conduct a visual exploration of our data, instead than testing an hypothesis.
+Today we will learn how to analyze and make sense of our biodiversity data (after long campaigns in the field collecting data... really exhausting)
 
 
 ```{r data}
+#Loading required packages
 library(dplyr)
 library(ggplot2)
 library(ggsci)
 library(ggpubr)
 library(vegan)
-library(ade4)
-library(ecodist)
-library("factoextra")
+library(BiodiversityR)
+library(Rarefy)
 
 #Loading work data
-data = read.csv("data/17_monito_hab.csv",
+data = read.csv("data/data_cn.csv",
                    header=TRUE,
                    sep=",")
+
 attach(data)
-head(data)
+
+animal.dt<-data[,5:26]
+env.dt<-data[,3:4]
+
+env.dt$posicion<-as.factor(env.dt$posicion)
+env.dt$color<-as.factor(env.dt$color)
 ```
 
 ```{r grooming, include=FALSE, warning=FALSE, message=FALSE}
@@ -57,7 +63,7 @@ My_Theme2 = theme(
   plot.title = element_text(size = 20,face="bold"))
 ```
 
-Today we will use some data of [Gonzalez-Ancin et al. 2022](https://www.cambridge.org/core/journals/oryx/article/intermediate-levels-of-wood-extraction-may-facilitate-coexistence-of-an-endemic-arboreal-marsupial-and-indigenous-communities/7E08676B30B1C4392BF34522D495EDB2) as a working example. This dataset contains habitat structure variables of three forests stands in which we captured _Dromiciops gliroides_ nearby the Pucatrihue bay.
+Today we will use some data of [Jaques et al. 2023](https://www.mdpi.com/2073-4395/13/2/552) as a working example. This dataset contains data of insect pollinator in a canola crop (the one with the yellow flowers), comparing pan trap color and position effects in the diversity of insects captured.
 
 ## Analysis of Principal Components (PCA)
 
