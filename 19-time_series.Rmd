@@ -179,30 +179,31 @@ Autoregressive integrated moving average (aka ARIMA) are intended to be used wit
 ##Rayadito-Canelo
 m1.aphcan=arima(aphcan,order=c(1,1,1),seasonal=list(order=c(0,1,1), period=12))
 m1.aphcan
-#Diagnostico del modelo ARIMA
+#Diagnosing ARIMA model
 tsdiag(m1.aphcan)
 Box.test(m1.aphcan$residuals,lag=1)
-#Para calcular la significancia del coeficiente "ma1" hacemos esto:
+#Estimating ma1 significance
 (1-pnorm(abs(m1.aphcan$coef)/sqrt(diag(m1.aphcan$var.coef))))*2
-# Diagnostico: Residuales del modelo ARIMA(0,1,1) (0,1,1)12
+# Residuals
 plot(window(rstandard(m1.aphcan),start=c(2003,2)), ylab='Standardized Residuals',type='o')
 abline(h=0)
-# ACF e histograma de los residuales del ARIMA
+# ACF
 acf(as.vector(window(rstandard(m1.aphcan),start=c(2003,2))), lag.max=36)
 hist(window(rstandard(m1.aphcan),start=c(2003,2)), xlab='Standardized Residuals')
-##
+
+
 ##Rayadito-Notro
 m1.aphnot=arima(aphnot,order=c(1,1,1),seasonal=list(order=c(0,1,1), period=12))
 m1.aphnot
-#Diagnostico del modelo ARIMA
+#Diagnosing ARIMA model
 tsdiag(m1.aphnot)
 Box.test(m1.aphnot$residuals,lag=1)
-#Para calcular la significancia del coeficiente "ma1" hacemos esto:
+#Estimating ma1 significance
 (1-pnorm(abs(m1.aphnot$coef)/sqrt(diag(m1.aphnot$var.coef))))*2
-# Diagnostico: Residuales del modelo ARIMA(0,1,1) (0,1,1)12
+# Residuals
 plot(window(rstandard(m1.aphnot),start=c(2003,2)), ylab='Standardized Residuals',type='o')
 abline(h=0)
-# ACF e histograma de los residuales del ARIMA
+# ACF
 acf(as.vector(window(rstandard(m1.aphnot),start=c(2003,2))), lag.max=36)
 hist(window(rstandard(m1.aphnot),start=c(2003,2)), xlab='Standardized Residuals')
 ```
