@@ -20,7 +20,7 @@ knitr::opts_chunk$set(
 
 Organisms in nature are rarely distributed in regular arrangements. We usually found plants or animals forming clusters in high-quality microhabitats or randomly distributed in some areas. Such arrangement pattern is called _spatial structure_ and it is from remarkable importance in ecology. When we collect field data, we may obtain geographic coordinates from our sampling sites / units and therefore conduct spatially-explicit models, including the relative location of each unit as a covariate.
 
-To illustrate this lesson, we will use (again) the data of [Fontúrbek et al. 2015](https://besjournals.onlinelibrary.wiley.com/doi/full/10.1111/1365-2745.12443).
+To illustrate this lesson, we will use (again) the data of [Fontúrbel et al. 2015](https://besjournals.onlinelibrary.wiley.com/doi/full/10.1111/1365-2745.12443).
 
 ```{r data}
 library(spdep)
