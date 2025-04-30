@@ -64,7 +64,7 @@ This first edition (c) 2022 is composed by 20 lessons, but more lessons are expe
 
 #### Our social media :metal:
 
-Follow Integrative Ecology lab on [Twitter](https://twitter.com/IntegrativeEco) and [Instagram](https://www.instagram.com/integrative.ecolab) to see what's new.
+Follow Integrative Ecology lab on [X (fka Twitter)](https://twitter.com/IntegrativeEco) and [Instagram](https://www.instagram.com/integrative.ecolab) to see what's new.
 
 
 ## Terms of use
