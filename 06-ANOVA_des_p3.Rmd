@@ -1,7 +1,7 @@
 ---
 title: "06 - Other ANOVA designs part 3"
 author: "Francisco E. Fonturbel"
-date: "28/June/2022"
+date: "28/September/2025"
 output: 
   html_document:
     includes:
@@ -14,31 +14,145 @@ knitr::opts_chunk$set(
 	message = FALSE,
 	warning = FALSE
 )
+library(car)         # For Type II/III ANOVA
+library(ggplot2)     # For advanced plotting
+library(dplyr)       # For data manipulation
+library(tidyr)       # For data reshaping
+library(ez)          # For ezANOVA (alternative repeated measures)
+library(emmeans)     # For post-hoc tests and contrasts
+library(lme4)        # For mixed effects models
+library(nlme)        # Alternative for mixed effects
 ```
 
-## Repeated measures ANOVA
+## Repeated Measures ANOVA
 
-A common task is measuring the same experimental unit in multiple times. For example, we have plants growing under three different treatments and we measure plant height as a response variable, but we measure our plant every week for two months. So, we cannot consider each measurement as an independent data point as they represent pseudo-replicates. Thus, we cannot run a simple one-way ANOVA with such data, but we can run a **repeated measures ANOVA** instead to correct our data indicating R that we have sampled the same experimental unit _t_ times.
+A common task is measuring the same experimental unit at multiple times. For example, we have plants growing under three different treatments and we measure plant height as a response variable, but we measure our plant every week for two months. So, we cannot consider each measurement as an independent data point as they represent **pseudo-replicates**. Thus, we cannot run a simple one-way ANOVA with such data, but we can run a **repeated measures ANOVA** instead to correct our data indicating R that we have sampled the same experimental unit _t_ times.
+
+### Understanding the Problem
+
+**Why not regular ANOVA?**
+- Measurements from the same individual are not independent
+- This violates the independence assumption of ANOVA
+- Treating repeated measures as independent inflates Type I error (false positives)
+- We need to account for the correlation structure within subjects
+
+**Repeated Measures ANOVA accounts for:**
+- Within-subject correlation
+- Individual differences as a source of variation
+- Temporal patterns in the data
+
+### Loading and Exploring the Data
 
 ```{r data}
 #Let's load the data file
 data<-read.table("data/06-repeated.txt", header = T)
 
+# Convert to appropriate factors
 data$id <- factor(data$id)
 data$workout <- factor(data$workout)
 data$diet <- factor(data$diet)
 data$time <- factor(data$time)
 attach(data)
+
+# Examine data structure
+str(data)
+head(data, 12) # Show first 12 rows to see multiple time points per subject
 ```
 
+Our example data is based on some athletes that had three different workout schemes and three different diets, and we measured their pulse (as a response variable) three times during the experiment. Thus, our fixed factors are workout scheme and diet (athletes received different combinations of those factors), and the column _time_ represents the repeated measures.
 
-Our example data is based on some athletes that had three different workout schemes and three different diets, and we measured their pulse (as a response variable) three times during the experiment. Thus, our fixed factors are workout scheme and diet (athletes received different combinations of those factors), and the column _time_ represent the repeated measured.
+### Exploratory Data Analysis
 
+Let's explore our data structure and patterns:
+
+```{r exploration}
+# Check experimental design balance
+table(data$workout, data$diet)
+table(data$id, data$time) # Each subject should appear once per time point
+
+# Summary statistics by groups and time
+data %>%
+  group_by(workout, diet, time) %>%
+  summarise(
+    n = n(),
+    mean_pulse = mean(pulse),
+    sd_pulse = sd(pulse),
+    se_pulse = sd(pulse)/sqrt(n()),
+    .groups = 'drop'
+  )
+
+# Check for missing values
+sum(is.na(data$pulse))
+
+# Individual subject trajectories
+data %>%
+  group_by(id) %>%
+  summarise(
+    workout = first(workout),
+    diet = first(diet),
+    n_timepoints = n(),
+    mean_pulse = mean(pulse),
+    .groups = 'drop'
+  ) %>%
+  head(10)
+```
+
+### Visualization of Repeated Measures Data
+
+```{r visualization, fig.width=12, fig.height=10}
+# Create comprehensive visualization
+par(mfrow=c(2,3))
+
+# 1. Overall time trend
+boxplot(pulse ~ time, data = data,
+        main = "Pulse Changes Over Time",
+        xlab = "Time", ylab = "Pulse",
+        col = "lightblue")
+
+# 2. Diet effects over time
+boxplot(pulse ~ diet:time, data = data,
+        main = "Pulse by Diet and Time",
+        xlab = "Diet:Time", ylab = "Pulse",
+        col = c("lightcoral", "lightgreen", "lightyellow"))
+
+# 3. Workout effects over time  
+boxplot(pulse ~ workout:time, data = data,
+        main = "Pulse by Workout and Time",
+        xlab = "Workout:Time", ylab = "Pulse",
+        col = c("salmon", "wheat", "lightsteelblue"))
+
+# 4. Individual trajectories (sample)
+sample_ids <- sample(unique(data$id), 9)
+plot(1, type="n", xlim=c(1,3), ylim=range(data$pulse),
+     main = "Individual Trajectories (Sample)",
+     xlab = "Time", ylab = "Pulse")
+for(i in sample_ids) {
+  subject_data <- data[data$id == i, ]
+  lines(as.numeric(subject_data$time), subject_data$pulse, 
+        col = rainbow(length(sample_ids))[which(sample_ids == i)])
+}
+
+# 5. Diet interaction plot
+interaction.plot(data$time, data$diet, data$pulse,
+                main = "Diet × Time Interaction",
+                xlab = "Time", ylab = "Mean Pulse",
+                col = c("red", "blue", "green"), lwd = 2)
+
+# 6. Workout interaction plot  
+interaction.plot(data$time, data$workout, data$pulse,
+                main = "Workout × Time Interaction", 
+                xlab = "Time", ylab = "Mean Pulse",
+                col = c("orange", "purple", "brown"), lwd = 2)
+
+par(mfrow=c(1,1))
+```
+
+### Traditional Repeated Measures ANOVA
 
 Let's fit a repeated measures ANOVA model with this:
 
 ```{r ANOVA.r}
-rm.aov <- aov(pulse ~ diet * workout * time + Error(id) )
+rm.aov <- aov(pulse ~ diet * workout * time + Error(id))
 ```
 
 OK, now we have an object called `rm.aov`, now we'll use the `summary()` function to see the results:
@@ -47,50 +161,416 @@ OK, now we have an object called `rm.aov`, now we'll use the `summary()` functio
 summary(rm.aov)
 ```
 
-Our show that diet had a **significantly effect** on athletes' pulse, but not workout scheme or the intearaction of both. Further, the repeated measures showed that pulse changed over time and this change was related to diet.
+Our results show that diet had a **significant effect** on athletes' pulse, but not workout scheme or the interaction of both. Further, the repeated measures showed that pulse changed over time and this change was related to diet (significant diet:time interaction).
 
+### Alternative Analysis with ezANOVA
+
+The `ez` package provides a more comprehensive approach to repeated measures ANOVA:
+
+```{r ez_anova}
+# Using ezANOVA for more detailed output
+ez_result <- ezANOVA(
+  data = data,
+  dv = pulse,
+  wid = id,
+  within = time,
+  between = c(diet, workout),
+  detailed = TRUE,
+  return_aov = TRUE
+)
+
+print(ez_result)
+```
+
+### Checking Assumptions
+
+Repeated measures ANOVA has specific assumptions we need to check:
+
+```{r assumptions}
+# 1. Sphericity assumption (compound symmetry)
+# Extract the within-subject model for sphericity testing
+within_model <- aov(pulse ~ time + Error(id/time), data = data)
+
+# 2. Check residuals for normality and homogeneity
+residuals_rm <- residuals(lm(pulse ~ diet * workout * time + id, data = data))
+
+par(mfrow=c(2,2))
+hist(residuals_rm, main = "Distribution of Residuals", col = "lightblue")
+qqnorm(residuals_rm, main = "Q-Q Plot of Residuals")
+qqline(residuals_rm)
+plot(fitted(lm(pulse ~ diet * workout * time + id, data = data)), residuals_rm,
+     main = "Residuals vs Fitted", xlab = "Fitted Values", ylab = "Residuals")
+abline(h = 0, col = "red")
+
+# Test for normality
+shapiro.test(residuals_rm)
+
+par(mfrow=c(1,1))
+```
+
+### Mixed Effects Models (Advanced Alternative)
+
+Modern approaches often use mixed effects models instead of traditional repeated measures ANOVA:
+
+```{r mixed_effects}
+# Fit mixed effects model
+library(lme4)
+mixed_model <- lmer(pulse ~ diet * workout * time + (1|id), data = data)
+summary(mixed_model)
+
+# Type III ANOVA table for mixed model
+Anova(mixed_model, type = "III")
+
+# Compare with traditional ANOVA
+print("Traditional RM-ANOVA vs Mixed Effects Model comparison:")
+print("Both approaches account for repeated measures but mixed models are more flexible")
+```
+
+### Post-hoc Analysis
+
+Since we found significant effects, let's conduct post-hoc tests:
+
+```{r posthoc}
+# Traditional approach
+TukeyHSD(aov(pulse ~ diet * time + Error(id), data = data))
+
+# Using emmeans for more control
+library(emmeans)
+
+# Main effect of diet
+diet_means <- emmeans(lm(pulse ~ diet * workout * time + id, data = data), ~ diet)
+pairs(diet_means)
+
+# Diet × Time interaction
+diet_time_means <- emmeans(lm(pulse ~ diet * workout * time + id, data = data), 
+                          ~ diet * time)
+pairs(diet_time_means, by = "time")
+
+# Simple effects: diet effects at each time point
+print("Diet effects at each time point:")
+test(diet_time_means, by = "time")
+```
+
+### Effect Sizes
+
+```{r effect_sizes}
+# Calculate effect sizes for repeated measures
+# Using eta-squared from ezANOVA output
+if(exists("ez_result") && "ANOVA" %in% names(ez_result)) {
+  print("Effect sizes (Generalized Eta-Squared):")
+  print(ez_result$ANOVA[, c("Effect", "ges")])
+}
+
+# Manual calculation for traditional ANOVA
+aov_summary <- summary(rm.aov)
+# Note: Effect size calculation for RM-ANOVA is more complex
+# due to different error terms for different effects
+```
 
 ## ANCOVA (Analysis of Covariance)
 
-So far we have used categorical factors, but what about continuous covariates? We may have a non-categorical variable that is not our analysis focus we know that it can influence our results (e.g., altitute). Therefore, in these cases we need to use an **Analysis of Covariance** (ANCOVA for short).
+So far we have used categorical factors, but what about continuous covariates? We may have a non-categorical variable that is not our analysis focus but we know that it can influence our results (e.g., altitude, body weight, age). Therefore, in these cases we need to use an **Analysis of Covariance** (ANCOVA for short).
 
-Let's use an example data in which we have fecundity as a response variable, site and microhabitat as fixed factors, and individual size as a continuous covariate.
+### Understanding ANCOVA
+
+**ANCOVA combines:**
+- ANOVA: comparing group means
+- Regression: accounting for continuous covariates
+
+**Benefits of ANCOVA:**
+- Reduces error variance by accounting for covariate effects
+- Increases statistical power
+- Provides adjusted group means
+- Tests whether group differences exist after controlling for covariates
+
+**Key Assumptions:**
+- **Homogeneity of regression slopes:** The relationship between covariate and response is similar across groups
+- **Independence:** Observations are independent
+- **Normality:** Residuals are normally distributed
+- **Homoscedasticity:** Equal variances across groups
+- **Linearity:** Linear relationship between covariate and response
+
+### Loading and Exploring ANCOVA Data
 
 ```{r data2}
-library(car)
-
 dataf<-read.table("data/06-ancova.txt", header = TRUE)
 
 dataf$site <- factor(dataf$site, ordered=T)
 dataf$microhab <-factor(dataf$microhab, ordered=T)
 
 attach(dataf)
+
+# Explore the data structure
+str(dataf)
+summary(dataf)
+
+# Check for missing values
+colSums(is.na(dataf))
 ```
 
+Let's use an example data in which we have fecundity as a response variable, site and microhabitat as fixed factors, and individual size as a continuous covariate.
 
-And now we can fit the `ANCOVA`:
+### Exploratory Data Analysis for ANCOVA
 
-```{r ancova}
-fecund.lm <- lm(lnfecund ~ size + site * microhab)
-fecund.ancova <- Anova(fecund.lm, type = 'III')
-summary(fecund.lm)
-print(fecund.ancova)
+```{r ancova_exploration}
+# Summary statistics
+dataf %>%
+  group_by(site, microhab) %>%
+  summarise(
+    n = n(),
+    mean_lnfecund = mean(lnfecund, na.rm = TRUE),
+    sd_lnfecund = sd(lnfecund, na.rm = TRUE),
+    mean_size = mean(size, na.rm = TRUE),
+    sd_size = sd(size, na.rm = TRUE),
+    correlation = cor(size, lnfecund, use = "complete.obs"),
+    .groups = 'drop'
+  )
+
+# Check experimental design balance
+table(dataf$site, dataf$microhab)
 ```
 
-Our results show that our covariate has a significant effect on our results altogether with site and microhabitat.
+### Visualization for ANCOVA
 
-Now let's examine some plots to see how residuals are distributed:
+```{r ancova_viz, fig.width=12, fig.height=8}
+par(mfrow=c(2,3))
 
-```{r acvplot}
-par(mfrow=c(2,2))
-plot(fecund.lm)
+# 1. Relationship between covariate and response
+plot(size, lnfecund, 
+     main = "Size vs Log Fecundity",
+     xlab = "Size", ylab = "Log Fecundity",
+     pch = 16, col = "darkblue")
+abline(lm(lnfecund ~ size), col = "red", lwd = 2)
+
+# 2. By site
+plot(size, lnfecund, col = as.numeric(site),
+     main = "Size vs Log Fecundity by Site",
+     xlab = "Size", ylab = "Log Fecundity", pch = 16)
+legend("bottomright", levels(site), col = 1:nlevels(site), pch = 16)
+# Add regression lines for each site
+for(i in 1:nlevels(site)) {
+  site_data <- dataf[dataf$site == levels(site)[i], ]
+  abline(lm(lnfecund ~ size, data = site_data), col = i, lwd = 2)
+}
+
+# 3. By microhabitat
+plot(size, lnfecund, col = as.numeric(microhab),
+     main = "Size vs Log Fecundity by Microhabitat", 
+     xlab = "Size", ylab = "Log Fecundity", pch = 16)
+legend("bottomright", levels(microhab), col = 1:nlevels(microhab), pch = 16)
+for(i in 1:nlevels(microhab)) {
+  hab_data <- dataf[dataf$microhab == levels(microhab)[i], ]
+  abline(lm(lnfecund ~ size, data = hab_data), col = i, lwd = 2)
+}
+
+# 4. Group means (unadjusted)
+boxplot(lnfecund ~ site, data = dataf,
+        main = "Log Fecundity by Site (Unadjusted)",
+        xlab = "Site", ylab = "Log Fecundity",
+        col = "lightblue")
+
+# 5. Group means by microhabitat
+boxplot(lnfecund ~ microhab, data = dataf,
+        main = "Log Fecundity by Microhabitat",
+        xlab = "Microhabitat", ylab = "Log Fecundity", 
+        col = "lightgreen")
+
+# 6. Covariate distribution by groups
+boxplot(size ~ site:microhab, data = dataf,
+        main = "Size Distribution by Groups",
+        xlab = "Site:Microhabitat", ylab = "Size",
+        col = "salmon")
+
 par(mfrow=c(1,1))
 ```
 
+### Testing ANCOVA Assumptions
+
+Before conducting ANCOVA, we must test the crucial assumption of homogeneity of regression slopes:
+
+```{r assumptions_ancova}
+# Test homogeneity of regression slopes
+# This tests whether the covariate has the same effect across all groups
+
+# Full model with interactions between covariate and factors
+full_model <- lm(lnfecund ~ size * site * microhab, data = dataf)
+summary(full_model)
+
+# Reduced model without covariate interactions
+reduced_model <- lm(lnfecund ~ size + site * microhab, data = dataf)
+
+# Test the assumption using ANOVA
+slope_test <- anova(reduced_model, full_model)
+print("Test of homogeneity of regression slopes:")
+print(slope_test)
+
+if(slope_test$`Pr(>F)`[2] > 0.05) {
+  print("✓ Assumption of homogeneous slopes is met (p > 0.05)")
+  print("We can proceed with ANCOVA")
+} else {
+  print("✗ Assumption violated - slopes differ significantly across groups")
+  print("Consider separate analyses by group or interaction terms")
+}
+```
+
+### Fitting the ANCOVA Model
+
+Now we can fit the ANCOVA:
+
+```{r ancova}
+fecund.lm <- lm(lnfecund ~ size + site * microhab, data = dataf)
+fecund.ancova <- Anova(fecund.lm, type = 'III')
+
+summary(fecund.lm)
+print("ANCOVA Results:")
+print(fecund.ancova)
+```
+
+Our results show that our covariate (size) has a significant effect on fecundity, along with site and microhabitat. The covariate explains additional variance, making our tests of group differences more powerful.
+
+### Model Diagnostics
+
+Now let's examine some plots to see how residuals are distributed:
+
+```{r ancova_diagnostics, fig.width=10, fig.height=8}
+par(mfrow=c(2,2))
+plot(fecund.lm)
+par(mfrow=c(1,1))
+
+# Additional diagnostic tests
+print("Normality test of residuals:")
+shapiro.test(residuals(fecund.lm))
+
+print("Homoscedasticity test:")
+library(car)
+leveneTest(residuals(fecund.lm) ~ site * microhab, data = dataf)
+```
+
+### Adjusted Means and Post-hoc Tests
+
+One of the key benefits of ANCOVA is obtaining adjusted means:
+
+```{r adjusted_means}
+# Calculate adjusted means (least squares means)
+library(emmeans)
+
+# Adjusted means for site
+site_emmeans <- emmeans(fecund.lm, ~ site)
+print("Adjusted means by site (controlling for size):")
+print(site_emmeans)
+
+# Adjusted means for microhabitat
+microhab_emmeans <- emmeans(fecund.lm, ~ microhab)
+print("Adjusted means by microhabitat (controlling for size):")
+print(microhab_emmeans)
+
+# Pairwise comparisons
+print("Pairwise comparisons for site (adjusted):")
+pairs(site_emmeans)
+
+print("Pairwise comparisons for microhabitat (adjusted):")
+pairs(microhab_emmeans)
+
+# Interaction contrasts
+if(fecund.ancova$`Pr(>F)`[4] < 0.05) {
+  interaction_emmeans <- emmeans(fecund.lm, ~ site * microhab)
+  print("Site × Microhabitat interaction means:")
+  print(interaction_emmeans)
+}
+```
+
+### Effect Sizes for ANCOVA
+
+```{r ancova_effect_sizes}
+# Calculate partial eta-squared
+ancova_summary <- summary(fecund.lm)
+anova_table <- anova(fecund.lm)
+
+# Total sum of squares
+ss_total <- sum(anova_table$`Sum Sq`)
+
+# Calculate partial eta-squared for each effect
+partial_eta_sq <- anova_table$`Sum Sq` / (anova_table$`Sum Sq` + anova_table$`Sum Sq`[nrow(anova_table)])
+names(partial_eta_sq) <- rownames(anova_table)
+
+print("Partial eta-squared (effect sizes):")
+print(partial_eta_sq[-length(partial_eta_sq)]) # Exclude residuals
+
+print(paste("R-squared (total variance explained):", round(summary(fecund.lm)$r.squared, 3)))
+print(paste("Adjusted R-squared:", round(summary(fecund.lm)$adj.r.squared, 3)))
+```
+
+### Comparison: ANOVA vs ANCOVA
+
+Let's compare what happens if we ignore the covariate:
+
+```{r comparison}
+# ANOVA without covariate
+anova_only <- lm(lnfecund ~ site * microhab, data = dataf)
+anova_results <- Anova(anova_only, type = 'III')
+
+print("Comparison of approaches:")
+print("ANOVA (without covariate):")
+print(anova_results)
+print(paste("R-squared without covariate:", round(summary(anova_only)$r.squared, 3)))
+
+print("ANCOVA (with covariate):")
+print(fecund.ancova)
+print(paste("R-squared with covariate:", round(summary(fecund.lm)$r.squared, 3)))
+
+# Calculate the improvement in explained variance
+improvement <- summary(fecund.lm)$r.squared - summary(anova_only)$r.squared
+print(paste("Improvement in R-squared by including covariate:", round(improvement, 3)))
+```
+
+### Advanced: Multiple Comparisons with ANCOVA
+
+```{r multiple_comparisons}
+# Comprehensive post-hoc analysis with adjustment for multiple comparisons
+contrast_results <- contrast(emmeans(fecund.lm, ~ site * microhab), 
+                           method = "pairwise", 
+                           adjust = "tukey")
+print("All pairwise comparisons with Tukey adjustment:")
+print(contrast_results)
+
+# Custom contrasts if needed
+# Example: compare each site to a control site
+if(nlevels(dataf$site) > 2) {
+  custom_contrasts <- contrast(emmeans(fecund.lm, ~ site),
+                             method = "dunnett")
+  print("Comparisons to reference site:")
+  print(custom_contrasts)
+}
+```
 
 ## Final thoughts
 
-Repeated measures ANOVA and ANCOVA allow us to conduct more complex ANOVA models by including temporal replication (and overcome the pseudoreplication problem) and to include a continuous covariate to account to such variability in our comparisons.
+Repeated measures ANOVA and ANCOVA allow us to conduct more complex ANOVA models by including temporal replication (and overcoming the pseudoreplication problem) and by including continuous covariates to account for such variability in our comparisons.
+
+**Key takeaways:**
+
+### Repeated Measures ANOVA:
+- Essential when measurements are taken from the same subjects over time
+- Accounts for within-subject correlation and reduces Type I error
+- Check sphericity assumption (compound symmetry)
+- Consider mixed effects models for more flexibility
+- Visualize individual trajectories and interaction patterns
+
+### ANCOVA:
+- Combines regression and ANOVA to control for continuous covariates
+- **Must check homogeneity of regression slopes** before proceeding
+- Provides adjusted means that account for covariate effects
+- Increases statistical power by reducing error variance
+- Effect sizes help interpret practical significance
+
+### General recommendations:
+- Always visualize your data before analysis
+- Check model assumptions thoroughly
+- Consider effect sizes alongside p-values
+- Use appropriate post-hoc tests for multiple comparisons
+- Modern mixed effects models often provide more flexibility than traditional approaches
+
+Remember that proper experimental design and consideration of these factors before data collection will lead to more robust and interpretable results.
 
 ## Session
 
