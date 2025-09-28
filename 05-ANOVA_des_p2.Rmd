@@ -1,7 +1,7 @@
 ---
 title: "05 - Other ANOVA designs part 2"
 author: "Francisco E. Fonturbel"
-date: "15/June/2022"
+date: "28/September/2025"
 output: 
   html_document:
     includes:
@@ -14,11 +14,18 @@ knitr::opts_chunk$set(
 	message = FALSE,
 	warning = FALSE
 )
+library(ggplot2)
+library(dplyr)
+library(car) # For Type II/III ANOVA
 ```
 
 ## Nested ANOVA
 
-In some opportunities, we have more than one factor explaining our response variable. If those factors are independent, we simply use a two-way ANOVA design, but what if one factor is a subset of the other? Let's imagine that we measured plant diameter in three populations, and at each population we set three experimental treatments: control, half water and 10% water. So, we will have the water treatment factor nested within the population factor. Thus, each treatment constitutes a sub-replicate of each population replicate. Therefore, it won't be correct to treat this as a two-way ANOVA; we need to use a Nested ANOVA design instead. Let's see some example data:
+In some opportunities, we have more than one factor explaining our response variable. If those factors are independent, we simply use a two-way ANOVA design, but what if one factor is a subset of the other? Let's imagine that we measured plant diameter in three populations, and at each population we set three experimental treatments: control, half water and 10% water. So, we will have the water treatment factor nested within the population factor. Thus, each treatment constitutes a sub-replicate of each population replicate. Therefore, it won't be correct to treat this as a two-way ANOVA; we need to use a Nested ANOVA design instead.
+
+**Key concept:** In nested designs, the levels of one factor (e.g., sites) are unique within each level of another factor (e.g., valleys). This is different from crossed designs where all combinations of factors are possible.
+
+Let's see some example data:
 
 ```{r data}
 #Let's load the data file
@@ -35,7 +42,22 @@ data
 
 As you may see in the example data, we have two valleys (Elqui and Limari) and within each valley we have two sampling sites in which we measured cockroach infestation (ewww!). So, we need to nest `site` within `valley` to properly analyze our data.
 
-Let's fit a nested ANOVA model with this:
+Let's first check our experimental design balance:
+
+```{r design_check}
+# Check the structure of our nested design
+table(data$valley, data$site)
+
+# Summary statistics by groups
+data %>% 
+  group_by(valley, site) %>% 
+  summarise(n = n(), 
+            mean_infest = mean(infestation),
+            sd_infest = sd(infestation),
+            .groups = 'drop')
+```
+
+Now let's fit a nested ANOVA model:
 
 ```{r ANOVA.r}
 replications(~ valley * site, data)
@@ -49,7 +71,7 @@ OK, now we have an object called `aov.infest`, now we'll use the `summary()` fun
 summary(aov.infest)
 ```
 
-Our results indicate that infestation height is **significantly different** among valleys and sampling sites.
+Our results indicate that infestation height is **significantly different** among valleys and sampling sites within valleys. Notice how the F-test for sites uses the residual error as denominator, which is appropriate for this nested design.
 
 Another thought... what if we want to know which sites explain the differences? Let me introduce you the _a posteriori_ tests, which are commonly used to explain pairwise differences in ANOVA models. One of the most famous _a posteriori_ tests is the Tukey test, which can be summoned using the `TukeyHSD` function. Let's see:
 
@@ -57,34 +79,84 @@ Another thought... what if we want to know which sites explain the differences? 
 TukeyHSD(aov.infest)
 ```
 
-Well, some comparisons appear marked as "NA" (which represents **missing values** in R jargon). Why there are missing comparisons? because we have nested factors! of course! we cannot compare sites that are in other valleys.
+Well, some comparisons appear marked as "NA" (which represents **missing values** in R jargon). Why there are missing comparisons? because we have nested factors! of course! we cannot compare sites that are in other valleys - Site 1 in Elqui valley is completely different from Site 1 in Limari valley.
 
+```{r nested_visualization}
+# Let's visualize our nested design
+boxplot(infestation ~ valley:site, 
+        data = data, 
+        col = c("lightblue", "lightgreen", "salmon", "wheat"),
+        main = "Cockroach Infestation by Valley and Site",
+        xlab = "Valley:Site", 
+        ylab = "Infestation Level")
+```
 
 ## Factorial ANOVA
 
-Until now we have operated **fixed factors**. A fixed factor is a categorical variable from which we have total control and we have measured all its levels. But not everything can be labeled as a fixed factor in nature. We may have another confounding factors that can be affecting our results, but we have no control over them and/or we have (or cannot) measured all levels. Those weird factors are called **random factors**. In Factorial ANOVA designs we have three possible models types:
+Until now we have operated with **fixed factors**. A fixed factor is a categorical variable from which we have total control and we have measured all its levels of interest. But not everything can be labeled as a fixed factor in nature. We may have other confounding factors that can be affecting our results, but we have no control over them and/or we have (or cannot) measured all levels. Those factors are called **random factors**.
 
-(1) **Model I:** Have only fixed factors.
+### Understanding Factor Types
 
-(2) **Model II:** Have only random factors.
+**Fixed factors:** 
+- Levels are specifically chosen by the researcher
+- Inference applies only to the tested levels
+- Examples: specific treatments, particular species, chosen temperatures
 
-(3) **Model III:*** Have a mixture of fixed and random factors.
+**Random factors:**
+- Levels are randomly sampled from a larger population
+- Inference extends to the entire population of levels
+- Examples: randomly selected individuals, random sampling locations, random time periods
 
-Let's use an example from Quinn (1988), in which we have the mean number of eggs as a response variable with two factors: season and density treatments.
+### Factorial ANOVA Models
+
+In Factorial ANOVA designs we have three possible model types:
+
+1. **Model I (Fixed Effects Model):** Have only fixed factors.
+2. **Model II (Random Effects Model):** Have only random factors.
+3. **Model III (Mixed Effects Model):** Have a mixture of fixed and random factors.
+
+Let's use an example from Quinn (1988), in which we have the mean number of eggs as a response variable with two factors: season (fixed factor) and density treatments (fixed factor).
 
 ```{r data2}
 dataf<-read.csv("data/05-quinn.csv", header = TRUE, sep = ",")
 attach(dataf)
+
+# Convert to factors and check structure
+dataf$SEASON <- factor(dataf$SEASON)
+dataf$DENSITY <- factor(dataf$DENSITY)
+
+str(dataf)
+head(dataf)
 ```
 
-We may fit independent ANOVAs for each factor:
+### Exploratory Data Analysis
+
+Before diving into the analysis, let's explore our data:
+
+```{r exploration}
+# Summary statistics
+dataf %>% 
+  group_by(SEASON, DENSITY) %>% 
+  summarise(n = n(),
+            mean_eggs = mean(EGGS),
+            sd_eggs = sd(EGGS),
+            se_eggs = sd(EGGS)/sqrt(n()),
+            .groups = 'drop')
+
+# Check for balance in our design
+table(dataf$SEASON, dataf$DENSITY)
+```
+
+### Step-by-step Analysis
+
+Let's start by fitting individual models for each factor to understand their independent effects:
 
 ```{r aov1}
 aov.season<-aov(EGGS~SEASON, data = dataf)
 summary(aov.season)
 ```
 
-OK, season matters.
+Season has a significant effect on egg number (p < 0.05).
 
 Now let's examine density effects:
 
@@ -93,56 +165,194 @@ aov.dens<-aov(EGGS~DENSITY, data = dataf)
 summary(aov.dens)
 ```
 
-Well, density also matters. We have two significant ANOVA results, but what is the joint effect of them?
+Density also has a significant effect. However, examining factors separately doesn't tell us about their joint effects or potential interactions.
 
-Let's conduct a two-way ANOVA:
+### Two-way ANOVA: Additive Model
+
+Let's conduct a two-way ANOVA with additive effects (no interaction):
 
 ```{r aov3}
 aov.2w<-aov(EGGS~SEASON+DENSITY, data = dataf)
 summary(aov.2w)
 ```
 
-As expected, both terms are significant. But this does not resolves the problem.
+Both factors remain significant when considered together. The additive model assumes that the effect of one factor is consistent across all levels of the other factor.
 
-Let's examine the interaction model (replacing + for *):
+### Two-way ANOVA: Interaction Model
+
+Now let's examine the interaction model (the most complete model):
 
 ```{r aov4}
 aov.int<-aov(EGGS~SEASON*DENSITY, data = dataf)
 summary(aov.int)
 ```
 
-Nice! while both terms are significant, the interaction is not significant, meaning that both factors have similar slopes and respond in the same way. A signoficant interaction means that when one factor increases, the other one decreased.
+**Interpretation:** 
+- Both main effects (SEASON and DENSITY) are significant
+- The interaction term (SEASON:DENSITY) is not significant (p > 0.05)
+- This means the effect of season is consistent across density levels, and vice versa
 
-What if we ONLY want the interaction term? just replace * by :
+A **significant interaction** would indicate that the effect of one factor depends on the level of the other factor - for example, if season effects were stronger at high densities than at low densities.
 
+### Interaction-only Model
+
+If we want to test ONLY the interaction term:
 
 ```{r aov5}
 aov.intonly<-aov(EGGS~SEASON:DENSITY, data = dataf)
 summary(aov.intonly)
 ```
 
-Let's make a simple boxplot to see how it looks like:
+This model tests whether the combination of season and density levels produces effects beyond what would be expected from their individual contributions.
 
-```{r bp, fig.width=12}
-boxplot(EGGS~SEASON:DENSITY, col = "dodgerblue2", data = dataf)
+### Visualization and Interpretation
+
+Let's create better visualizations to understand our results:
+
+```{r visualization, fig.width=12, fig.height=8}
+# Create interaction plot
+par(mfrow=c(2,2))
+
+# Boxplot by combination
+boxplot(EGGS~SEASON:DENSITY, 
+        col = c("lightblue", "lightgreen", "salmon", "wheat"),
+        data = dataf,
+        main = "Eggs by Season and Density Combination",
+        xlab = "Season:Density",
+        ylab = "Number of Eggs")
+
+# Interaction plot - Season as factor
+interaction.plot(dataf$DENSITY, dataf$SEASON, dataf$EGGS,
+                main = "Interaction Plot: Season by Density",
+                xlab = "Density", ylab = "Mean Eggs",
+                col = c("blue", "red"), lwd = 2)
+
+# Interaction plot - Density as factor  
+interaction.plot(dataf$SEASON, dataf$DENSITY, dataf$EGGS,
+                main = "Interaction Plot: Density by Season", 
+                xlab = "Season", ylab = "Mean Eggs",
+                col = c("darkgreen", "orange", "purple"), lwd = 2)
+
+# Boxplot by individual factors
+boxplot(EGGS~SEASON, data = dataf, col = "lightblue",
+        main = "Eggs by Season", ylab = "Number of Eggs")
 ```
 
+**Interpreting interaction plots:**
+- Parallel lines = no interaction
+- Non-parallel lines = interaction present
+- Crossing lines = strong interaction
 
-### Including an error term
+### Model Comparison and Selection
 
-Let's assume that we only care about the season in the last example, but we need to account for egg density (as an error term).
+Let's compare our models using AIC (Akaike Information Criterion):
 
-```{r aov6}
-aov.err<-aov(EGGS~SEASON + Error(DENSITY), data = dataf)
-summary(aov.err)
+```{r model_comparison}
+# Compare models
+models <- list(
+  "Season only" = aov.season,
+  "Density only" = aov.dens, 
+  "Additive" = aov.2w,
+  "Interaction" = aov.int
+)
+
+# Calculate AIC for each model
+aic_values <- sapply(models, AIC)
+aic_table <- data.frame(
+  Model = names(aic_values),
+  AIC = aic_values,
+  Delta_AIC = aic_values - min(aic_values)
+)
+aic_table[order(aic_table$AIC),]
 ```
 
-What are we looking here? We are examining the effects of season on the mean number of eggs, but corrected by the egg density variability.
+The model with the lowest AIC is generally preferred, with differences > 2 being meaningful.
 
+### Post-hoc Tests
+
+Since we have significant main effects, let's examine pairwise differences:
+
+```{r posthoc}
+# Tukey HSD for the interaction model
+TukeyHSD(aov.int)
+
+# For a more detailed view of main effects
+TukeyHSD(aov.int, which = "SEASON")
+TukeyHSD(aov.int, which = "DENSITY")
+```
+
+### Model Assumptions
+
+Let's check our model assumptions:
+
+```{r assumptions, fig.width=10, fig.height=8}
+par(mfrow=c(2,2))
+plot(aov.int)
+
+# Additional tests
+# Homogeneity of variances (Levene's test)
+leveneTest(EGGS ~ SEASON * DENSITY, data = dataf)
+
+# Normality of residuals (Shapiro-Wilk test)
+shapiro.test(residuals(aov.int))
+```
+
+### Effect Sizes
+
+Understanding statistical significance is important, but effect sizes help us understand practical significance:
+
+```{r effect_sizes}
+# Calculate eta-squared (proportion of variance explained)
+ss_table <- summary(aov.int)[[1]]
+ss_total <- sum(ss_table[,"Sum Sq"])
+
+eta_squared <- ss_table[1:3,"Sum Sq"] / ss_total
+names(eta_squared) <- rownames(ss_table)[1:3]
+
+print("Eta-squared (effect sizes):")
+eta_squared
+```
+
+**Effect size interpretation:**
+- Small: η² ≈ 0.01
+- Medium: η² ≈ 0.06  
+- Large: η² ≈ 0.14
+
+### Including Error Terms (Mixed Effects)
+
+In some cases, we might want to treat one factor as random. Let's assume DENSITY represents randomly selected density levels from a broader population:
+
+```{r mixed_model}
+# Treating DENSITY as a random factor
+aov.mixed <- aov(EGGS ~ SEASON + Error(DENSITY), data = dataf)
+summary(aov.mixed)
+```
+
+**Interpretation:** This analysis examines the effects of season on egg number, while accounting for the random variation among density levels. This approach is useful when we want to generalize beyond the specific density levels tested.
+
+### Advanced: Using Type II/III ANOVA
+
+For unbalanced designs or when order matters, we might want Type II or III ANOVA:
+
+```{r type_anova}
+# Type II ANOVA (recommended for balanced designs without interactions)
+Anova(aov.int, type = "II")
+
+# Type III ANOVA (for unbalanced designs or when interactions are present)
+Anova(aov.int, type = "III")
+```
 
 ## Final thoughts
 
-Nested and Factorial ANOVA designs allow us to analyze more complex experiments and obtain reliable estimates taking those aspects in consideration. It is important to have these issues in mind when we are proposing a research project, as we need to think ahead in the statistical analyses to be used before going to the field and collect our data. Otherwise, if we perform a flawed design and collected field data, analyzing such data will be difficult and probably our results might be unreliable.
+Nested and Factorial ANOVA designs allow us to analyze more complex experiments and obtain reliable estimates taking multiple sources of variation into consideration. Key considerations include:
+
+1. **Design planning:** Think about your factors (fixed vs. random) and their relationships (nested vs. crossed) before data collection
+2. **Model selection:** Use appropriate models based on your experimental design and research questions
+3. **Assumption checking:** Always verify that your data meets ANOVA assumptions
+4. **Effect sizes:** Don't rely solely on p-values; consider practical significance
+5. **Visualization:** Plots help interpret complex interactions and communicate results effectively
+
+Remember that if you perform a flawed design and collect field data, analyzing such data will be difficult and your results might be unreliable or not generalizable to your intended population.
 
 ## Session
 
