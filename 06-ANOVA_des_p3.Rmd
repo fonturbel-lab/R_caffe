@@ -14,14 +14,6 @@ knitr::opts_chunk$set(
 	message = FALSE,
 	warning = FALSE
 )
-library(car)         # For Type II/III ANOVA
-library(ggplot2)     # For advanced plotting
-library(dplyr)       # For data manipulation
-library(tidyr)       # For data reshaping
-library(ez)          # For ezANOVA (alternative repeated measures)
-library(emmeans)     # For post-hoc tests and contrasts
-library(lme4)        # For mixed effects models
-library(nlme)        # Alternative for mixed effects
 ```
 
 ## Repeated Measures ANOVA
@@ -44,6 +36,16 @@ A common task is measuring the same experimental unit at multiple times. For exa
 ### Loading and Exploring the Data
 
 ```{r data}
+#loading packages
+library(car)         # For Type II/III ANOVA
+library(ggplot2)     # For advanced plotting
+library(dplyr)       # For data manipulation
+library(tidyr)       # For data reshaping
+library(ez)          # For ezANOVA (alternative repeated measures)
+library(emmeans)     # For post-hoc tests and contrasts
+library(lme4)        # For mixed effects models
+library(nlme)        # Alternative for mixed effects
+
 #Let's load the data file
 data<-read.table("data/06-repeated.txt", header = T)
 
