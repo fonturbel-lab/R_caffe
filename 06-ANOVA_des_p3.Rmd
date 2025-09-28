@@ -233,24 +233,44 @@ print("Both approaches account for repeated measures but mixed models are more f
 Since we found significant effects, let's conduct post-hoc tests:
 
 ```{r posthoc}
-# Traditional approach
-TukeyHSD(aov(pulse ~ diet * time + Error(id), data = data))
+# Method 1: Fit separate models for post-hoc tests
+# For main effects that don't involve the repeated measure
+if(any(grepl("diet", names(summary(rm.aov))))) {
+  diet_model <- aov(pulse ~ diet + Error(id), data = data)
+  # Extract the between-subjects part for Tukey test
+  diet_simple <- aov(pulse ~ diet, data = aggregate(pulse ~ id + diet, data, mean))
+  print("Post-hoc test for diet effect:")
+  TukeyHSD(diet_simple)
+}
 
-# Using emmeans for more control
+# Method 2: Using emmeans for more control (recommended approach)
 library(emmeans)
 
+# Create a linear model including subject as a factor for emmeans
+lm_model <- lm(pulse ~ diet * workout * time + id, data = data)
+
 # Main effect of diet
-diet_means <- emmeans(lm(pulse ~ diet * workout * time + id, data = data), ~ diet)
+diet_means <- emmeans(lm_model, ~ diet)
+print("Pairwise comparisons for diet:")
 pairs(diet_means)
 
-# Diet × Time interaction
-diet_time_means <- emmeans(lm(pulse ~ diet * workout * time + id, data = data), 
-                          ~ diet * time)
+# If time effect is significant, examine time comparisons
+time_means <- emmeans(lm_model, ~ time)
+print("Pairwise comparisons for time:")
+pairs(time_means)
+
+# Diet × Time interaction (if significant)
+diet_time_means <- emmeans(lm_model, ~ diet * time)
+print("Diet effects at each time point:")
 pairs(diet_time_means, by = "time")
 
-# Simple effects: diet effects at each time point
-print("Diet effects at each time point:")
-test(diet_time_means, by = "time")
+print("Time effects within each diet:")
+pairs(diet_time_means, by = "diet")
+
+# Method 3: Simple effects analysis
+print("Simple effects: diet effects at each time point:")
+simple_effects <- test(diet_time_means, by = "time")
+print(simple_effects)
 ```
 
 ### Effect Sizes
