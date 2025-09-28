@@ -14,9 +14,6 @@ knitr::opts_chunk$set(
 	message = FALSE,
 	warning = FALSE
 )
-library(ggplot2)
-library(dplyr)
-library(car) # For Type II/III ANOVA
 ```
 
 ## Nested ANOVA
@@ -28,6 +25,11 @@ In some opportunities, we have more than one factor explaining our response vari
 Let's see some example data:
 
 ```{r data}
+#Loading packages
+library(ggplot2)
+library(dplyr)
+library(car) # For Type II/III ANOVA
+
 #Let's load the data file
 data<-read.table("data/05-infest.txt", header = T)
 attach(data)
