@@ -1,7 +1,7 @@
 ---
 title: "04 - Other ANOVA designs part 1"
 author: "Francisco E. Fonturbel"
-date: "06/June/2022"
+date: "29/September/2025"
 output: 
   html_document:
     includes:
@@ -14,18 +14,49 @@ knitr::opts_chunk$set(
 	message = FALSE,
 	warning = FALSE
 )
+library(ggplot2)   # For advanced plotting
+library(dplyr)     # For data manipulation
+library(tidyr)     # For data reshaping
+library(car)       # For Levene's test and Type II/III ANOVA
 ```
 
 ## Completely Randomized Design
 
 Now, we will examine the code and the explanations to perform a **completely randomized design**. In this kind of model, we have only one experimental factor under consideration.
 
+### Understanding Completely Randomized Design
+
+A **completely randomized design (CRD)** is the simplest experimental design where:
+- We have one factor of interest (treatment)
+- Experimental units are assigned to treatments completely at random
+- All experimental units are assumed to be homogeneous except for random variation
+- It's essentially a one-way ANOVA design
+
+**Advantages:**
+- Simple to design and analyze
+- Maximum degrees of freedom for error
+- No restrictions on number of treatments or replicates
+
+**Disadvantages:**
+- Assumes experimental units are homogeneous
+- Less efficient if there are systematic differences among units
+
+### The Research Question
+
 Let's suppose that we sample the height of _Echinopsis chiloensis_ cacti in three populations (randomly selected) out of 15 populations available in our study area. We took 15 measurements at each one of the populations. The information is contained on the file named _04-cactus.txt_ located in the `data` folder.
+
+**Research hypothesis:** Cactus height differs among populations due to local environmental conditions or genetic differentiation.
+
+### Loading and Exploring the Data
 
 ```{r data}
 #Let's load the data file
 data<-read.table("data/04-cactus.txt", header = T)
 attach(data)
+
+# Check the structure of our data
+str(data)
+head(data)
 ```
 
 Let's see if we can see the data file by calling the object:
@@ -34,64 +65,483 @@ Let's see if we can see the data file by calling the object:
 data
 ```
 
-OK, it seems to be in order! Now we have to concatenate the three columns into one:
+OK, it seems to be in order! However, our data is in **wide format** (one column per population), but for ANOVA we need it in **long format** (one column for response, one for treatment). Let's transform it properly:
 
-```{r conc}
-#Concatenate the data rows of df1 into a single vector r
-r<-c(t(as.matrix(data)))
-#Assign new variables for the treatment levels and number of observations
-f = c("Pop1", "Pop2", "Pop3") #Population names
-k = 3 #Number of populations sampled
-n = 15 #Number of samples per population
-#Create a vector of treatment factors that corresponds to each element of r
-tm <- gl(k, 1, n*k, factor(f))
+### Data Management and Transformation
+
+```{r data_management}
+# Method 1: Modern approach using tidyr (recommended)
+library(tidyr)
+library(dplyr)
+
+# Convert from wide to long format
+data_long <- data %>%
+  pivot_longer(cols = everything(),           # All columns
+               names_to = "Population",       # Column names become "Population" 
+               values_to = "Height") %>%      # Values become "Height"
+  mutate(Population = factor(Population))     # Convert to factor
+
+# Check the structure of transformed data
+str(data_long)
+head(data_long, 10)  # Show first 10 rows
+tail(data_long, 10)  # Show last 10 rows
+
+# Method 2: Base R approach (for comparison)
+# This is what the original code was trying to do, but more clearly:
+height_vector <- c(data$Pop1, data$Pop2, data$Pop3)  # Concatenate heights
+population_vector <- factor(rep(c("Pop1", "Pop2", "Pop3"), each = 15))  # Create population labels
+
+# Create a cleaner data frame
+data_base <- data.frame(
+  Height = height_vector,
+  Population = population_vector
+)
+
+# Verify both methods give the same result
+identical(data_long$Height, data_base$Height)
+identical(as.character(data_long$Population), as.character(data_base$Population))
+
+# Use the tidyr version for the rest of the analysis
+cactus_data <- data_long
 ```
+
+Let's verify our data structure and check for any issues:
+
+```{r data_check}
+# Check sample sizes per group
+table(cactus_data$Population)
+
+# Summary statistics by population
+summary_stats <- cactus_data %>%
+  group_by(Population) %>%
+  summarise(
+    n = n(),
+    mean_height = mean(Height),
+    sd_height = sd(Height),
+    median_height = median(Height),
+    min_height = min(Height),
+    max_height = max(Height),
+    .groups = 'drop'
+  )
+
+print(summary_stats)
+
+# Check for missing values
+sum(is.na(cactus_data$Height))
+```
+
+### Exploratory Data Analysis
+
+Before running ANOVA, let's explore our data visually:
+
+```{r exploration, fig.width=12, fig.height=8}
+par(mfrow=c(2,3))
+
+# 1. Boxplot - shows distribution and potential outliers
+boxplot(Height ~ Population, data = cactus_data,
+        main = "Cactus Height by Population",
+        xlab = "Population", ylab = "Height (cm)",
+        col = c("lightblue", "lightgreen", "salmon"))
+
+# 2. Histogram of all data
+hist(cactus_data$Height, 
+     main = "Distribution of All Heights", 
+     xlab = "Height (cm)", 
+     col = "lightgray", 
+     breaks = 10)
+
+# 3. Individual histograms by population
+for(pop in levels(cactus_data$Population)) {
+  hist(cactus_data$Height[cactus_data$Population == pop],
+       main = paste("Height Distribution -", pop),
+       xlab = "Height (cm)",
+       col = which(levels(cactus_data$Population) == pop),
+       xlim = range(cactus_data$Height))
+}
+
+# 4. Dot plot to show individual observations
+stripchart(Height ~ Population, data = cactus_data,
+           main = "Individual Height Measurements",
+           xlab = "Population", ylab = "Height (cm)",
+           method = "jitter", pch = 16, col = 1:3)
+
+par(mfrow=c(1,1))
+
+# Calculate some descriptive statistics
+print("Descriptive Statistics:")
+print(summary_stats)
+
+# Check the range and potential outliers
+print("Overall data range:")
+range(cactus_data$Height)
+```
+
+### ANOVA Assumptions
+
+Before conducting ANOVA, let's check the key assumptions:
+
+```{r assumptions}
+# 1. Normality within groups (Shapiro-Wilk test)
+print("Normality tests by population:")
+for(pop in levels(cactus_data$Population)) {
+  pop_data <- cactus_data$Height[cactus_data$Population == pop]
+  shapiro_result <- shapiro.test(pop_data)
+  print(paste(pop, ": W =", round(shapiro_result$statistic, 4), 
+              ", p =", round(shapiro_result$p.value, 4)))
+}
+
+# 2. Homogeneity of variances (Levene's test)
+library(car)
+levene_result <- leveneTest(Height ~ Population, data = cactus_data)
+print("Levene's test for homogeneity of variances:")
+print(levene_result)
+
+# 3. Visual assessment of normality
+par(mfrow=c(2,2))
+for(pop in levels(cactus_data$Population)) {
+  pop_data <- cactus_data$Height[cactus_data$Population == pop]
+  qqnorm(pop_data, main = paste("Q-Q Plot -", pop))
+  qqline(pop_data, col = "red")
+}
+par(mfrow=c(1,1))
+
+# Interpretation helper
+if(levene_result$`Pr(>F)`[1] > 0.05) {
+  print("✓ Homogeneity assumption met (Levene's test p > 0.05)")
+} else {
+  print("✗ Homogeneity assumption violated (Levene's test p ≤ 0.05)")
+}
+```
+
+### Fitting the One-Way ANOVA
 
 Now we have our data properly ordered. Let's fit a one-way ANOVA model with this:
 
 ```{r ANOVA.r}
-aov.cactus.r <- aov(r ~ tm)
+# Fit the completely randomized design (one-way ANOVA)
+aov.cactus.r <- aov(Height ~ Population, data = cactus_data)
+
+# Alternative using original variable names (for comparison with old method)
+# This shows that both approaches yield identical results:
+r <- cactus_data$Height  # Response variable
+tm <- cactus_data$Population  # Treatment factor
+aov.cactus.old <- aov(r ~ tm)
+
+# Verify they give the same results
+summary(aov.cactus.r)
+print("Results are identical to old method:")
+all.equal(summary(aov.cactus.r)[[1]], summary(aov.cactus.old)[[1]])
 ```
 
 OK, now we have an object called `aov.cactus.r`, now we'll use the `summary()` function to see the results:
 
 ```{r result_aov_r}
 summary(aov.cactus.r)
+
+# Additional information
+print("ANOVA Table with more details:")
+anova_table <- anova(aov.cactus.r)
+print(anova_table)
+
+# Calculate effect size (eta-squared)
+ss_treatment <- anova_table$`Sum Sq`[1]
+ss_total <- sum(anova_table$`Sum Sq`)
+eta_squared <- ss_treatment / ss_total
+
+print(paste("Effect size (eta-squared):", round(eta_squared, 3)))
+print("Effect size interpretation:")
+if(eta_squared < 0.01) print("- Small effect")
+if(eta_squared >= 0.01 & eta_squared < 0.06) print("- Small to medium effect") 
+if(eta_squared >= 0.06 & eta_squared < 0.14) print("- Medium effect")
+if(eta_squared >= 0.14) print("- Large effect")
 ```
 
-Our results indicate that cactus height is **significantly different** among the three sampled population.
+Our results indicate that cactus height is **significantly different** among the three sampled populations (F = `r round(summary(aov.cactus.r)[[1]]$F[1], 2)`, p = `r round(summary(aov.cactus.r)[[1]]$Pr[1], 4)`).
 
+### Post-hoc Analysis
+
+Since we found significant differences, let's determine which populations differ from each other:
+
+```{r posthoc}
+# Tukey's Honestly Significant Difference test
+tukey_results <- TukeyHSD(aov.cactus.r)
+print(tukey_results)
+
+# Plot the confidence intervals
+plot(tukey_results, main = "Tukey HSD Confidence Intervals")
+
+# Alternative: Using emmeans for more control
+library(emmeans)
+population_means <- emmeans(aov.cactus.r, ~ Population)
+print("Estimated marginal means:")
+print(population_means)
+
+print("Pairwise comparisons:")
+pairs(population_means)
+```
+
+### Model Diagnostics
+
+Let's check our model assumptions with diagnostic plots:
+
+```{r diagnostics, fig.width=10, fig.height=8}
+par(mfrow=c(2,2))
+plot(aov.cactus.r)
+par(mfrow=c(1,1))
+
+# Additional diagnostic information
+print("Model diagnostic summary:")
+print("1. Residuals vs Fitted: Check for homoscedasticity (equal variances)")
+print("2. Q-Q Plot: Check for normality of residuals")
+print("3. Scale-Location: Another check for homoscedasticity") 
+print("4. Residuals vs Leverage: Check for influential outliers")
+
+# Formal tests on residuals
+residuals_aov <- residuals(aov.cactus.r)
+print("Shapiro-Wilk test on residuals:")
+print(shapiro.test(residuals_aov))
+```
 
 ## Randomized Block Design
 
-Now, let's go further and get acquianted with the **randomized block design**. In this kind of model, similar test subjects are grouped in **blocks** and each block is tested against all treatment levels of the primary factor, at a random order. This approach is intended to get rid of possible influences of external factors (e.g., slope or sunlight incidence).
+Now, let's go further and get acquainted with the **randomized block design**. In this kind of model, similar test subjects are grouped in **blocks** and each block is tested against all treatment levels of the primary factor, in a random order. This approach is intended to get rid of possible influences of external factors (e.g., slope or sunlight incidence).
 
+### Understanding Randomized Block Design
 
-In a further step, we need to define the blocks:
+A **randomized block design (RBD)** is used when:
+- We suspect there's a nuisance factor that might affect our response
+- We want to control for this variation to get a clearer picture of treatment effects
+- Each block contains one replicate of each treatment
+- Treatments are randomly assigned within each block
+
+**In our cactus example:**
+- **Treatments:** The three populations (our main interest)
+- **Blocks:** Could represent different sampling areas, elevations, or measurement periods
+- **Purpose:** Control for environmental heterogeneity within populations
+
+### Creating Blocks for Our Data
+
+In a further step, we need to define the blocks. For our cactus data, let's assume that the measurements were taken in different areas within each population (e.g., different slopes or aspects):
 
 ```{r blocks}
-blk = gl(n, k, k*n)             # blocking factor
+# Create blocking factor
+# Assume we have 15 blocks, each containing one measurement from each population
+n_per_pop <- 15  # Number of observations per population
+k_pops <- 3      # Number of populations
+
+# Method 1: Using the original gl() approach (explained)
+blk_original <- gl(n_per_pop, k_pops, k_pops * n_per_pop)
+
+# Method 2: More intuitive approach
+# Each "block" represents a set of 3 measurements (one from each population)
+# taken under similar conditions
+block_labels <- rep(1:n_per_pop, each = k_pops)
+blk_clear <- factor(block_labels, labels = paste("Block", 1:n_per_pop))
+
+# Add blocks to our data frame
+cactus_data$Block <- blk_clear
+
+# Verify the blocking structure
+print("Blocking structure (first 20 observations):")
+head(cactus_data, 20)
+
+print("Cross-tabulation of Population and Block:")
+print(table(cactus_data$Population, cactus_data$Block))
+
+# Check that each block has exactly one observation per population
+block_check <- cactus_data %>%
+  group_by(Block, Population) %>%
+  summarise(count = n(), .groups = 'drop') %>%
+  group_by(Block) %>%
+  summarise(populations_per_block = n(),
+            total_obs_per_block = sum(count),
+            .groups = 'drop')
+
+print("Block validation (each block should have 3 populations, 3 total observations):")
+print(head(block_check))
 ```
 
+### Exploratory Analysis for Blocks
 
-Now we have our data properly ordered blocks, let's fit a one-way ANOVA model with this:
+Let's examine the block structure:
+
+```{r block_exploration}
+# Summary statistics by block (first few blocks)
+block_summary <- cactus_data %>%
+  group_by(Block) %>%
+  summarise(
+    n = n(),
+    mean_height = mean(Height),
+    sd_height = sd(Height),
+    range_height = max(Height) - min(Height),
+    .groups = 'drop'
+  )
+
+print("Block summary (first 10 blocks):")
+print(head(block_summary, 10))
+
+# Visualize block effects
+boxplot(Height ~ Block, data = cactus_data,
+        main = "Height Distribution by Block",
+        xlab = "Block", ylab = "Height (cm)",
+        las = 2)  # Rotate x-axis labels
+
+# Check if blocks are capturing meaningful variation
+print("Variance components:")
+print(paste("Between-block variance:", round(var(block_summary$mean_height), 2)))
+print(paste("Overall variance:", round(var(cactus_data$Height), 2)))
+```
+
+### Fitting the Randomized Block Design
+
+Now we have our data with properly defined blocks, let's fit a randomized block design ANOVA:
 
 ```{r ANOVAb}
-aov.cactus.b <- aov(r ~ tm + blk)
+# Fit randomized block design (two-way ANOVA without interaction)
+aov.cactus.b <- aov(Height ~ Population + Block, data = cactus_data)
+
+# For comparison with original method:
+r <- cactus_data$Height
+tm <- cactus_data$Population  
+blk <- cactus_data$Block
+aov.cactus.old_b <- aov(r ~ tm + blk)
+
+print("Verify both methods give identical results:")
+all.equal(summary(aov.cactus.b)[[1]], summary(aov.cactus.old_b)[[1]])
 ```
 
-OK, now we have an object called `aov.cactus`, now we'll use the `summary()` function to see the results:
+OK, now we have an object called `aov.cactus.b`, now we'll use the `summary()` function to see the results:
 
 ```{r result_aov_b}
 summary(aov.cactus.b)
+
+# More detailed ANOVA table
+print("Detailed ANOVA table:")
+anova_table_b <- anova(aov.cactus.b)
+print(anova_table_b)
+
+# Calculate effect sizes
+ss_population <- anova_table_b$`Sum Sq`[1]
+ss_block <- anova_table_b$`Sum Sq`[2]
+ss_total <- sum(anova_table_b$`Sum Sq`)
+
+eta_sq_pop <- ss_population / ss_total
+eta_sq_block <- ss_block / ss_total
+
+print("Effect sizes:")
+print(paste("Population effect (eta-squared):", round(eta_sq_pop, 3)))
+print(paste("Block effect (eta-squared):", round(eta_sq_block, 3)))
 ```
 
-Our results indicate that cactus height is **significantly different** among the three sampled population. However, the block factor `blk` is not significant, indicating that the influence of environmental heterogeneity within populations is negligible.
+Our results indicate that cactus height is **significantly different** among the three sampled populations. However, the block factor `Block` is not significant (p = `r round(summary(aov.cactus.b)[[1]]$Pr[2], 3)`), indicating that the influence of environmental heterogeneity within populations is negligible.
 
+### Comparing Completely Randomized vs. Randomized Block Design
+
+Let's compare both approaches to see the effect of blocking:
+
+```{r comparison}
+# Compare ANOVA tables
+print("=== COMPLETELY RANDOMIZED DESIGN ===")
+print(summary(aov.cactus.r))
+
+print("=== RANDOMIZED BLOCK DESIGN ===") 
+print(summary(aov.cactus.b))
+
+# Compare error terms and power
+crd_mse <- summary(aov.cactus.r)[[1]]$`Mean Sq`[2]  # Error Mean Square
+rbd_mse <- summary(aov.cactus.b)[[1]]$`Mean Sq`[3]  # Error Mean Square
+
+print("Comparison of designs:")
+print(paste("CRD Error Mean Square:", round(crd_mse, 2)))
+print(paste("RBD Error Mean Square:", round(rbd_mse, 2)))
+print(paste("Efficiency of blocking:", round(crd_mse / rbd_mse, 2)))
+
+if(rbd_mse < crd_mse) {
+  print("✓ Blocking reduced error variance (more efficient)")
+} else {
+  print("✗ Blocking increased error variance (less efficient)")
+  print("  This suggests blocks are not capturing meaningful variation")
+}
+
+# Compare F-statistics for population effect
+f_crd <- summary(aov.cactus.r)[[1]]$`F value`[1]
+f_rbd <- summary(aov.cactus.b)[[1]]$`F value`[1]
+
+print(paste("F-statistic for Population (CRD):", round(f_crd, 2)))
+print(paste("F-statistic for Population (RBD):", round(f_rbd, 2)))
+```
+
+### Model Diagnostics for Block Design
+
+```{r diagnostics_block, fig.width=10, fig.height=8}
+par(mfrow=c(2,2))
+plot(aov.cactus.b, main = "Randomized Block Design Diagnostics")
+par(mfrow=c(1,1))
+
+# Check for block × treatment interaction (should be minimal)
+interaction_model <- aov(Height ~ Population * Block, data = cactus_data)
+print("Test for Population × Block interaction (should be non-significant):")
+print(anova(aov.cactus.b, interaction_model))
+
+if(anova(aov.cactus.b, interaction_model)$`Pr(>F)`[2] > 0.05) {
+  print("✓ No significant interaction - blocking assumption met")
+} else {
+  print("✗ Significant interaction - blocking assumption violated")
+  print("  Consider alternative analysis approaches")
+}
+```
+
+### Post-hoc Tests for Block Design
+
+```{r posthoc_block}
+# Tukey test for population effects in block design
+tukey_block <- TukeyHSD(aov.cactus.b, which = "Population")
+print("Post-hoc comparisons (controlling for blocks):")
+print(tukey_block)
+
+# Using emmeans
+pop_means_blocked <- emmeans(aov.cactus.b, ~ Population)
+print("Population means (adjusted for block effects):")
+print(pop_means_blocked)
+
+print("Pairwise comparisons (blocked design):")
+pairs(pop_means_blocked)
+```
 
 ## Final thoughts
 
-ANOVA is quite a flexible test that allows to consider some sources of variation to obtain more reliable results. If we suspect that external factors may be affecting our data, using a randomized block design may be a good option.
+ANOVA is quite a flexible test that allows us to consider various sources of variation to obtain more reliable results. If we suspect that external factors may be affecting our data, using a randomized block design may be a good option.
+
+### Key Takeaways:
+
+**Completely Randomized Design:**
+- Simplest ANOVA design for comparing treatment means
+- Assumes all experimental units are homogeneous
+- Maximum degrees of freedom for error estimation
+- Best when experimental units are truly similar
+
+**Randomized Block Design:**
+- Controls for one nuisance factor (blocks)
+- Reduces experimental error when blocks capture meaningful variation
+- More complex but potentially more powerful
+- Requires that each treatment appears once in each block
+
+### Design Selection Guidelines:
+
+1. **Use CRD when:** Experimental units are homogeneous, or nuisance factors are minimal
+2. **Use RBD when:** There's an identifiable source of variation you want to control for
+3. **Check efficiency:** Compare error mean squares to see if blocking helped
+4. **Verify assumptions:** Especially the no interaction assumption in RBD
+
+### Data Management Best Practices:
+
+- **Use tidy data format:** One row per observation, one column per variable
+- **Clear variable names:** Descriptive names for factors and responses
+- **Factor conversion:** Ensure categorical variables are properly coded as factors
+- **Data validation:** Always check your data structure before analysis
+
+Remember: The choice between designs should be made during the planning phase, not after data collection. Proper experimental design is crucial for obtaining reliable and interpretable results.
+
 
 ## Session
 
