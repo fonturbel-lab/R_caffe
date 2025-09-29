@@ -14,10 +14,6 @@ knitr::opts_chunk$set(
 	message = FALSE,
 	warning = FALSE
 )
-library(ggplot2)   # For advanced plotting
-library(dplyr)     # For data manipulation
-library(tidyr)     # For data reshaping
-library(car)       # For Levene's test and Type II/III ANOVA
 ```
 
 ## Completely Randomized Design
@@ -50,6 +46,12 @@ Let's suppose that we sample the height of _Echinopsis chiloensis_ cacti in thre
 ### Loading and Exploring the Data
 
 ```{r data}
+#Loading required packages
+library(ggplot2)   # For advanced plotting
+library(dplyr)     # For data manipulation
+library(tidyr)     # For data reshaping
+library(car)       # For Levene's test and Type II/III ANOVA
+
 #Let's load the data file
 data<-read.table("data/04-cactus.txt", header = T)
 attach(data)
