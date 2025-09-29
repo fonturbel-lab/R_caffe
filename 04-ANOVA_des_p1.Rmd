@@ -51,6 +51,7 @@ library(ggplot2)   # For advanced plotting
 library(dplyr)     # For data manipulation
 library(tidyr)     # For data reshaping
 library(car)       # For Levene's test and Type II/III ANOVA
+library(emmeans)
 
 #Let's load the data file
 data<-read.table("data/04-cactus.txt", header = T)
@@ -269,11 +270,7 @@ Since we found significant differences, let's determine which populations differ
 tukey_results <- TukeyHSD(aov.cactus.r)
 print(tukey_results)
 
-# Plot the confidence intervals
-plot(tukey_results, main = "Tukey HSD Confidence Intervals")
-
 # Alternative: Using emmeans for more control
-library(emmeans)
 population_means <- emmeans(aov.cactus.r, ~ Population)
 print("Estimated marginal means:")
 print(population_means)
@@ -484,13 +481,6 @@ par(mfrow=c(1,1))
 interaction_model <- aov(Height ~ Population * Block, data = cactus_data)
 print("Test for Population × Block interaction (should be non-significant):")
 print(anova(aov.cactus.b, interaction_model))
-
-if(anova(aov.cactus.b, interaction_model)$`Pr(>F)`[2] > 0.05) {
-  print("✓ No significant interaction - blocking assumption met")
-} else {
-  print("✗ Significant interaction - blocking assumption violated")
-  print("  Consider alternative analysis approaches")
-}
 ```
 
 ### Post-hoc Tests for Block Design
