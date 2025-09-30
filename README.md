@@ -4,7 +4,7 @@
 
 Created by [Francisco E. Fontúrbel](https://github.com/fonturbel) :sunglasses:
 
-![cup](images/caffe.png)
+![cup](images/caffe2025.png)
 
 This repository presents a comprehensive R course intended for self-learning and build capacities in statistical analysis using [R](https://cran.r-project.org), [R Studio](https://rstudio.com), and RMarkdown language (not familiar with Markdown? start [here!](https://guides.github.com/features/mastering-markdown/)).
 
