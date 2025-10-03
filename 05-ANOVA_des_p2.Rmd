@@ -354,6 +354,9 @@ Anova(aov.int, type = "II")
 Anova(aov.int, type = "III")
 ```
 
+As you can see, results are different between type II and type III. Therefore, it's critical to wisely choose the most appropriate model for your data.
+
+
 ## Final thoughts
 
 Nested and Factorial ANOVA designs allow us to analyze more complex experiments and obtain reliable estimates taking multiple sources of variation into consideration. Key considerations include:
