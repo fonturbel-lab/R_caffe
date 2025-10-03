@@ -85,12 +85,21 @@ Well, some comparisons appear marked as "NA" (which represents **missing values*
 
 ```{r nested_visualization}
 # Let's visualize our nested design
-boxplot(infestation ~ valley:site, 
-        data = data, 
-        col = c("lightblue", "lightgreen", "salmon", "wheat"),
-        main = "Cockroach Infestation by Valley and Site",
-        xlab = "Valley:Site", 
-        ylab = "Infestation Level")
+ggplot(data, aes(x = site, y = infestation, fill = valley)) +
+  geom_boxplot(alpha = 0.8, outlier.shape = 21, outlier.size = 2) +
+  scale_fill_brewer(palette = "Set2", name = "Valley") +
+  labs(
+    title = "Infestation by Valley and Site",
+    x = "Site",
+    y = "Infestation Level"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold", size = 16),
+    legend.position = "right",
+    panel.grid.major.x = element_blank(),
+    panel.grid.minor = element_blank()
+  )
 ```
 
 ## Factorial ANOVA
