@@ -752,7 +752,8 @@ models &lt;- list(
   &quot;Season only&quot; = aov.season,
   &quot;Density only&quot; = aov.dens, 
   &quot;Additive&quot; = aov.2w,
-  &quot;Interaction&quot; = aov.int
+  &quot;Interaction&quot; = aov.int,
+  &quot;Intercept-only&quot; = aov.intonly
 )
 
 # Calculate AIC for each model
@@ -763,11 +764,12 @@ aic_table &lt;- data.frame(
   Delta_AIC = aic_values - min(aic_values)
 )
 aic_table[order(aic_table$AIC),]</code></pre>
-<pre><code>##                     Model      AIC Delta_AIC
-## Additive         Additive 30.82889  0.000000
-## Interaction   Interaction 35.50973  4.680839
-## Density only Density only 46.12111 15.292221
-## Season only   Season only 48.80873 17.979842</code></pre>
+<pre><code>##                         Model      AIC Delta_AIC
+## Additive             Additive 30.82889  0.000000
+## Interaction       Interaction 35.50973  4.680839
+## Intercept-only Intercept-only 35.50973  4.680839
+## Density only     Density only 46.12111 15.292221
+## Season only       Season only 48.80873 17.979842</code></pre>
 <p>The model with the lowest AIC is generally preferred, with
 differences &gt; 2 being meaningful.</p>
 </div>

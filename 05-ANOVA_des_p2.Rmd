@@ -264,7 +264,8 @@ models <- list(
   "Season only" = aov.season,
   "Density only" = aov.dens, 
   "Additive" = aov.2w,
-  "Interaction" = aov.int
+  "Interaction" = aov.int,
+  "Intercept-only" = aov.intonly
 )
 
 # Calculate AIC for each model
