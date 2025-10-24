@@ -68,7 +68,7 @@ Wait... what if we want to know which metals have different between sites? Well,
 summary.aov(manova0)
 ```
 
-Awesome! with this code we can determine that Cd and Zu are not different between sites, but the other metals present significant differences.
+Awesome! with this code we can determine that Cd and Zn are not different between sites, but the other metals present significant differences.
 
 ### Assumptions
 
