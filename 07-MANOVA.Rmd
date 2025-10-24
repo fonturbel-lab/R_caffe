@@ -1,7 +1,7 @@
 ---
 title: "07 - MANOVA"
 author: "Francisco E. Fonturbel"
-date: "03/July/2022"
+date: "24/October/2025"
 output: 
   html_document:
     includes:
@@ -86,14 +86,20 @@ par(mfcol=c(1,1))
 Uhmm... it seems that our data is not normal. Let's use the `mvn` function from the `MVN` package to test it:
 
 ```{r mvn1}
-multinorm<-mvn(y, mvnTest = "royston", univariatePlot = "qqplot")
+multinorm<-mvn(y, mvn_test = "royston")
 multinorm
+par(mfrow=c(3,3))
+for(i in 1:ncol(y)){
+  qqnorm(y[,i], main = paste("QQ Plot -", names(y)[i]))
+  qqline(y[,i], col = "blue")
+}
+par(mfrow=c(1,1))
 ```
 
 So, we have some normality issues. As an alternative, there is a non-parametric version of MANOVA. We will use the function `adonis` from the `vegan` package to do this:
 
 ```{r m0np}
-manova0np<-adonis(as.matrix(y)~Site)
+manova0np<-adonis2(as.matrix(y)~Site)
 manova0np
 ```
 
