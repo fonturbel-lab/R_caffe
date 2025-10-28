@@ -14,12 +14,6 @@ knitr::opts_chunk$set(
 	message = FALSE,
 	warning = FALSE
 )
-library(vegan)      # For ANOSIM and SIMPER
-library(mvabund)    # For multivariate abundance analysis
-library(ggplot2)    # For advanced plotting
-library(dplyr)      # For data manipulation
-library(tidyr)      # For data reshaping
-library(corrplot)   # For correlation plots
 ```
 
 ## How to analyze species composition?
@@ -38,6 +32,14 @@ Traditional univariate tests (like ANOVA) have several limitations when applied 
 ### Loading and Exploring the Data
 
 ```{r data}
+#Loading packages
+library(vegan)      # For ANOSIM and SIMPER
+library(mvabund)    # For multivariate abundance analysis
+library(ggplot2)    # For advanced plotting
+library(dplyr)      # For data manipulation
+library(tidyr)      # For data reshaping
+library(corrplot)   # For correlation plots
+
 data<-read.table("data/16_bird_data.txt", 
                      header=TRUE, 
                      sep="\t", dec=".", 
