@@ -1,7 +1,7 @@
 ---
 title: "16 - ANOSIM, SIMPER, and mvabund for Community Analysis"
 author: "Francisco E. Fonturbel"
-date: "23/November/2022"
+date: "28/October/2025"
 output: 
   html_document:
     includes:
