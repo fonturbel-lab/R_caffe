@@ -94,10 +94,13 @@ barplot(colSums(birds), las=2, col="steelblue",
 # Prepare data for stacked barplot
 birds_with_groups <- cbind(data[,1:2], birds)
 
+# Get the species column names (all columns except Sample and Habitat)
+species_cols <- names(birds)
+
 # Calculate proportions by habitat
 habitat_composition <- birds_with_groups %>%
   group_by(Habitat) %>%
-  summarise(across(3:22, sum)) %>%
+  summarise(across(all_of(species_cols), sum)) %>%
   pivot_longer(cols = -Habitat, names_to = "Species", values_to = "Abundance")
 
 # Stacked barplot by habitat
@@ -111,7 +114,7 @@ ggplot(habitat_composition, aes(x=Habitat, y=Abundance, fill=Species)) +
 # Calculate proportions by sampling method
 sample_composition <- birds_with_groups %>%
   group_by(Sample) %>%
-  summarise(across(3:22, sum)) %>%
+  summarise(across(all_of(species_cols), sum)) %>%
   pivot_longer(cols = -Sample, names_to = "Species", values_to = "Abundance")
 
 # Stacked barplot by sampling method
@@ -280,8 +283,6 @@ The `mvabund` package provides a more powerful alternative based on **multivaria
 ### Preparing Data for mvabund
 
 ```{r mvabund_setup}
-library(mvabund)
-
 # Create mvabund object
 birds_mv <- mvabund(birds)
 
