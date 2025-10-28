@@ -409,23 +409,13 @@ mv_habitat_test <- anova(mv_habitat,
 print("Multivariate test results for Habitat:")
 print(mv_habitat_test)
 
-if(mv_habitat_test$table[1,"Pr(>Dev)"] < 0.05) {
-  print("✓ Significant difference in community composition by habitat")
-  
-  # Get species-level results
-  habitat_species_pvals <- mv_habitat_test$uni.p[2,]
-  habitat_species_results <- data.frame(
-    Species = names(habitat_species_pvals),
-    P_value = habitat_species_pvals,
-    Significant = ifelse(habitat_species_pvals < 0.05, "Yes", "No")
-  )
-  habitat_species_results <- habitat_species_results[order(habitat_species_results$P_value),]
-  
-  print("Species contributing to habitat differences:")
-  print(habitat_species_results[habitat_species_results$Significant == "Yes",])
-  
-} else {
+pval_habitat <- mv_habitat_test$table["data$Habitat", "Pr(>Dev)"]
+if(!is.na(pval_habitat) && pval_habitat < 0.05) {
+  # ... rest of code
+} else if(!is.na(pval_habitat)) {
   print("✗ No significant difference in community composition by habitat")
+} else {
+  print("Note: P-value not available - check test results above")
 }
 ```
 
