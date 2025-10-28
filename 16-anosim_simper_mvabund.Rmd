@@ -348,10 +348,13 @@ print("Multivariate test results:")
 print(mv_sample_test)
 
 # Interpret results
-if(mv_sample_test$table[1,"Pr(>Dev)"] < 0.05) {
+pval_sample <- mv_sample_test$table["data$Sample", "Pr(>Dev)"]
+if(!is.na(pval_sample) && pval_sample < 0.05) {
   print("✓ Significant difference in community composition by sampling method")
-} else {
+} else if(!is.na(pval_sample)) {
   print("✗ No significant difference in community composition by sampling method")
+} else {
+  print("Note: P-value not available - check test results above")
 }
 ```
 
