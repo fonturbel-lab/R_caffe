@@ -199,7 +199,7 @@ set.seed(123)
 nmds <- metaMDS(birds, distance="bray", k=2, trymax=100)
 
 # Extract NMDS scores
-nmds_scores <- as.data.frame(scores(nmds))
+nmds_scores <- as.data.frame(scores(nmds, display="sites"))
 nmds_scores$Habitat <- data$Habitat
 nmds_scores$Sample <- data$Sample
 
