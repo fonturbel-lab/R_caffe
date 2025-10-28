@@ -286,11 +286,20 @@ The `mvabund` package provides a more powerful alternative based on **multivaria
 # Create mvabund object
 birds_mv <- mvabund(birds)
 
-# Check the mean-variance relationship
-meanvar.plot(birds_mv, 
-             main="Mean-Variance Relationship",
-             xlab="Mean Abundance", 
-             ylab="Variance")
+## Check the mean-variance relationship
+# Alternative approach if meanvar.plot gives issues:
+species_means <- colMeans(birds)
+species_vars <- apply(birds, 2, var)
+
+plot(species_means, species_vars, 
+     pch=16, col="steelblue",
+     xlab="Mean Abundance", 
+     ylab="Variance",
+     main="Mean-Variance Relationship")
+abline(a=0, b=1, col="red", lty=2)  # 1:1 line
+text(max(species_means)*0.7, max(species_vars)*0.9, 
+     "If points are above the line,\nvariance > mean (overdispersion)", 
+     cex=0.8)
 
 # The plot shows if variance increases with mean (common in count data)
 # If variance increases with mean, negative binomial family is appropriate
