@@ -1,0 +1,572 @@
+---
+title: "16 - ANOSIM, SIMPER, and mvabund for Community Analysis"
+author: "Francisco E. Fonturbel"
+date: "23/November/2022"
+output: 
+  html_document:
+    includes:
+        after_body: footer.html
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	echo = TRUE,
+	message = FALSE,
+	warning = FALSE
+)
+library(vegan)      # For ANOSIM and SIMPER
+library(mvabund)    # For multivariate abundance analysis
+library(ggplot2)    # For advanced plotting
+library(dplyr)      # For data manipulation
+library(tidyr)      # For data reshaping
+library(corrplot)   # For correlation plots
+```
+
+## How to analyze species composition?
+
+Dealing with biodiversity data is somewhat different than dealing with the usual stuff that we are used to. Some authors use standard approaches (e.g., ANOVA) to compare species composition among sites, but this is not correct as in this case the identity of the species matters, and traditional methods cannot consider them.
+
+### Understanding the Challenge
+
+Traditional univariate tests (like ANOVA) have several limitations when applied to community data:
+
+1. **Ignore species identities:** Treating each species independently loses the multivariate structure
+2. **Multiple testing problem:** Testing each species separately inflates Type I error
+3. **Ignore correlations:** Species often co-vary due to similar habitat requirements
+4. **Compositional nature:** Community data has special properties (many zeros, over-dispersion)
+
+### Loading and Exploring the Data
+
+```{r data}
+data<-read.table("data/16_bird_data.txt", 
+                     header=TRUE, 
+                     sep="\t", dec=".", 
+                     na.strings="NA")
+attach(data)
+
+# Check data structure
+str(data)
+head(data)
+
+# Summary of experimental design
+print("Sample sizes by habitat:")
+table(data$Habitat)
+
+print("Sample sizes by sampling method:")
+table(data$Sample)
+
+print("Cross-tabulation:")
+table(data$Sample, data$Habitat)
+```
+
+We will use the data of [Fontúrbel et al. 2020](https://www.sciencedirect.com/science/article/pii/S1470160X20308013) to illustrate this. This dataset contains bird abundance data for camera trap and point count data, comparing four habitat conditions.
+
+### Data Exploration
+
+```{r exploration}
+# Extract species data
+birds<-data[,3:22]
+
+# Basic summaries
+print("Total abundance per species:")
+colSums(birds)
+
+print("Total abundance per site:")
+rowSums(birds)
+
+# Species richness per site
+richness <- rowSums(birds > 0)
+print("Species richness summary:")
+summary(richness)
+
+# Visualize total abundances
+par(mar=c(8,4,2,1))
+barplot(colSums(birds), las=2, col="steelblue",
+        main="Total Abundance by Species",
+        ylab="Total Count")
+```
+
+### Visualizing Community Composition
+
+```{r composition_viz, fig.width=12, fig.height=8}
+# Prepare data for stacked barplot
+birds_with_groups <- cbind(data[,1:2], birds)
+
+# Calculate proportions by habitat
+habitat_composition <- birds_with_groups %>%
+  group_by(Habitat) %>%
+  summarise(across(3:22, sum)) %>%
+  pivot_longer(cols = -Habitat, names_to = "Species", values_to = "Abundance")
+
+# Stacked barplot by habitat
+ggplot(habitat_composition, aes(x=Habitat, y=Abundance, fill=Species)) +
+  geom_bar(stat="identity", position="fill") +
+  labs(title="Bird Community Composition by Habitat",
+       y="Proportion of Total Abundance") +
+  theme_minimal() +
+  theme(legend.position="right")
+
+# Calculate proportions by sampling method
+sample_composition <- birds_with_groups %>%
+  group_by(Sample) %>%
+  summarise(across(3:22, sum)) %>%
+  pivot_longer(cols = -Sample, names_to = "Species", values_to = "Abundance")
+
+# Stacked barplot by sampling method
+ggplot(sample_composition, aes(x=Sample, y=Abundance, fill=Species)) +
+  geom_bar(stat="identity", position="fill") +
+  labs(title="Bird Community Composition by Sampling Method",
+       y="Proportion of Total Abundance") +
+  theme_minimal() +
+  theme(legend.position="right")
+```
+
+## Analysis of Similarities (ANOSIM)
+
+When we have species presence/absence or relative abundance data with two or more groups and at least three replicates per group, we can use the Analysis of Similarities (ANOSIM) to test for species composition differences. ANOSIM is a non-parametric approach that uses a similarity metric (e.g., Jaccard or Bray-Curtis) to compare species similarity within and between groups (following the same logic than ANOVA). 
+
+### Understanding ANOSIM
+
+**How ANOSIM works:**
+1. Calculate a dissimilarity matrix between all pairs of samples
+2. Rank all dissimilarities
+3. Compare average ranks within groups vs. between groups
+4. Test significance using permutations
+
+**The R statistic:**
+- R ranges from -1 to +1
+- R ≈ 0: No difference between groups
+- R = 1: Complete separation (all within-group dissimilarities < all between-group)
+- R < 0: Within-group dissimilarities > between-group (rare, suggests misclassification)
+
+**Interpretation guidelines:**
+- R > 0.75: Well separated
+- R > 0.5: Separated but overlapping
+- R > 0.25: Separated but strongly overlapping
+- R < 0.25: Barely separable
+
+The resulting statistic (R) is not a proportional value as it is calculated upon rankings (and it should not be interpreted as a linear scale of difference). The significance of this test is estimated using permutations (P value is the number of times that the randomized R value is equal or greater than the real R value, divided by the number of permutations). ANOSIM is implemented in the `vegan` package.
+
+### ANOSIM: Testing Habitat Effects
+
+```{r anosim1}
+#Creating a distance matrix
+birdist<-vegdist(birds, method="bray")
+
+# Check the distribution of dissimilarities
+hist(birdist, main="Distribution of Bray-Curtis Dissimilarities",
+     xlab="Dissimilarity", col="lightblue", breaks=20)
+
+#ANOSIM per habitat
+forestbirds<-anosim(birdist, data$Habitat, permutations = 999, distance = "bray")
+summary(forestbirds)
+plot(forestbirds, xlab="Condition", ylab="Rank distance")
+
+# Additional information
+print(paste("ANOSIM R statistic:", round(forestbirds$statistic, 3)))
+print(paste("Significance:", forestbirds$signif))
+print("Interpretation: R < 0.25 suggests communities are barely separable by habitat")
+```
+
+So, there is no significant difference among habitat conditions (R = `r round(forestbirds$statistic, 3)`, p = `r forestbirds$signif`). This suggests that bird communities are similar across the different habitat types sampled.
+
+### ANOSIM: Testing Sampling Method Effects
+
+What about sampling approaches?
+
+```{r anosim2}
+sampbirds<-anosim(birdist, data$Sample, permutations = 999, distance = "bray")
+summary(sampbirds)
+plot(sampbirds, xlab="Sampling method", ylab="Rank distance")
+
+print(paste("ANOSIM R statistic:", round(sampbirds$statistic, 3)))
+print(paste("Significance:", sampbirds$signif))
+print("Interpretation: R > 0.25 suggests some separation between sampling methods")
+```
+
+In this case, we found a significant difference (R = `r round(sampbirds$statistic, 3)`, p = `r sampbirds$signif`), in which point counts are different from camera traps. This makes biological sense as different sampling methods may detect different species or relative abundances.
+
+### Visualizing ANOSIM Results with Ordination
+
+```{r anosim_ordination, fig.width=12, fig.height=6}
+# NMDS ordination to visualize community differences
+set.seed(123)
+nmds <- metaMDS(birds, distance="bray", k=2, trymax=100)
+
+# Extract NMDS scores
+nmds_scores <- as.data.frame(scores(nmds))
+nmds_scores$Habitat <- data$Habitat
+nmds_scores$Sample <- data$Sample
+
+# Plot by habitat
+par(mfrow=c(1,2))
+plot(nmds, type="n", main="NMDS by Habitat")
+points(nmds, display="sites", col=as.numeric(factor(data$Habitat)), pch=16, cex=1.5)
+legend("topright", legend=levels(factor(data$Habitat)), 
+       col=1:nlevels(factor(data$Habitat)), pch=16)
+ordihull(nmds, groups=data$Habitat, draw="polygon", alpha=50, 
+         col=1:nlevels(factor(data$Habitat)))
+
+# Plot by sampling method
+plot(nmds, type="n", main="NMDS by Sampling Method")
+points(nmds, display="sites", col=as.numeric(factor(data$Sample)), pch=16, cex=1.5)
+legend("topright", legend=levels(factor(data$Sample)), 
+       col=1:nlevels(factor(data$Sample)), pch=16)
+ordihull(nmds, groups=data$Sample, draw="polygon", alpha=50,
+         col=1:nlevels(factor(data$Sample)))
+
+par(mfrow=c(1,1))
+
+print(paste("NMDS stress:", round(nmds$stress, 3)))
+print("Stress interpretation: < 0.1 excellent, < 0.2 good, > 0.3 poor")
+```
+
+## Which species explain the differences?
+
+In the second case, we found a significant difference in the ANOSIM test. But, which species account for such differences? In this case, we can use the Similarity Percentages (SIMPER) test, also implemented in the `vegan` package.
+
+### Understanding SIMPER
+
+**SIMPER (Similarity Percentages) analysis:**
+- Identifies species contributing most to observed differences between groups
+- Calculates average contribution of each species to dissimilarity
+- Provides cumulative contribution percentages
+- Helps focus on key species driving community patterns
+
+```{r simper}
+simbirds<-simper(birds, group = data$Sample, permutations = 999)
+summary(simbirds, digits = 3)
+
+# Extract and visualize top contributors
+simper_summary <- summary(simbirds)
+
+# For Camera1 vs Point comparison (if exists in results)
+if("Camera1_Point" %in% names(simper_summary)) {
+  top_species <- simper_summary$Camera1_Point[1:10,]
+  
+  barplot(top_species$contr, names.arg=rownames(top_species),
+          las=2, col="coral", 
+          main="Top 10 Species Contributing to Dissimilarity\n(Camera1 vs Point)",
+          ylab="Contribution (%)", cex.names=0.7)
+}
+```
+
+## Multivariate Abundance Analysis using mvabund
+
+While ANOSIM and SIMPER are useful, they have some limitations:
+- **ANOSIM:** Assumes exchangeability, sensitive to dispersion differences, uses rank-based approach
+- **Limited inference:** Doesn't provide species-level p-values or account for mean-variance relationships
+
+The `mvabund` package provides a more powerful alternative based on **multivariate generalized linear models (GLMs)** that:
+- **Tests community-level hypotheses** while accounting for species correlations
+- **Provides species-level inference** with proper p-value adjustment
+- **Handles mean-variance relationships** common in count data
+- **More powerful** for detecting subtle community differences
+- **Model-based approach** allowing for more complex experimental designs
+
+### Understanding mvabund
+
+**Key advantages of mvabund:**
+
+1. **Proper statistical framework:** Uses likelihood-based models (GLMs) rather than distance-based approaches
+2. **Accounts for mean-variance relationship:** Count data typically shows increasing variance with mean
+3. **Species correlations:** Resampling approach accounts for correlations among species
+4. **Hypothesis testing:** Provides proper multivariate test statistics
+5. **Species-level inference:** Identifies which species contribute to differences with adjusted p-values
+6. **Flexible:** Can include covariates and more complex designs
+
+### Preparing Data for mvabund
+
+```{r mvabund_setup}
+library(mvabund)
+
+# Create mvabund object
+birds_mv <- mvabund(birds)
+
+# Check the mean-variance relationship
+meanvar.plot(birds_mv, 
+             main="Mean-Variance Relationship",
+             xlab="Mean Abundance", 
+             ylab="Variance")
+
+# The plot shows if variance increases with mean (common in count data)
+# If variance increases with mean, negative binomial family is appropriate
+```
+
+### Choosing the Right Distribution Family
+
+```{r model_selection}
+# Compare different families for our data
+# This helps us choose the appropriate error distribution
+
+# Negative binomial is often best for count data with overdispersion
+# Let's check by fitting models and comparing
+
+# Fit models with different families
+mod_poisson <- manyglm(birds_mv ~ data$Sample, family="poisson")
+mod_negbin <- manyglm(birds_mv ~ data$Sample, family="negative.binomial")
+
+# Plot residuals to check assumptions
+par(mfrow=c(2,2))
+plot(mod_poisson, which=1:2, main="Poisson")
+plot(mod_negbin, which=1:2, main="Negative Binomial")
+par(mfrow=c(1,1))
+
+print("Based on residual plots, negative binomial typically fits better for count data")
+print("We'll use negative binomial family for subsequent analyses")
+```
+
+### mvabund Analysis: Testing Sampling Method Effects
+
+```{r mvabund_sample}
+# Fit the model
+mv_sample <- manyglm(birds_mv ~ data$Sample, family="negative.binomial")
+
+# Summary of the model
+summary(mv_sample)
+
+# Hypothesis test using likelihood ratio test with resampling
+# This tests if bird community composition differs by sampling method
+mv_sample_test <- anova(mv_sample, 
+                        p.uni="adjusted",  # Get adjusted p-values for each species
+                        nBoot=999,         # Number of bootstrap iterations
+                        test="LR")         # Likelihood ratio test
+
+print("Multivariate test results:")
+print(mv_sample_test)
+
+# Interpret results
+if(mv_sample_test$table[1,"Pr(>Dev)"] < 0.05) {
+  print("✓ Significant difference in community composition by sampling method")
+} else {
+  print("✗ No significant difference in community composition by sampling method")
+}
+```
+
+### Species-Level Inference with mvabund
+
+```{r species_level}
+# Get species-level p-values
+species_pvals <- mv_sample_test$uni.p[2,]  # p-values for Sample effect
+species_test <- mv_sample_test$uni.test[2,]  # Test statistics
+
+# Create results table
+species_results <- data.frame(
+  Species = names(species_pvals),
+  Test_Stat = species_test,
+  P_value = species_pvals,
+  Significant = ifelse(species_pvals < 0.05, "Yes", "No")
+)
+
+# Sort by p-value
+species_results <- species_results[order(species_results$P_value),]
+
+print("Species contributing to sampling method differences:")
+print(species_results)
+
+# Visualize significant species
+sig_species <- species_results[species_results$P_value < 0.05,]
+
+if(nrow(sig_species) > 0) {
+  par(mar=c(8,4,2,1))
+  barplot(sig_species$Test_Stat, 
+          names.arg=sig_species$Species,
+          las=2, col="steelblue",
+          main="Species with Significant Differences\n(Sampling Method Effect)",
+          ylab="Test Statistic")
+  abline(h=0, col="red", lty=2)
+  par(mar=c(5,4,4,2))
+}
+```
+
+### mvabund Analysis: Testing Habitat Effects
+
+```{r mvabund_habitat}
+# Fit model for habitat
+mv_habitat <- manyglm(birds_mv ~ data$Habitat, family="negative.binomial")
+
+# Hypothesis test
+mv_habitat_test <- anova(mv_habitat,
+                        p.uni="adjusted",
+                        nBoot=999,
+                        test="LR")
+
+print("Multivariate test results for Habitat:")
+print(mv_habitat_test)
+
+if(mv_habitat_test$table[1,"Pr(>Dev)"] < 0.05) {
+  print("✓ Significant difference in community composition by habitat")
+  
+  # Get species-level results
+  habitat_species_pvals <- mv_habitat_test$uni.p[2,]
+  habitat_species_results <- data.frame(
+    Species = names(habitat_species_pvals),
+    P_value = habitat_species_pvals,
+    Significant = ifelse(habitat_species_pvals < 0.05, "Yes", "No")
+  )
+  habitat_species_results <- habitat_species_results[order(habitat_species_results$P_value),]
+  
+  print("Species contributing to habitat differences:")
+  print(habitat_species_results[habitat_species_results$Significant == "Yes",])
+  
+} else {
+  print("✗ No significant difference in community composition by habitat")
+}
+```
+
+### Complex Model: Both Factors
+
+```{r mvabund_complex}
+# Fit model with both factors
+mv_both <- manyglm(birds_mv ~ data$Sample + data$Habitat, family="negative.binomial")
+
+# Test each term
+mv_both_test <- anova(mv_both,
+                     p.uni="adjusted",
+                     nBoot=999,
+                     test="LR")
+
+print("Results for model with both factors:")
+print(mv_both_test)
+
+# Could also test interaction if sample sizes allow
+# mv_interaction <- manyglm(birds_mv ~ data$Sample * data$Habitat, family="negative.binomial")
+```
+
+### Visualizing mvabund Results
+
+```{r mvabund_viz, fig.width=12, fig.height=8}
+# Plot model residuals
+par(mfrow=c(2,2))
+plot(mv_sample)
+par(mfrow=c(1,1))
+
+# Create abundance plots for significant species
+sig_species_names <- species_results$Species[species_results$Significant == "Yes"]
+
+if(length(sig_species_names) > 0) {
+  # Select a few species to plot (max 6 for clarity)
+  plot_species <- head(sig_species_names, 6)
+  
+  par(mfrow=c(2,3))
+  for(sp in plot_species) {
+    boxplot(birds[,sp] ~ data$Sample,
+            main=sp,
+            xlab="Sampling Method",
+            ylab="Abundance",
+            col=c("lightblue", "lightcoral", "lightgreen"))
+  }
+  par(mfrow=c(1,1))
+}
+```
+
+## Comparing ANOSIM vs. mvabund Approaches
+
+Let's summarize and compare the results from both methods:
+
+```{r comparison}
+# Create comparison table
+comparison_results <- data.frame(
+  Method = c("ANOSIM", "mvabund GLM"),
+  Sampling_Method_P = c(
+    sampbirds$signif,
+    mv_sample_test$table[1,"Pr(>Dev)"]
+  ),
+  Sampling_Method_Stat = c(
+    round(sampbirds$statistic, 3),
+    round(mv_sample_test$table[1,"Dev"], 3)
+  ),
+  Habitat_P = c(
+    forestbirds$signif,
+    mv_habitat_test$table[1,"Pr(>Dev)"]
+  ),
+  Habitat_Stat = c(
+    round(forestbirds$statistic, 3),
+    round(mv_habitat_test$table[1,"Dev"], 3)
+  )
+)
+
+print("Comparison of Methods:")
+print(comparison_results)
+```
+
+### When to Use Each Method
+
+**Use ANOSIM/SIMPER when:**
+- You need a quick, exploratory analysis
+- Your focus is on dissimilarity/distance-based patterns
+- You want a simple, non-parametric approach
+- Sample sizes are very small
+- You're primarily interested in overall community patterns
+
+**Use mvabund when:**
+- You want more statistical power
+- You need species-level inference with proper p-values
+- Your data has count structure with overdispersion
+- You want to account for mean-variance relationships
+- You need to include covariates or test complex designs
+- You want model-based inference rather than distance-based
+
+**Key differences:**
+
+| Aspect | ANOSIM | mvabund |
+|--------|--------|---------|
+| **Approach** | Distance-based, non-parametric | Model-based GLMs |
+| **Test statistic** | R (rank-based) | Likelihood ratio |
+| **Species inference** | Indirect (via SIMPER) | Direct with adjusted p-values |
+| **Mean-variance** | Not explicitly modeled | Explicitly modeled |
+| **Power** | Lower | Higher |
+| **Assumptions** | Exchangeability | GLM assumptions |
+| **Complexity** | Simple | More complex |
+
+### Methodological Considerations
+
+```{r considerations}
+print("Important considerations:")
+print("")
+print("ANOSIM limitations:")
+print("- Sensitive to differences in dispersion (not just location)")
+print("- R statistic can be hard to interpret")
+print("- Less powerful for detecting subtle differences")
+print("- Doesn't provide species-level p-values")
+print("")
+print("mvabund advantages:")
+print("- More powerful statistical tests")
+print("- Proper inference at both community and species levels")
+print("- Accounts for data properties (counts, overdispersion)")
+print("- Can include covariates and interactions")
+print("- Model checking via residual diagnostics")
+print("")
+print("Best practice: Use both methods for complementary insights!")
+```
+
+## Final thoughts
+
+ANOSIM and SIMPER are simple tests to test for species composition differences and provide an actual hypothesis test with a proper P value. This approach is more appropriate to analyze species composition data rather than other approaches, such as ANOVA, which may be giving unreliable results.
+
+However, **modern best practice** increasingly favors model-based approaches like mvabund because they:
+- Provide greater statistical power
+- Allow direct species-level inference
+- Better account for properties of count data
+- Enable more complex experimental designs
+- Provide better control of Type I error rates
+
+### Recommendations for your analyses:
+
+1. **Start with exploratory analysis:** Use ordination (NMDS, PCA) to visualize patterns
+2. **Test community-level hypotheses:** Use mvabund for formal testing
+3. **Identify key species:** Use species-level tests from mvabund
+4. **Validate with ANOSIM:** Use as a complementary non-parametric check
+5. **Report both:** When results differ, discuss why (dispersion effects, power differences)
+
+### Additional Resources:
+
+- Wang et al. (2012) "mvabund – an R package for model-based analysis of multivariate abundance data" - Methods in Ecology and Evolution
+- Warton et al. (2012) "Distance-based multivariate analyses confound location and dispersion effects" - Methods in Ecology and Evolution
+- Warton et al. (2015) "So Many Variables: Joint Modeling in Community Ecology" - Trends in Ecology & Evolution
+
+## Session
+
+```{r session, echo=TRUE}
+sessionInfo()
+```
