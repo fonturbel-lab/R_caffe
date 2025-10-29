@@ -191,9 +191,9 @@ print("Interpretation: R > 0.25 suggests some separation between sampling method
 
 In this case, we found a significant difference (R = `r round(sampbirds$statistic, 3)`, p = `r sampbirds$signif`), in which point counts are different from camera traps. This makes biological sense as different sampling methods may detect different species or relative abundances.
 
-### Visualizing ANOSIM Results with Ordination
+```{r anosim_ordination, eval=FALSE, fig.height=6, fig.width=12, include=FALSE}
+### Visualizing ANOSIM Results with Ordination [temporarily disabled]
 
-```{r anosim_ordination, fig.width=12, fig.height=6}
 # NMDS ordination to visualize community differences
 set.seed(123)
 nmds <- metaMDS(birds, distance="bray", k=2, trymax=100)
