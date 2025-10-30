@@ -16,7 +16,7 @@ This repository presents a comprehensive R course intended for self-learning and
 
 02.- Making awesome plots in R
 
-03.- Simple hypothesis test in R
+03.- Simple hypothesis test in R (t test and ANOVA)
 
 04.- Other ANOVA designs part 1
 
