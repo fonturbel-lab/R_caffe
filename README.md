@@ -35,13 +35,13 @@ This repository presents a comprehensive R course intended for self-learning and
 
 ### Part 2 :man_beard:
 
-11.- Generalized Linear Models and data distributions
+11.- Common data distributions and Generalized Linear Models (GLM)
 
-12.- Generalized Estimation Equations and special distributions
+12.- Generalized Estimation Equations (GEE) and special distributions
 
-13.- Generalized Additive Models
+13.- Generalized Additive Models (GAM)
 
-14.- Mixed-effects Generalized Linear/Additive Models
+14.- Mixed-effects Generalized Linear/Additive Models (GLMM)
 
 15.- Spatially-explicit Generalized Linear/Additive Models
 
