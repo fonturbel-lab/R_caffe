@@ -14,6 +14,9 @@ knitr::opts_chunk$set(
 	message = FALSE,
 	warning = FALSE
 )
+```
+
+```{r packages, include=FALSE}
 library(MASS)         # For glm.nb
 library(lme4)         # For mixed models comparison
 library(geepack)      # For GEE models
@@ -25,6 +28,7 @@ library(DHARMa)       # For residual diagnostics
 library(AER)          # For dispersion tests
 library(performance)  # For model comparison
 ```
+
 
 # Relaxing Model Assumptions Even Further
 
