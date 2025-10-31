@@ -280,14 +280,21 @@ par(mfrow=c(2,2))
 obs_freq <- table(factor(bioChemists$art, levels=0:max(bioChemists$art)))
 
 # Model 1: Poisson
-pred1 <- colSums(dpois(0:max(bioChemists$art), fitted(model1)))
+max_count <- max(bioChemists$art)
+pred1 <- numeric(max_count + 1)
+for(i in 0:max_count) {
+  pred1[i+1] <- sum(dpois(i, fitted(model1)))
+}
 plot(0:max(bioChemists$art), obs_freq, type="h", lwd=3, col="black",
      main="Poisson GLM", xlab="Number of Articles", ylab="Frequency")
 lines(0:max(bioChemists$art), pred1, col="red", lwd=2)
 legend("topright", c("Observed", "Predicted"), col=c("black", "red"), lwd=2)
 
 # Model 2: Negative Binomial
-pred2 <- colSums(dnbinom(0:max(bioChemists$art), mu=fitted(model2), size=model2$theta))
+pred2 <- numeric(max_count + 1)
+for(i in 0:max_count) {
+  pred2[i+1] <- sum(dnbinom(i, mu=fitted(model2), size=model2$theta))
+}
 plot(0:max(bioChemists$art), obs_freq, type="h", lwd=3, col="black",
      main="Negative Binomial GLM", xlab="Number of Articles", ylab="Frequency")
 lines(0:max(bioChemists$art), pred2, col="blue", lwd=2)
