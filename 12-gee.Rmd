@@ -1,7 +1,7 @@
 ---
 title: "12 - Generalized Estimation Equations and Special Distributions"
 author: "Francisco E. Fonturbel"
-date: "31/September/2022"
+date: "31/October/2025"
 output: 
   html_document:
     includes:
