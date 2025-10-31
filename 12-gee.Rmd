@@ -525,9 +525,9 @@ coef_comparison <- data.frame(
   GLM = coef(glm_model),
   Mixed_Model = fixef(lmer_model)
 )
-
 print("Coefficient Comparison:")
-print(round(coef_comparison, 4))
+coef_comparison[,2:4] <- round(coef_comparison[,2:4], 4)
+print(coef_comparison)
 
 # Compare standard errors
 se_gee <- summary(gee_ar1)$coefficients[,"Std.err"]
@@ -542,7 +542,8 @@ se_comparison <- data.frame(
 )
 
 print("Standard Error Comparison:")
-print(round(se_comparison, 4))
+se_comparison[,2:4] <- round(se_comparison[,2:4], 4)
+print(se_comparison)
 print("")
 print("Note: GEE and Mixed Models typically have larger SE than GLM")
 print("because they properly account for correlation")
