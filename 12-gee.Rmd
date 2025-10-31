@@ -264,14 +264,27 @@ aic_values <- c(
 print("AIC values (lower is better):")
 print(sort(aic_values))
 
-# Vuong test to compare zero-inflated vs non-zero-inflated
-vuong_pois <- vuong(model1zi, model1)
-print("Vuong test: ZIP vs Poisson")
-print(vuong_pois)
+#Comparsing ZI models:
+print("Model Comparison: ZIP vs Poisson")
+print(paste("Poisson AIC:", round(AIC(model1), 2)))
+print(paste("ZIP AIC:", round(AIC(model1zi), 2)))
+print(paste("AIC difference:", round(AIC(model1) - AIC(model1zi), 2)))
+if(AIC(model1zi) < AIC(model1)) {
+  print("→ Zero-inflated model is preferred (lower AIC)")
+} else {
+  print("→ Standard Poisson model is preferred (lower AIC)")
+}
 
-vuong_nb <- vuong(model2zi, model2)
-print("Vuong test: ZINB vs Negative Binomial")
-print(vuong_nb)
+print("")
+print("Model Comparison: ZINB vs Negative Binomial")
+print(paste("Negative Binomial AIC:", round(AIC(model2), 2)))
+print(paste("ZINB AIC:", round(AIC(model2zi), 2)))
+print(paste("AIC difference:", round(AIC(model2) - AIC(model2zi), 2)))
+if(AIC(model2zi) < AIC(model2)) {
+  print("→ Zero-inflated model is preferred (lower AIC)")
+} else {
+  print("→ Standard Negative Binomial model is preferred (lower AIC)")
+}
 
 # Visualize model fit
 par(mfrow=c(2,2))

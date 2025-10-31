@@ -772,33 +772,37 @@ print(&quot;AIC values (lower is better):&quot;)</code></pre>
 <pre class="r"><code>print(sort(aic_values))</code></pre>
 <pre><code>##              ZINB Negative Binomial               ZIP           Poisson 
 ##          3125.982          3135.917          3233.546          3314.113</code></pre>
-<pre class="r"><code># Vuong test to compare zero-inflated vs non-zero-inflated
-vuong_pois &lt;- vuong(model1zi, model1)</code></pre>
-<pre><code>## Vuong Non-Nested Hypothesis Test-Statistic: 
-## (test-statistic is asymptotically distributed N(0,1) under the
-##  null that the models are indistinguishible)
-## -------------------------------------------------------------
-##               Vuong z-statistic             H_A    p-value
-## Raw                    4.180493 model1 &gt; model2 1.4544e-05
-## AIC-corrected          3.638551 model1 &gt; model2 0.00013709
-## BIC-corrected          2.332762 model1 &gt; model2 0.00983032</code></pre>
-<pre class="r"><code>print(&quot;Vuong test: ZIP vs Poisson&quot;)</code></pre>
-<pre><code>## [1] &quot;Vuong test: ZIP vs Poisson&quot;</code></pre>
-<pre class="r"><code>print(vuong_pois)</code></pre>
-<pre><code>## NULL</code></pre>
-<pre class="r"><code>vuong_nb &lt;- vuong(model2zi, model2)</code></pre>
-<pre><code>## Vuong Non-Nested Hypothesis Test-Statistic: 
-## (test-statistic is asymptotically distributed N(0,1) under the
-##  null that the models are indistinguishible)
-## -------------------------------------------------------------
-##               Vuong z-statistic             H_A  p-value
-## Raw                    2.241831 model1 &gt; model2 0.012486
-## AIC-corrected          1.015385 model1 &gt; model2 0.154961
-## BIC-corrected         -1.939690 model2 &gt; model1 0.026209</code></pre>
-<pre class="r"><code>print(&quot;Vuong test: ZINB vs Negative Binomial&quot;)</code></pre>
-<pre><code>## [1] &quot;Vuong test: ZINB vs Negative Binomial&quot;</code></pre>
-<pre class="r"><code>print(vuong_nb)</code></pre>
-<pre><code>## NULL</code></pre>
+<pre class="r"><code>#Comparsing ZI models:
+print(&quot;Model Comparison: ZIP vs Poisson&quot;)</code></pre>
+<pre><code>## [1] &quot;Model Comparison: ZIP vs Poisson&quot;</code></pre>
+<pre class="r"><code>print(paste(&quot;Poisson AIC:&quot;, round(AIC(model1), 2)))</code></pre>
+<pre><code>## [1] &quot;Poisson AIC: 3314.11&quot;</code></pre>
+<pre class="r"><code>print(paste(&quot;ZIP AIC:&quot;, round(AIC(model1zi), 2)))</code></pre>
+<pre><code>## [1] &quot;ZIP AIC: 3233.55&quot;</code></pre>
+<pre class="r"><code>print(paste(&quot;AIC difference:&quot;, round(AIC(model1) - AIC(model1zi), 2)))</code></pre>
+<pre><code>## [1] &quot;AIC difference: 80.57&quot;</code></pre>
+<pre class="r"><code>if(AIC(model1zi) &lt; AIC(model1)) {
+  print(&quot;→ Zero-inflated model is preferred (lower AIC)&quot;)
+} else {
+  print(&quot;→ Standard Poisson model is preferred (lower AIC)&quot;)
+}</code></pre>
+<pre><code>## [1] &quot;→ Zero-inflated model is preferred (lower AIC)&quot;</code></pre>
+<pre class="r"><code>print(&quot;&quot;)</code></pre>
+<pre><code>## [1] &quot;&quot;</code></pre>
+<pre class="r"><code>print(&quot;Model Comparison: ZINB vs Negative Binomial&quot;)</code></pre>
+<pre><code>## [1] &quot;Model Comparison: ZINB vs Negative Binomial&quot;</code></pre>
+<pre class="r"><code>print(paste(&quot;Negative Binomial AIC:&quot;, round(AIC(model2), 2)))</code></pre>
+<pre><code>## [1] &quot;Negative Binomial AIC: 3135.92&quot;</code></pre>
+<pre class="r"><code>print(paste(&quot;ZINB AIC:&quot;, round(AIC(model2zi), 2)))</code></pre>
+<pre><code>## [1] &quot;ZINB AIC: 3125.98&quot;</code></pre>
+<pre class="r"><code>print(paste(&quot;AIC difference:&quot;, round(AIC(model2) - AIC(model2zi), 2)))</code></pre>
+<pre><code>## [1] &quot;AIC difference: 9.93&quot;</code></pre>
+<pre class="r"><code>if(AIC(model2zi) &lt; AIC(model2)) {
+  print(&quot;→ Zero-inflated model is preferred (lower AIC)&quot;)
+} else {
+  print(&quot;→ Standard Negative Binomial model is preferred (lower AIC)&quot;)
+}</code></pre>
+<pre><code>## [1] &quot;→ Zero-inflated model is preferred (lower AIC)&quot;</code></pre>
 <pre class="r"><code># Visualize model fit
 par(mfrow=c(2,2))
 
