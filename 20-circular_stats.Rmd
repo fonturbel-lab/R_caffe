@@ -131,8 +131,8 @@ Another interesting area that we can explore in circular statistics are daily ac
 library("overlap")
 library ("activity")
 #Loading two activity datasets (time)
-act_x<-read.table("./data/act_x.txt", header= T)
-act_y<-read.table("./data/act_y.txt", header= T)
+act_x<-read.table("./data/20_act_x.txt", header= T)
+act_y<-read.table("./data/20_act_y.txt", header= T)
 ```
 
 
