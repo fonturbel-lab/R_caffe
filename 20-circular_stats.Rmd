@@ -147,7 +147,7 @@ rad_x<-act_x$Time_2*2*pi
 rad_y<-act_y$Time_2*2*pi
 ```
 
-And one more step before the fun start... we must compute fitted data. In this example, we will use only one condition (A) of the two conditions available in the dataset (A and B).
+And one more step before the fun start... we must compute fitted data. In this example, we will use only one condition (A) of the two conditions available in our datasets A and B.
 
 ```{r fit, echo=TRUE, eval=TRUE, warning=FALSE, error=FALSE}
 fitact_a <-fitact(rad_x[act_x$Condition=="A"])
