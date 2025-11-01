@@ -160,10 +160,10 @@ Now we will plot kernel density functions for our two datasets separately.
 
 ```{r denplot, echo=TRUE, eval=TRUE, fig.width=8}
 #Density plot for dataset A
-plot(fitact_a, yunit="dens", las=1, dline=list(col="lightblue"), tline=list(col="blue"), main="Data X", ylim=c(0,0.17))
+plot(fitact_a, yunit="dens", las=1, dline=list(col="lightblue"), tline=list(col="blue"), main="Dataset A", ylim=c(0,0.17))
 
 #Density plot for dataset B
-plot(fitact_b, yunit="dens", las=1, dline=list(col="pink"), tline=list(col="red"), main = "Data Y")
+plot(fitact_b, yunit="dens", las=1, dline=list(col="pink"), tline=list(col="red"), main = "Dataset B")
 ```
 
 And we also are able to depict both kernels in one plot:
