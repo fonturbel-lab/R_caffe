@@ -142,6 +142,77 @@ $$
 rad=time*2*{\pi}
 $$
 
+```{r rad, echo=TRUE, eval=TRUE}
+rad_x<-act_x$Time_2*2*pi
+rad_y<-act_y$Time_2*2*pi
+```
+
+And one more step before the fun start... we must compute fitted data. In this example, we will use only one condition (A) of the two conditions available in the dataset (A and B).
+
+```{r fit, echo=TRUE, eval=TRUE, warning=FALSE, error=FALSE}
+fitact_a <-fitact(rad_x[act_x$Condition=="A"])
+fitact_b <-fitact(rad_y[act_y$Condition=="A"])
+```
+
+### Density plots
+
+Now we will plot kernel density functions for our two datasets separately.
+
+```{r denplot, echo=TRUE, eval=TRUE, fig.width=8}
+#Density plot for dataset A
+plot(fitact_a, yunit="dens", las=1, dline=list(col="lightblue"), tline=list(col="blue"), main="Data X", ylim=c(0,0.17))
+
+#Density plot for dataset B
+plot(fitact_b, yunit="dens", las=1, dline=list(col="pink"), tline=list(col="red"), main = "Data Y")
+```
+
+And we also are able to depict both kernels in one plot:
+
+```{r denpcomp, echo=TRUE, eval=TRUE, fig.width=8}
+plot(fitact_a, yunit="dens", las=1, dline=list(col="lightblue"), tline=list(col="blue"), ylim=c(0,0.17))
+     plot(fitact_b, yunit="dens", add=TRUE, dline=list(col="pink"), tline=list(col="red"))
+     legend("topright", inset = c(0,0), title = "Data", c("X", "Y"), lty= c(1,1), col = c("lightblue", "pink"), bty = "n")
+```
+
+It is very nice, isn't it?
+
+## Overlap coefficient _dhat5_
+
+The overlap coefficient of is the area under a density curve.This index is merely descriptive. On the other hand, the function `CompareCkern` of the package `activity`, is a probability test that assess if two datasets come from the same activity distribution. In addition, this test calculate overlap index _dhat5_ for two fitted distributions (with function `fitact`).
+
+Below we compare datasets X and Y, and test if they come or not from the same activity distribution:
+
+```{r comp, echo=TRUE}
+compareCkern(fitact_a, fitact_b, reps = 100)
+```
+
+## Overlap assessment
+
+Before plotting overlaps we must extracti data for condition = A...
+
+```{r extr, echo=TRUE}
+act_a <- rad_x[act_x$Condition=="A"]
+act_b <- rad_y[act_y$Condition=="A"]
+```
+
+And now we will graph the Density Plots!
+
+```{r densplot, echo=TRUE, eval=TRUE, fig.width=8}
+#Density plot for A
+densityPlot(act_a, xscale = 24, xcenter = c("noon", "midnight"), add = F, rug = T, extend = "lightgray", main = "Data X", xlab = "Time", ylab = "Density", bty = "L")
+
+#Density plot for B
+densityPlot(act_b, xscale = 24, xcenter = c("noon", "midnight"), add = F, rug = T, extend = "lightgray", main = "Data Y", xlab = "Time", ylab = "Density", bty = "L")
+```
+
+And of course, we can plot the two datasets in same plot with `overlap`
+
+```{r dplotcomb, echo=TRUE, eval=TRUE, fig.width=8}
+overlapPlot(act_a, act_b, main = " ", linecol = c("black", "darkgreen"), lty = c(1,3), bty = "L", xlab = "Time", ylab = "Density")
+legend("topright", inset = c(0,0), title = "Data", c("X", "Y"), lty= c(1,3), col = c("gray25", "seagreen"), bty = "n")
+```
+
+
 ## Final thoughts
 
 Circular statistics are a different way to assess temporal data. As you may see in the example, it would be absurd to use ANOVA tests or GLM models in this case. What we need is an appropriate tool that takes time circularity into account. Of course there are much more in circular statistics than I presented here, and fortunately there are many good books that you can read if you want to explore this subject further.
