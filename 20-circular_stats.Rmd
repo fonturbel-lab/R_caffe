@@ -126,7 +126,21 @@ rayleigh.test(n_a)
 Another interesting area that we can explore in circular statistics are daily activity patterns. The time of the day is circular, of course, and animals tend to keep a regular activity peaks along the day, with the exception of a few species (e.g., foxes) that can show activity throughout the day. In this case, we can (1) use kernel estimators to depict daily activity patterns along a 24-h period, and (2) use the `compareCkern` function from the `activity` package to compare two kernels. Let's reuse Javier's data once again:
 
 
+```{r data_activk, echo=TRUE}
+#Loading required packages
+library("overlap")
+library ("activity")
+#Loading two activity datasets (time)
+act_x<-read.table("./data/act_x.txt", header= T)
+act_y<-read.table("./data/act_y.txt", header= T)
+```
 
+
+Before plotting the kernels, we must transform time data to radians using the following formula:
+
+$$
+rad=time*2*{\pi}
+$$
 
 ## Final thoughts
 
