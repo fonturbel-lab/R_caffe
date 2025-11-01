@@ -186,7 +186,7 @@ Below we compare datasets A and B, and test if they come or not from the same ac
 compareCkern(fitact_a, fitact_b, reps = 100)
 ```
 
-Here we have the observed overlap coefficient (think about it as a percentage), the null model overlap, and the P-value. As the P-value is calculated using permutations, the more permutations the more robust results we'll get. Of course more permutations demand more CPU and may take much longer is slow computers.
+Here we have the observed overlap coefficient (think about it as a percentage), the null model overlap, and the P-value. As the P-value is calculated using permutations, the more permutations the more robust results we'll get. Of course more permutations demand more CPU and may take much longer is slow computers. For demonstration purposes here we used only 100 permutations, but be advised that at least 1000 permutations are required for a reliable result. If you have too much data and this takes very long, we may consider using parallel computing, if your CPU has multiple cores you can take advantage from them and split the process in N-1 simultaneous runs (being N the number of cores that you CPU has, it is recommended to use all cores but one to avoid your computed to freeze).
 
 #### Overlap assessment
 
