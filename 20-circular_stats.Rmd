@@ -120,6 +120,14 @@ rayleigh.test(n_a)
 ```
 
 
+
+## Daily activity patterns
+
+Another interesting area that we can explore in circular statistics are daily activity patterns. The time of the day is circular, of course, and animals tend to keep a regular activity peaks along the day, with the exception of a few species (e.g., foxes) that can show activity throughout the day. In this case, we can (1) use kernel estimators to depict daily activity patterns along a 24-h period, and (2) use the `compareCkern` function from the `activity` package to compare two kernels. Let's reuse Javier's data once again:
+
+
+
+
 ## Final thoughts
 
 Circular statistics are a different way to assess temporal data. As you may see in the example, it would be absurd to use ANOVA tests or GLM models in this case. What we need is an appropriate tool that takes time circularity into account. Of course there are much more in circular statistics than I presented here, and fortunately there are many good books that you can read if you want to explore this subject further.
