@@ -123,7 +123,7 @@ rayleigh.test(n_a)
 
 ## Daily activity patterns
 
-Another interesting area that we can explore in circular statistics are daily activity patterns. The time of the day is circular, of course, and animals tend to keep a regular activity peaks along the day, with the exception of a few species (e.g., foxes) that can show activity throughout the day. In this case, we can (1) use kernel estimators to depict daily activity patterns along a 24-h period, and (2) use the `compareCkern` function from the `activity` package to compare two kernels. Let's reuse Javier's data once again:
+Another interesting area that we can explore in circular statistics are daily activity patterns. The time of the day is circular, of course, and animals tend to keep a regular activity peaks along the day, with the exception of a few species (e.g., foxes) that can show activity throughout the day. In this case, we can (1) use kernel estimators to depict daily activity patterns along a 24-h period, and (2) use the `CompareCkern` function from the `activity` package to compare two kernels. Let's reuse Javier's data once again:
 
 
 ```{r data_activk, echo=TRUE}
@@ -178,17 +178,17 @@ Now let's move to formal hypothesis testing.
 
 ### Overlap coefficient _dhat5_
 
-The overlap coefficient of is the area under a density curve.This index is merely descriptive. On the other hand, the function `CompareCkern` of the package `activity`, is a probability test that assess if two datasets come from the same activity distribution. In addition, this test calculate overlap index _dhat5_ for two fitted distributions (with function `fitact`).
+The overlap coefficient of is the area under a density curve.This index is merely descriptive. On the other hand, the function `CompareCkern` of the package `activity`, is a probability test that assess if two datasets come from the same activity distribution. In addition, this test calculate overlap index _dhat5_ for two fitted distributions (with function `fitact`). Of course we have to make pairwise comparisons, if we have more than two groups we need to make as much pairwise comparisons as we need.
 
-Below we compare datasets X and Y, and test if they come or not from the same activity distribution:
+Below we compare datasets A and B, and test if they come or not from the same activity distribution:
 
 ```{r comp, echo=TRUE}
 compareCkern(fitact_a, fitact_b, reps = 100)
 ```
 
-## Overlap assessment
+#### Overlap assessment
 
-Before plotting overlaps we must extracti data for condition = A...
+Before plotting overlaps we must extract data for condition = A...
 
 ```{r extr, echo=TRUE}
 act_a <- rad_x[act_x$Condition=="A"]
@@ -199,10 +199,10 @@ And now we will graph the Density Plots!
 
 ```{r densplot, echo=TRUE, eval=TRUE, fig.width=8}
 #Density plot for A
-densityPlot(act_a, xscale = 24, xcenter = c("noon", "midnight"), add = F, rug = T, extend = "lightgray", main = "Data X", xlab = "Time", ylab = "Density", bty = "L")
+densityPlot(act_a, xscale = 24, xcenter = c("noon", "midnight"), add = F, rug = T, extend = "lightgray", main = "Data A", xlab = "Time", ylab = "Density", bty = "L")
 
 #Density plot for B
-densityPlot(act_b, xscale = 24, xcenter = c("noon", "midnight"), add = F, rug = T, extend = "lightgray", main = "Data Y", xlab = "Time", ylab = "Density", bty = "L")
+densityPlot(act_b, xscale = 24, xcenter = c("noon", "midnight"), add = F, rug = T, extend = "lightgray", main = "Data B", xlab = "Time", ylab = "Density", bty = "L")
 ```
 
 And of course, we can plot the two datasets in same plot with `overlap`
