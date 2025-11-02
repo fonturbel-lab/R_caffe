@@ -212,10 +212,8 @@ ARIMA models can be decomposed into three main components, denoted as **ARIMA(p,
 
 ### What Does Each Component Mean?
 
-```{r arima_conceptual, echo=FALSE}
-cat("
-ARIMA COMPONENT INTERPRETATION
-==============================
+
+**ARIMA COMPONENT INTERPRETATION**
 
 AR (AutoRegressive) - p parameter:
 - How many past observations influence the current one?
@@ -240,8 +238,7 @@ Seasonal components (P, D, Q):
 - Same idea but for seasonal patterns
 - Period s=12 for monthly data (yearly cycle)
 - Example: April's abundance relates to last April's abundance
-")
-```
+
 
 ### Determining ARIMA Order: A Step-by-Step Guide
 
