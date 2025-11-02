@@ -289,10 +289,8 @@ print(adf_diff)
 
 ### How to Read ACF and PACF Plots
 
-```{r acf_interpretation, echo=FALSE}
-cat("
-INTERPRETING ACF AND PACF FOR ARIMA ORDER SELECTION
-====================================================
+**INTERPRETING ACF AND PACF FOR ARIMA ORDER SELECTION**
+
 
 ACF (Autocorrelation Function):
 - Shows correlation between series and its lagged values
@@ -321,8 +319,7 @@ Example interpretations:
 - ACF spike at lag 1 only → MA(1)
 - Both decay gradually → ARMA model (both AR and MA)
 - Spikes at lag 12, 24 → Seasonal component needed
-")
-```
+
 
 ### Automatic ARIMA Selection
 
@@ -452,7 +449,24 @@ qqnorm(residuals_std, main="Normal Q-Q Plot")
 qqline(residuals_std, col="red")
 
 # Residuals vs fitted
-plot(fitted(m1.aphcan), residuals_std,
+fitted_vals <- fitted(m1.aphcan)
+residuals_to_plot <- as.vector(window(residuals_std, start=c(2003,2)))
+
+# fitted() might return NULL for ARIMA, use an alternative approach
+if(is.null(fitted_vals) || length(fitted_vals) == 0) {
+  # Calculate fitted values as observed - residuals
+  fitted_vals <- aphcan - residuals(m1.aphcan)
+}
+
+# Ensure same length
+fitted_to_plot <- as.vector(window(fitted_vals, start=c(2003,2)))
+
+# Make sure lengths match
+min_length <- min(length(fitted_to_plot), length(residuals_to_plot))
+fitted_to_plot <- fitted_to_plot[1:min_length]
+residuals_to_plot <- residuals_to_plot[1:min_length]
+
+plot(fitted_to_plot, residuals_to_plot,
      xlab="Fitted Values", ylab="Standardized Residuals",
      main="Residuals vs Fitted", pch=16)
 abline(h=0, col="red", lty=2)
