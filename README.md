@@ -10,7 +10,7 @@ This repository presents a comprehensive R course intended for self-learning and
 
 ## Content
 
-### Part 1 :baby:
+### Part 1 - Basic statistics :baby:
 
 01.- Managing and operating objects in R
 
@@ -33,7 +33,7 @@ This repository presents a comprehensive R course intended for self-learning and
 10.- Model averaging and regression trees
 
 
-### Part 2 :man_beard:
+### Part 2 - Advanced statistics :man_beard:
 
 11.- Common data distributions and Generalized Linear Models (GLM)
 
@@ -46,7 +46,7 @@ This repository presents a comprehensive R course intended for self-learning and
 15.- Spatially-explicit Generalized Linear/Additive Models
 
 
-### Part 3 :older_adult:
+### Part 3 - Applied statistics :older_adult:
 
 16.- ANOSIM, SIMPER, and MVABUND
 
