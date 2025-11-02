@@ -26,14 +26,21 @@ When we measure the same variable (whichever it is) many times in different time
 library(TSA)
 library(forecast)
 library(astsa)
+library(ggplot2)
+library(dplyr)
+library(tidyr)
 
 #Loading work data
 data<-read.table("data/19_bird_data.txt", header=T)
 attach(data)
 names(data)
+
+# Quick data exploration
+str(data)
+summary(data)
 ```
 
-We will use now an unpublished dataset of bird abundance in two habitat types (notro and canelo forests) with monthly records for 12 year (yeah, a lot of work).
+We will use now an unpublished dataset of bird abundance in two habitat types (notro and canelo forests) with monthly records for 12 years (yeah, a lot of work).
 
 First, we need to convert each variable into a TSA object:
 
@@ -54,7 +61,7 @@ zoncan<-ts(zoncapC, start=c(2003, 1), end=c(2015, 12), frequency=12)
 zonnot<-ts(zoncapN, start=c(2003, 1), end=c(2015, 12), frequency=12)
 ```
 
-Now that we have those object, we can plot each variable:
+Now that we have those objects, we can plot each variable:
 
 ```{r plots_hab}
 plot(aphcan,ylab='Rayadito abundance (Canelo)')
@@ -186,48 +193,563 @@ var.test(zoncan, zonnot)
 
 ## ARIMA models
 
-Autoregressive integrated moving average (aka ARIMA) are intended to be used with time series data as they account for seasonality and temporal autocorrelation. Below we will compare one species in two habitats as an example using ARIMA models of first order. ARIMA could be decomposed in AR-I-MA and 0 or 1 indicate if each component (autoregressive, integrated, or moving average) is present or not in the model. A detailed explanation of these models is beyond the scope of this lesson, but there are many good books on this subject.
+Autoregressive integrated moving average (aka ARIMA) are intended to be used with time series data as they account for seasonality and temporal autocorrelation. ARIMA models are powerful tools for understanding patterns in time series data and making forecasts.
+
+### Understanding ARIMA Components
+
+ARIMA models can be decomposed into three main components, denoted as **ARIMA(p, d, q)(P, D, Q)[s]**:
+
+**Non-seasonal components:**
+- **AR (p) - Autoregressive:** Uses past values to predict current value (p = order)
+- **I (d) - Integrated:** Differencing to make the series stationary (d = times differenced)
+- **MA (q) - Moving Average:** Uses past forecast errors (q = order)
+
+**Seasonal components (for seasonal data like our monthly bird counts):**
+- **P:** Seasonal autoregressive order
+- **D:** Seasonal differencing order
+- **Q:** Seasonal moving average order
+- **s:** Seasonal period (12 for monthly data)
+
+### What Does Each Component Mean?
+
+```{r arima_conceptual, echo=FALSE}
+cat("
+ARIMA COMPONENT INTERPRETATION
+==============================
+
+AR (AutoRegressive) - p parameter:
+- How many past observations influence the current one?
+- p=1: Today's value depends on yesterday's value
+- p=2: Today depends on yesterday AND the day before
+- Example: If birds were abundant last month, they'll be abundant this month
+
+I (Integrated) - d parameter:
+- How many times do we need to difference the data to make it stationary?
+- d=0: Data is already stationary (no trend)
+- d=1: Remove linear trend by differencing once
+- d=2: Remove quadratic trend (rare)
+- Example: Remove long-term population increase/decrease
+
+MA (Moving Average) - q parameter:
+- How many past forecast errors influence the current value?
+- q=1: Current value depends on the previous forecast error
+- q=2: Depends on last two forecast errors
+- Example: If we overestimated last month, we adjust this month
+
+Seasonal components (P, D, Q):
+- Same idea but for seasonal patterns
+- Period s=12 for monthly data (yearly cycle)
+- Example: April's abundance relates to last April's abundance
+")
+```
+
+### Determining ARIMA Order: A Step-by-Step Guide
+
+Before fitting ARIMA models, we should examine our data to determine appropriate orders:
+
+```{r arima_diagnostics, fig.width=12, fig.height=10}
+# Let's focus on Rayadito-Canelo as an example
+par(mfrow=c(3,2))
+
+# 1. Original series
+plot(aphcan, main="1. Original Series", ylab="Abundance")
+
+# 2. Check for trend and seasonality
+plot(decompose(aphcan))
+
+# 3. Check stationarity - does it need differencing?
+plot(aphcan, main="3. Original Series - Check for Trend", ylab="Abundance")
+abline(reg=lm(aphcan~time(aphcan)), col="red", lwd=2)
+
+# 4. First difference (removes trend)
+diff_aphcan <- diff(aphcan)
+plot(diff_aphcan, main="4. First Difference", ylab="Differenced Abundance")
+abline(h=0, col="red", lty=2)
+
+# 5. ACF of original series
+acf(aphcan, lag.max=36, main="5. ACF - Original Series")
+
+# 6. PACF of original series
+pacf(aphcan, lag.max=36, main="6. PACF - Original Series")
+
+par(mfrow=c(1,1))
+
+# Augmented Dickey-Fuller test for stationarity
+library(tseries)
+adf_original <- adf.test(aphcan)
+print("Augmented Dickey-Fuller Test (original series):")
+print(adf_original)
+if(adf_original$p.value < 0.05) {
+  print("→ Series is stationary (p < 0.05)")
+} else {
+  print("→ Series is non-stationary (p > 0.05) - differencing needed")
+}
+
+adf_diff <- adf.test(diff_aphcan)
+print("Augmented Dickey-Fuller Test (differenced series):")
+print(adf_diff)
+```
+
+### How to Read ACF and PACF Plots
+
+```{r acf_interpretation, echo=FALSE}
+cat("
+INTERPRETING ACF AND PACF FOR ARIMA ORDER SELECTION
+====================================================
+
+ACF (Autocorrelation Function):
+- Shows correlation between series and its lagged values
+- Helps identify MA order (q)
+
+PACF (Partial Autocorrelation Function):  
+- Shows correlation after removing effects of intermediate lags
+- Helps identify AR order (p)
+
+PATTERNS TO LOOK FOR:
+
+For AR process (use PACF):
+- PACF cuts off sharply after lag p → suggests AR(p)
+- ACF decays gradually
+
+For MA process (use ACF):
+- ACF cuts off sharply after lag q → suggests MA(q)
+- PACF decays gradually
+
+For seasonal patterns:
+- Spikes at seasonal lags (12, 24, 36 for monthly data)
+- Suggests seasonal ARIMA component needed
+
+Example interpretations:
+- PACF spike at lag 1 only → AR(1)
+- ACF spike at lag 1 only → MA(1)
+- Both decay gradually → ARMA model (both AR and MA)
+- Spikes at lag 12, 24 → Seasonal component needed
+")
+```
+
+### Automatic ARIMA Selection
+
+The `auto.arima()` function can help us select the best ARIMA model automatically:
+
+```{r auto_arima}
+# Automatic ARIMA selection for Rayadito-Canelo
+auto_aphcan <- auto.arima(aphcan, seasonal=TRUE, stepwise=FALSE, approximation=FALSE)
+print("Automatically selected ARIMA model for Rayadito-Canelo:")
+print(auto_aphcan)
+
+# Automatic ARIMA selection for Rayadito-Notro
+auto_aphnot <- auto.arima(aphnot, seasonal=TRUE, stepwise=FALSE, approximation=FALSE)
+print("Automatically selected ARIMA model for Rayadito-Notro:")
+print(auto_aphnot)
+
+# Automatic ARIMA selection for Chincol-Canelo
+auto_zoncan <- auto.arima(zoncan, seasonal=TRUE, stepwise=FALSE, approximation=FALSE)
+print("Automatically selected ARIMA model for Chincol-Canelo:")
+print(auto_zoncan)
+
+# Automatic ARIMA selection for Chincol-Notro
+auto_zonnot <- auto.arima(zonnot, seasonal=TRUE, stepwise=FALSE, approximation=FALSE)
+print("Automatically selected ARIMA model for Chincol-Notro:")
+print(auto_zonnot)
+```
+
+### Manual ARIMA Fitting
+
+Below we will compare one species in two habitats as an example using ARIMA models of first order. ARIMA could be decomposed in AR-I-MA and 0 or 1 indicate if each component (autoregressive, integrated, or moving average) is present or not in the model. 
 
 ```{r arima}
 ##Rayadito-Canelo
+# ARIMA(1,1,1)(0,1,1)[12] means:
+# Non-seasonal: AR(1), first differencing, MA(1)
+# Seasonal: no seasonal AR, seasonal differencing, seasonal MA(1), period=12
 m1.aphcan=arima(aphcan,order=c(1,1,1),seasonal=list(order=c(0,1,1), period=12))
-m1.aphcan
-#Diagnosing ARIMA model
-tsdiag(m1.aphcan)
-Box.test(m1.aphcan$residuals,lag=1)
-#Estimating ma1 significance
-(1-pnorm(abs(m1.aphcan$coef)/sqrt(diag(m1.aphcan$var.coef))))*2
-# Residuals
-plot(window(rstandard(m1.aphcan),start=c(2003,2)), ylab='Standardized Residuals',type='o')
-abline(h=0)
-# ACF
-acf(as.vector(window(rstandard(m1.aphcan),start=c(2003,2))), lag.max=36)
-hist(window(rstandard(m1.aphcan),start=c(2003,2)), xlab='Standardized Residuals')
+print("Manual ARIMA model for Rayadito-Canelo:")
+print(m1.aphcan)
 
+# Extract and interpret coefficients
+print("Model coefficients:")
+print(m1.aphcan$coef)
+print(paste("AR(1) coefficient:", round(m1.aphcan$coef[1], 4)))
+print(paste("MA(1) coefficient:", round(m1.aphcan$coef[2], 4)))
+print(paste("Seasonal MA(1) coefficient:", round(m1.aphcan$coef[3], 4)))
 
-##Rayadito-Notro
-m1.aphnot=arima(aphnot,order=c(1,1,1),seasonal=list(order=c(0,1,1), period=12))
-m1.aphnot
-#Diagnosing ARIMA model
-tsdiag(m1.aphnot)
-Box.test(m1.aphnot$residuals,lag=1)
-#Estimating ma1 significance
-(1-pnorm(abs(m1.aphnot$coef)/sqrt(diag(m1.aphnot$var.coef))))*2
-# Residuals
-plot(window(rstandard(m1.aphnot),start=c(2003,2)), ylab='Standardized Residuals',type='o')
-abline(h=0)
-# ACF
-acf(as.vector(window(rstandard(m1.aphnot),start=c(2003,2))), lag.max=36)
-hist(window(rstandard(m1.aphnot),start=c(2003,2)), xlab='Standardized Residuals')
+# AIC comparison
+print(paste("Manual model AIC:", round(AIC(m1.aphcan), 2)))
+print(paste("Auto model AIC:", round(AIC(auto_aphcan), 2)))
+if(AIC(auto_aphcan) < AIC(m1.aphcan)) {
+  print("→ Auto-selected model has better fit (lower AIC)")
+} else {
+  print("→ Manual model has better fit (lower AIC)")
+}
 ```
 
-The output of those models is a little difficult to interpret at first, but after some reading and practice everything makes sense.
+### Comprehensive Model Diagnostics
 
+```{r arima_diagnostics_detailed, fig.width=12, fig.height=10}
+##Rayadito-Canelo diagnostics
+
+# 1. Standard diagnostic plots
+tsdiag(m1.aphcan)
+
+# 2. Ljung-Box test for residual autocorrelation
+box_test <- Box.test(m1.aphcan$residuals, lag=20, type="Ljung-Box")
+print("Ljung-Box test (tests if residuals are white noise):")
+print(box_test)
+if(box_test$p.value > 0.05) {
+  print("✓ Residuals appear to be white noise (p > 0.05) - Good!")
+} else {
+  print("✗ Residuals show autocorrelation (p < 0.05) - Model may need adjustment")
+}
+
+# 3. Test coefficient significance
+coef_se <- sqrt(diag(m1.aphcan$var.coef))
+z_values <- m1.aphcan$coef / coef_se
+p_values <- (1-pnorm(abs(z_values)))*2
+
+print("Coefficient significance tests:")
+coef_table <- data.frame(
+  Coefficient = names(m1.aphcan$coef),
+  Estimate = round(m1.aphcan$coef, 4),
+  Std_Error = round(coef_se, 4),
+  Z_value = round(z_values, 4),
+  P_value = round(p_values, 4),
+  Significant = ifelse(p_values < 0.05, "Yes", "No")
+)
+print(coef_table)
+
+# 4. Detailed residual analysis
+residuals_std <- rstandard(m1.aphcan)
+
+par(mfrow=c(2,3))
+
+# Time series of standardized residuals
+plot(window(residuals_std, start=c(2003,2)), 
+     ylab='Standardized Residuals',
+     main='Standardized Residuals Over Time',
+     type='o', pch=16)
+abline(h=0, col="red", lty=2)
+abline(h=c(-2, 2), col="blue", lty=3)
+
+# ACF of residuals
+acf(as.vector(window(residuals_std, start=c(2003,2))), 
+    lag.max=36,
+    main="ACF of Residuals")
+
+# PACF of residuals
+pacf(as.vector(window(residuals_std, start=c(2003,2))), 
+     lag.max=36,
+     main="PACF of Residuals")
+
+# Histogram of residuals
+hist(window(residuals_std, start=c(2003,2)), 
+     xlab='Standardized Residuals',
+     main='Distribution of Residuals',
+     col='lightblue', breaks=20)
+curve(dnorm(x, mean=mean(residuals_std, na.rm=TRUE), 
+            sd=sd(residuals_std, na.rm=TRUE)) * 
+      length(residuals_std) * diff(hist(residuals_std, plot=FALSE)$breaks)[1],
+      add=TRUE, col="red", lwd=2)
+
+# Q-Q plot
+qqnorm(residuals_std, main="Normal Q-Q Plot")
+qqline(residuals_std, col="red")
+
+# Residuals vs fitted
+plot(fitted(m1.aphcan), residuals_std,
+     xlab="Fitted Values", ylab="Standardized Residuals",
+     main="Residuals vs Fitted", pch=16)
+abline(h=0, col="red", lty=2)
+
+par(mfrow=c(1,1))
+
+# Shapiro-Wilk normality test
+shapiro_test <- shapiro.test(as.vector(residuals_std))
+print("Shapiro-Wilk normality test:")
+print(shapiro_test)
+if(shapiro_test$p.value > 0.05) {
+  print("✓ Residuals are approximately normal (p > 0.05)")
+} else {
+  print("⚠ Residuals may not be normal (p < 0.05)")
+}
+```
+
+### ARIMA Model for Rayadito-Notro
+
+```{r arima_notro, fig.width=12, fig.height=8}
+##Rayadito-Notro
+m1.aphnot=arima(aphnot,order=c(1,1,1),seasonal=list(order=c(0,1,1), period=12))
+print("ARIMA model for Rayadito-Notro:")
+print(m1.aphnot)
+
+# Diagnostics
+tsdiag(m1.aphnot)
+
+# Box test
+box_test_notro <- Box.test(m1.aphnot$residuals, lag=20, type="Ljung-Box")
+print("Ljung-Box test:")
+print(box_test_notro)
+
+# Coefficient significance
+coef_se_notro <- sqrt(diag(m1.aphnot$var.coef))
+z_values_notro <- m1.aphnot$coef / coef_se_notro
+p_values_notro <- (1-pnorm(abs(z_values_notro)))*2
+
+print("Coefficient significance:")
+coef_table_notro <- data.frame(
+  Coefficient = names(m1.aphnot$coef),
+  Estimate = round(m1.aphnot$coef, 4),
+  P_value = round(p_values_notro, 4),
+  Significant = ifelse(p_values_notro < 0.05, "Yes", "No")
+)
+print(coef_table_notro)
+
+# Residual plots
+residuals_std_notro <- rstandard(m1.aphnot)
+par(mfrow=c(2,2))
+plot(window(residuals_std_notro, start=c(2003,2)), 
+     ylab='Standardized Residuals',
+     main='Rayadito-Notro: Residuals',
+     type='o')
+abline(h=0, col="red")
+acf(as.vector(window(residuals_std_notro, start=c(2003,2))), 
+    lag.max=36, main="ACF of Residuals")
+hist(window(residuals_std_notro, start=c(2003,2)), 
+     xlab='Standardized Residuals', main='Histogram',
+     col='lightblue')
+qqnorm(residuals_std_notro)
+qqline(residuals_std_notro, col="red")
+par(mfrow=c(1,1))
+```
+
+### Comparing Models: Manual vs Auto-selected
+
+```{r model_comparison, fig.width=12, fig.height=8}
+# Compare manual and automatic models
+comparison_table <- data.frame(
+  Species_Habitat = c("Rayadito-Canelo", "Rayadito-Notro"),
+  Manual_Model = c(
+    paste0("ARIMA", paste(c(1,1,1), collapse=",")),
+    paste0("ARIMA", paste(c(1,1,1), collapse=","))
+  ),
+  Manual_AIC = c(AIC(m1.aphcan), AIC(m1.aphnot)),
+  Auto_Model = c(
+    paste0("ARIMA", 
+           paste(auto_aphcan$arma[c(1,6,2,3,7,4,5)], collapse=",")),
+    paste0("ARIMA", 
+           paste(auto_aphnot$arma[c(1,6,2,3,7,4,5)], collapse=","))
+  ),
+  Auto_AIC = c(AIC(auto_aphcan), AIC(auto_aphnot))
+)
+comparison_table$Best_Model <- ifelse(
+  comparison_table$Auto_AIC < comparison_table$Manual_AIC,
+  "Auto", "Manual"
+)
+
+print("Model Comparison Table:")
+print(comparison_table)
+```
+
+### Forecasting with ARIMA
+
+One of the main applications of ARIMA is forecasting future values:
+
+```{r forecasting, fig.width=12, fig.height=8}
+# Forecast 24 months ahead using the automatic model
+forecast_aphcan <- forecast(auto_aphcan, h=24)
+forecast_aphnot <- forecast(auto_aphnot, h=24)
+
+par(mfrow=c(2,1))
+
+# Plot forecast for Rayadito-Canelo
+plot(forecast_aphcan, main="Rayadito-Canelo: 24-Month Forecast",
+     xlab="Time", ylab="Abundance")
+legend("topleft", 
+       c("Observed", "Forecast", "80% CI", "95% CI"),
+       col=c("black", "blue", "lightblue", "lightgray"),
+       lty=c(1,1,1,1), lwd=c(1,2,8,8))
+
+# Plot forecast for Rayadito-Notro  
+plot(forecast_aphnot, main="Rayadito-Notro: 24-Month Forecast",
+     xlab="Time", ylab="Abundance")
+
+par(mfrow=c(1,1))
+
+# Extract forecast values
+print("Forecast summary for next 12 months (Rayadito-Canelo):")
+print(head(as.data.frame(forecast_aphcan), 12))
+
+# Accuracy measures
+accuracy_aphcan <- accuracy(auto_aphcan)
+print("Model accuracy metrics (Rayadito-Canelo):")
+print(accuracy_aphcan)
+```
+
+### Comparing ARIMA Models Across Species
+
+```{r species_comparison, fig.width=12, fig.height=10}
+# Fit automatic ARIMA for all species in Canelo habitat
+species_list <- list(
+  Rayadito = aphcan,
+  Jilguero = carcan,
+  Fiofio = elacan,
+  Cometocino = phrcan,
+  Chercan = trocan,
+  Zorzal = turcan,
+  Chincol = zoncan
+)
+
+# Fit models and store results
+arima_results <- list()
+for(sp_name in names(species_list)) {
+  model <- auto.arima(species_list[[sp_name]], seasonal=TRUE)
+  arima_results[[sp_name]] <- model
+}
+
+# Create summary table
+summary_table <- data.frame(
+  Species = names(arima_results),
+  Model = sapply(arima_results, function(x) {
+    paste0("(", paste(arimaorder(x)[1:3], collapse=","), ")",
+           "(", paste(arimaorder(x)[4:6], collapse=","), ")[12]")
+  }),
+  AIC = sapply(arima_results, AIC),
+  BIC = sapply(arima_results, BIC),
+  LogLik = sapply(arima_results, logLik),
+  Sigma2 = sapply(arima_results, function(x) x$sigma2)
+)
+summary_table <- summary_table[order(summary_table$AIC),]
+
+print("ARIMA Model Summary for All Species (Canelo habitat):")
+print(summary_table)
+
+# Visualize forecasts for all species
+par(mfrow=c(3,3))
+for(sp_name in names(arima_results)) {
+  fc <- forecast(arima_results[[sp_name]], h=12)
+  plot(fc, main=sp_name, xlab="", ylab="Abundance")
+}
+par(mfrow=c(1,1))
+```
+
+### Model Selection Criteria
+
+```{r model_selection_guide, echo=FALSE}
+cat("
+MODEL SELECTION AND INTERPRETATION GUIDE
+========================================
+
+AIC (Akaike Information Criterion):
+- Lower is better
+- Penalizes model complexity
+- Good for comparing multiple candidate models
+- Difference < 2: Models essentially equivalent
+- Difference 2-7: Considerable support for lower AIC
+- Difference > 10: Strong preference for lower AIC
+
+BIC (Bayesian Information Criterion):
+- Lower is better
+- Penalizes complexity more than AIC
+- Preferred for large datasets
+- More conservative (prefers simpler models)
+
+Ljung-Box Test:
+- Tests if residuals are white noise
+- H0: Residuals are independent (good!)
+- p > 0.05: Fail to reject H0 → Good model fit
+- p < 0.05: Residuals still correlated → Poor fit
+
+Residual Diagnostics Checklist:
+✓ Residuals centered around zero
+✓ Constant variance over time
+✓ Approximately normally distributed
+✓ No autocorrelation in residuals
+✓ No obvious patterns or trends
+
+If diagnostics fail:
+- Try different ARIMA orders
+- Consider transformation (log, square root)
+- Check for outliers
+- Consider more complex seasonal patterns
+")
+```
+
+### Practical Interpretation
+
+The output of ARIMA models can be interpreted as follows:
+
+```{r interpretation_example}
+print("Example interpretation of ARIMA(1,1,1)(0,1,1)[12] for Rayadito-Canelo:")
+print("")
+print("Non-seasonal components:")
+print("- AR(1): Current abundance depends on previous month's abundance")
+print("- I(1): One-time differencing removes linear trend")
+print("- MA(1): Incorporates previous month's forecast error")
+print("")
+print("Seasonal components:")
+print("- P=0: No direct seasonal autoregressive effect")
+print("- D=1: Seasonal differencing (compares to same month last year)")
+print("- Q=1: Seasonal moving average (accounts for seasonal forecast errors)")
+print("- s=12: Seasonal period of 12 months (annual cycle)")
+print("")
+print("Biological interpretation:")
+print("This model captures:")
+print("1. Month-to-month population dynamics (AR and MA)")
+print("2. Long-term population trends (differencing)")
+print("3. Annual seasonal cycles (seasonal component)")
+print("")
+
+# Extract fitted values and plot
+fitted_values <- fitted(m1.aphcan)
+par(mfrow=c(1,1))
+plot(aphcan, main="Rayadito-Canelo: Observed vs Fitted",
+     ylab="Abundance", col="black", lwd=1.5)
+lines(fitted_values, col="red", lwd=1.5)
+legend("topright", c("Observed", "Fitted"), 
+       col=c("black", "red"), lwd=2)
+```
 
 ## Final thoughts
 
-Time Series Analysis is a powerful tool to work with measurements repeated in time. Here I presented the tip of the iceberg, the most basic analyses, but there is a lot more than can be done in this subject. Usually, the main limitation is gathering a large dataset (at least 5 years of data) to make robust inferences from it. Of course that the software will drop some results with a few points in time, but the interpretation of it may be wrong, so please take a note of caution on it: TSA with insufficient data may be misleading.
+Time Series Analysis is a powerful tool to work with measurements repeated in time. Here I presented the tip of the iceberg, the most basic analyses, but there is a lot more that can be done in this subject. Usually, the main limitation is gathering a large dataset (at least 5 years of data) to make robust inferences from it. Of course the software will drop some results with a few points in time, but the interpretation of it may be wrong, so please take a note of caution on it: TSA with insufficient data may be misleading.
 
+### Key Takeaways for ARIMA Modeling:
+
+**Model Building Process:**
+1. **Explore your data:** Plot time series, check for trends and seasonality
+2. **Check stationarity:** Use ADF test, difference if needed
+3. **Examine ACF/PACF:** Identify potential AR and MA orders
+4. **Fit candidate models:** Try both manual specification and auto.arima()
+5. **Check diagnostics:** Residuals should be white noise
+6. **Compare models:** Use AIC/BIC for model selection
+7. **Forecast:** Use best model for predictions
+8. **Validate:** Check forecast accuracy with holdout data if possible
+
+**Common Pitfalls to Avoid:**
+- Don't use ARIMA on non-stationary data without differencing
+- Don't ignore seasonal patterns in monthly/quarterly data
+- Don't trust models with autocorrelated residuals
+- Don't over-fit (too many parameters relative to data length)
+- Don't forget biological interpretation of model parameters
+
+**Best Practices:**
+- Always visualize your data first
+- Start simple, add complexity only if needed
+- Use automatic selection as a starting point
+- Validate model assumptions thoroughly
+- Consider multiple models and compare
+- Interpret results in biological context
+- Be cautious with long-term forecasts (uncertainty grows)
+
+**Minimum Data Requirements:**
+- At least 50-100 observations for reliable ARIMA
+- At least 2 full seasonal cycles for seasonal ARIMA
+- More data = more reliable parameter estimates
+- Consider simpler methods if data is limited
+
+**Further Resources:**
+- "Time Series Analysis and Its Applications" by Shumway & Stoffer
+- "Forecasting: Principles and Practice" by Hyndman & Athanasopoulos (free online)
+- R packages: forecast, TSA, astsa, tseries
 
 ## Session
 
