@@ -644,10 +644,9 @@ par(mfrow=c(1,1))
 
 ### Model Selection Criteria
 
-```{r model_selection_guide, echo=FALSE}
-cat("
-MODEL SELECTION AND INTERPRETATION GUIDE
-========================================
+
+**MODEL SELECTION AND INTERPRETATION GUIDE**
+
 
 AIC (Akaike Information Criterion):
 - Lower is better
@@ -681,8 +680,6 @@ If diagnostics fail:
 - Consider transformation (log, square root)
 - Check for outliers
 - Consider more complex seasonal patterns
-")
-```
 
 ### Practical Interpretation
 
