@@ -201,14 +201,22 @@ ARIMA models can be decomposed into three main components, denoted as **ARIMA(p,
 
 **Non-seasonal components:**
 - **AR (p) - Autoregressive:** Uses past values to predict current value (p = order)
+
 - **I (d) - Integrated:** Differencing to make the series stationary (d = times differenced)
+
 - **MA (q) - Moving Average:** Uses past forecast errors (q = order)
 
 **Seasonal components (for seasonal data like our monthly bird counts):**
 - **P:** Seasonal autoregressive order
+
 - **D:** Seasonal differencing order
+
 - **Q:** Seasonal moving average order
+
 - **s:** Seasonal period (12 for monthly data)
+
+_Please note that non-seasonal components and denoted in lowercase letter and seasonal components are denoted in uppercase letters_
+
 
 ### What Does Each Component Mean?
 
@@ -216,27 +224,43 @@ ARIMA models can be decomposed into three main components, denoted as **ARIMA(p,
 **ARIMA COMPONENT INTERPRETATION**
 
 AR (AutoRegressive) - p parameter:
+
 - How many past observations influence the current one?
+
 - p=1: Today's value depends on yesterday's value
+
 - p=2: Today depends on yesterday AND the day before
+
 - Example: If birds were abundant last month, they'll be abundant this month
 
 I (Integrated) - d parameter:
+
 - How many times do we need to difference the data to make it stationary?
+
 - d=0: Data is already stationary (no trend)
+
 - d=1: Remove linear trend by differencing once
+
 - d=2: Remove quadratic trend (rare)
+
 - Example: Remove long-term population increase/decrease
 
 MA (Moving Average) - q parameter:
+
 - How many past forecast errors influence the current value?
+
 - q=1: Current value depends on the previous forecast error
+
 - q=2: Depends on last two forecast errors
+
 - Example: If we overestimated last month, we adjust this month
 
 Seasonal components (P, D, Q):
+
 - Same idea but for seasonal patterns
+
 - Period s=12 for monthly data (yearly cycle)
+
 - Example: April's abundance relates to last April's abundance
 
 
