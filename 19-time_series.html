@@ -1186,34 +1186,62 @@ understanding patterns in time series data and making forecasts.</p>
 <strong>ARIMA(p, d, q)(P, D, Q)[s]</strong>:</p>
 <p><strong>Non-seasonal components:</strong> - <strong>AR (p) -
 Autoregressive:</strong> Uses past values to predict current value (p =
-order) - <strong>I (d) - Integrated:</strong> Differencing to make the
-series stationary (d = times differenced) - <strong>MA (q) - Moving
-Average:</strong> Uses past forecast errors (q = order)</p>
+order)</p>
+<ul>
+<li><p><strong>I (d) - Integrated:</strong> Differencing to make the
+series stationary (d = times differenced)</p></li>
+<li><p><strong>MA (q) - Moving Average:</strong> Uses past forecast
+errors (q = order)</p></li>
+</ul>
 <p><strong>Seasonal components (for seasonal data like our monthly bird
-counts):</strong> - <strong>P:</strong> Seasonal autoregressive order -
-<strong>D:</strong> Seasonal differencing order - <strong>Q:</strong>
-Seasonal moving average order - <strong>s:</strong> Seasonal period (12
-for monthly data)</p>
+counts):</strong> - <strong>P:</strong> Seasonal autoregressive
+order</p>
+<ul>
+<li><p><strong>D:</strong> Seasonal differencing order</p></li>
+<li><p><strong>Q:</strong> Seasonal moving average order</p></li>
+<li><p><strong>s:</strong> Seasonal period (12 for monthly
+data)</p></li>
+</ul>
+<p><em>Please note that non-seasonal components and denoted in lowercase
+letter and seasonal components are denoted in uppercase letters</em></p>
 </div>
 <div id="what-does-each-component-mean" class="section level3">
 <h3>What Does Each Component Mean?</h3>
 <p><strong>ARIMA COMPONENT INTERPRETATION</strong></p>
-<p>AR (AutoRegressive) - p parameter: - How many past observations
-influence the current one? - p=1: Today’s value depends on yesterday’s
-value - p=2: Today depends on yesterday AND the day before - Example: If
-birds were abundant last month, they’ll be abundant this month</p>
-<p>I (Integrated) - d parameter: - How many times do we need to
-difference the data to make it stationary? - d=0: Data is already
-stationary (no trend) - d=1: Remove linear trend by differencing once -
-d=2: Remove quadratic trend (rare) - Example: Remove long-term
-population increase/decrease</p>
-<p>MA (Moving Average) - q parameter: - How many past forecast errors
-influence the current value? - q=1: Current value depends on the
-previous forecast error - q=2: Depends on last two forecast errors -
-Example: If we overestimated last month, we adjust this month</p>
-<p>Seasonal components (P, D, Q): - Same idea but for seasonal patterns
-- Period s=12 for monthly data (yearly cycle) - Example: April’s
-abundance relates to last April’s abundance</p>
+<p>AR (AutoRegressive) - p parameter:</p>
+<ul>
+<li><p>How many past observations influence the current one?</p></li>
+<li><p>p=1: Today’s value depends on yesterday’s value</p></li>
+<li><p>p=2: Today depends on yesterday AND the day before</p></li>
+<li><p>Example: If birds were abundant last month, they’ll be abundant
+this month</p></li>
+</ul>
+<p>I (Integrated) - d parameter:</p>
+<ul>
+<li><p>How many times do we need to difference the data to make it
+stationary?</p></li>
+<li><p>d=0: Data is already stationary (no trend)</p></li>
+<li><p>d=1: Remove linear trend by differencing once</p></li>
+<li><p>d=2: Remove quadratic trend (rare)</p></li>
+<li><p>Example: Remove long-term population increase/decrease</p></li>
+</ul>
+<p>MA (Moving Average) - q parameter:</p>
+<ul>
+<li><p>How many past forecast errors influence the current
+value?</p></li>
+<li><p>q=1: Current value depends on the previous forecast
+error</p></li>
+<li><p>q=2: Depends on last two forecast errors</p></li>
+<li><p>Example: If we overestimated last month, we adjust this
+month</p></li>
+</ul>
+<p>Seasonal components (P, D, Q):</p>
+<ul>
+<li><p>Same idea but for seasonal patterns</p></li>
+<li><p>Period s=12 for monthly data (yearly cycle)</p></li>
+<li><p>Example: April’s abundance relates to last April’s
+abundance</p></li>
+</ul>
 </div>
 <div id="determining-arima-order-a-step-by-step-guide" class="section level3">
 <h3>Determining ARIMA Order: A Step-by-Step Guide</h3>
