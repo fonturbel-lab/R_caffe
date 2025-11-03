@@ -272,8 +272,6 @@ Before fitting ARIMA models, we should examine our data to determine appropriate
 
 ```{r arima_diagnostics, fig.width=12, fig.height=10}
 # Let's focus on Rayadito-Canelo as an example
-par(mfrow=c(3,2))
-
 # 1. Original series
 plot(aphcan, main="1. Original Series", ylab="Abundance")
 
