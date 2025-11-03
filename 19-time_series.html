@@ -1768,65 +1768,70 @@ par(mfrow=c(1,1))</code></pre>
 <div id="model-selection-criteria" class="section level3">
 <h3>Model Selection Criteria</h3>
 <p><strong>MODEL SELECTION AND INTERPRETATION GUIDE</strong></p>
-<p>AIC (Akaike Information Criterion): - Lower is better - Penalizes
-model complexity - Good for comparing multiple candidate models -
-Difference &lt; 2: Models essentially equivalent - Difference 2-7:
-Considerable support for lower AIC - Difference &gt; 10: Strong
-preference for lower AIC</p>
-<p>BIC (Bayesian Information Criterion): - Lower is better - Penalizes
-complexity more than AIC - Preferred for large datasets - More
-conservative (prefers simpler models)</p>
-<p>Ljung-Box Test: - Tests if residuals are white noise - H0: Residuals
-are independent (good!) - p &gt; 0.05: Fail to reject H0 → Good model
-fit - p &lt; 0.05: Residuals still correlated → Poor fit</p>
-<p>Residual Diagnostics Checklist: ✓ Residuals centered around zero ✓
-Constant variance over time ✓ Approximately normally distributed ✓ No
-autocorrelation in residuals ✓ No obvious patterns or trends</p>
-<p>If diagnostics fail: - Try different ARIMA orders - Consider
-transformation (log, square root) - Check for outliers - Consider more
-complex seasonal patterns</p>
+<p>AIC (Akaike Information Criterion):</p>
+<ul>
+<li><p>Lower is better</p></li>
+<li><p>Penalizes model complexity</p></li>
+<li><p>Good for comparing multiple candidate models</p></li>
+<li><p>Difference &lt; 2: Models essentially equivalent</p></li>
+<li><p>Difference 2-7: Considerable support for lower AIC</p></li>
+<li><p>Difference &gt; 10: Strong preference for lower AIC</p></li>
+</ul>
+<p>BIC (Bayesian Information Criterion):</p>
+<ul>
+<li><p>Lower is better</p></li>
+<li><p>Penalizes complexity more than AIC</p></li>
+<li><p>Preferred for large datasets</p></li>
+<li><p>More conservative (prefers simpler models)</p></li>
+</ul>
+<p>Ljung-Box Test:</p>
+<ul>
+<li><p>Tests if residuals are white noise</p></li>
+<li><p>H0: Residuals are independent (good!)</p></li>
+<li><p>p &gt; 0.05: Fail to reject H0 → Good model fit</p></li>
+<li><p>p &lt; 0.05: Residuals still correlated → Poor fit</p></li>
+</ul>
+<p>Residual Diagnostics Checklist:</p>
+<p>✓ Residuals centered around zero</p>
+<p>✓ Constant variance over time</p>
+<p>✓ Approximately normally distributed</p>
+<p>✓ No autocorrelation in residuals</p>
+<p>✓ No obvious patterns or trends</p>
+<p>If diagnostics fail: - Try different ARIMA orders</p>
+<ul>
+<li><p>Consider transformation (log, square root)</p></li>
+<li><p>Check for outliers</p></li>
+<li><p>Consider more complex seasonal patterns</p></li>
+</ul>
 </div>
 <div id="practical-interpretation" class="section level3">
 <h3>Practical Interpretation</h3>
 <p>The output of ARIMA models can be interpreted as follows:</p>
-<pre class="r"><code>print(&quot;Example interpretation of ARIMA(1,1,1)(0,1,1)[12] for Rayadito-Canelo:&quot;)</code></pre>
-<pre><code>## [1] &quot;Example interpretation of ARIMA(1,1,1)(0,1,1)[12] for Rayadito-Canelo:&quot;</code></pre>
-<pre class="r"><code>print(&quot;&quot;)</code></pre>
-<pre><code>## [1] &quot;&quot;</code></pre>
-<pre class="r"><code>print(&quot;Non-seasonal components:&quot;)</code></pre>
-<pre><code>## [1] &quot;Non-seasonal components:&quot;</code></pre>
-<pre class="r"><code>print(&quot;- AR(1): Current abundance depends on previous month&#39;s abundance&quot;)</code></pre>
-<pre><code>## [1] &quot;- AR(1): Current abundance depends on previous month&#39;s abundance&quot;</code></pre>
-<pre class="r"><code>print(&quot;- I(1): One-time differencing removes linear trend&quot;)</code></pre>
-<pre><code>## [1] &quot;- I(1): One-time differencing removes linear trend&quot;</code></pre>
-<pre class="r"><code>print(&quot;- MA(1): Incorporates previous month&#39;s forecast error&quot;)</code></pre>
-<pre><code>## [1] &quot;- MA(1): Incorporates previous month&#39;s forecast error&quot;</code></pre>
-<pre class="r"><code>print(&quot;&quot;)</code></pre>
-<pre><code>## [1] &quot;&quot;</code></pre>
-<pre class="r"><code>print(&quot;Seasonal components:&quot;)</code></pre>
-<pre><code>## [1] &quot;Seasonal components:&quot;</code></pre>
-<pre class="r"><code>print(&quot;- P=0: No direct seasonal autoregressive effect&quot;)</code></pre>
-<pre><code>## [1] &quot;- P=0: No direct seasonal autoregressive effect&quot;</code></pre>
-<pre class="r"><code>print(&quot;- D=1: Seasonal differencing (compares to same month last year)&quot;)</code></pre>
-<pre><code>## [1] &quot;- D=1: Seasonal differencing (compares to same month last year)&quot;</code></pre>
-<pre class="r"><code>print(&quot;- Q=1: Seasonal moving average (accounts for seasonal forecast errors)&quot;)</code></pre>
-<pre><code>## [1] &quot;- Q=1: Seasonal moving average (accounts for seasonal forecast errors)&quot;</code></pre>
-<pre class="r"><code>print(&quot;- s=12: Seasonal period of 12 months (annual cycle)&quot;)</code></pre>
-<pre><code>## [1] &quot;- s=12: Seasonal period of 12 months (annual cycle)&quot;</code></pre>
-<pre class="r"><code>print(&quot;&quot;)</code></pre>
-<pre><code>## [1] &quot;&quot;</code></pre>
-<pre class="r"><code>print(&quot;Biological interpretation:&quot;)</code></pre>
-<pre><code>## [1] &quot;Biological interpretation:&quot;</code></pre>
-<pre class="r"><code>print(&quot;This model captures:&quot;)</code></pre>
-<pre><code>## [1] &quot;This model captures:&quot;</code></pre>
-<pre class="r"><code>print(&quot;1. Month-to-month population dynamics (AR and MA)&quot;)</code></pre>
-<pre><code>## [1] &quot;1. Month-to-month population dynamics (AR and MA)&quot;</code></pre>
-<pre class="r"><code>print(&quot;2. Long-term population trends (differencing)&quot;)</code></pre>
-<pre><code>## [1] &quot;2. Long-term population trends (differencing)&quot;</code></pre>
-<pre class="r"><code>print(&quot;3. Annual seasonal cycles (seasonal component)&quot;)</code></pre>
-<pre><code>## [1] &quot;3. Annual seasonal cycles (seasonal component)&quot;</code></pre>
-<pre class="r"><code>print(&quot;&quot;)</code></pre>
-<pre><code>## [1] &quot;&quot;</code></pre>
+<p>Example interpretation of ARIMA(1,1,1)(0,1,1)[12] for
+Rayadito-Canelo:</p>
+<p><strong>Non-seasonal components:</strong></p>
+<ul>
+<li><p>AR(1): Current abundance depends on previous month’s
+abundance</p></li>
+<li><p>I(1): One-time differencing removes linear trend</p></li>
+<li><p>MA(1): Incorporates previous month’s forecast error</p></li>
+</ul>
+<p><strong>Seasonal components:</strong></p>
+<ul>
+<li><p>P=0: No direct seasonal autoregressive effect</p></li>
+<li><p>D=1: Seasonal differencing (compares to same month last
+year)</p></li>
+<li><p>Q=1: Seasonal moving average (accounts for seasonal forecast
+errors</p></li>
+<li><p>s=12: Seasonal period of 12 months (annual cycle)</p></li>
+</ul>
+<p><strong>Biological interpretation:</strong></p>
+<p>This model captures:</p>
+<ol style="list-style-type: decimal">
+<li><p>Month-to-month population dynamics (AR and MA)</p></li>
+<li><p>Long-term population trends (differencing)</p></li>
+<li><p>Annual seasonal cycles (seasonal component)</p></li>
+</ol>
 <pre class="r"><code># Extract fitted values and plot
 fitted_values &lt;- fitted(m1.aphcan)
 par(mfrow=c(1,1))
@@ -1850,35 +1855,61 @@ interpretation of it may be wrong, so please take a note of caution on
 it: TSA with insufficient data may be misleading.</p>
 <div id="key-takeaways-for-arima-modeling" class="section level3">
 <h3>Key Takeaways for ARIMA Modeling:</h3>
-<p><strong>Model Building Process:</strong> 1. <strong>Explore your
-data:</strong> Plot time series, check for trends and seasonality 2.
-<strong>Check stationarity:</strong> Use ADF test, difference if needed
-3. <strong>Examine ACF/PACF:</strong> Identify potential AR and MA
-orders 4. <strong>Fit candidate models:</strong> Try both manual
-specification and auto.arima() 5. <strong>Check diagnostics:</strong>
-Residuals should be white noise 6. <strong>Compare models:</strong> Use
-AIC/BIC for model selection 7. <strong>Forecast:</strong> Use best model
-for predictions 8. <strong>Validate:</strong> Check forecast accuracy
-with holdout data if possible</p>
-<p><strong>Common Pitfalls to Avoid:</strong> - Don’t use ARIMA on
-non-stationary data without differencing - Don’t ignore seasonal
-patterns in monthly/quarterly data - Don’t trust models with
-autocorrelated residuals - Don’t over-fit (too many parameters relative
-to data length) - Don’t forget biological interpretation of model
-parameters</p>
-<p><strong>Best Practices:</strong> - Always visualize your data first -
-Start simple, add complexity only if needed - Use automatic selection as
-a starting point - Validate model assumptions thoroughly - Consider
-multiple models and compare - Interpret results in biological context -
-Be cautious with long-term forecasts (uncertainty grows)</p>
-<p><strong>Minimum Data Requirements:</strong> - At least 50-100
-observations for reliable ARIMA - At least 2 full seasonal cycles for
-seasonal ARIMA - More data = more reliable parameter estimates -
-Consider simpler methods if data is limited</p>
-<p><strong>Further Resources:</strong> - “Time Series Analysis and Its
-Applications” by Shumway &amp; Stoffer - “Forecasting: Principles and
-Practice” by Hyndman &amp; Athanasopoulos (free online) - R packages:
-forecast, TSA, astsa, tseries</p>
+<p><strong>Model Building Process:</strong></p>
+<ol style="list-style-type: decimal">
+<li><p><strong>Explore your data:</strong> Plot time series, check for
+trends and seasonality</p></li>
+<li><p><strong>Check stationarity:</strong> Use ADF test, difference if
+needed</p></li>
+<li><p><strong>Examine ACF/PACF:</strong> Identify potential AR and MA
+orders</p></li>
+<li><p><strong>Fit candidate models:</strong> Try both manual
+specification and auto.arima()</p></li>
+<li><p><strong>Check diagnostics:</strong> Residuals should be white
+noise</p></li>
+<li><p><strong>Compare models:</strong> Use AIC/BIC for model
+selection</p></li>
+<li><p><strong>Forecast:</strong> Use best model for
+predictions</p></li>
+<li><p><strong>Validate:</strong> Check forecast accuracy with holdout
+data if possible</p></li>
+</ol>
+<p><strong>Common Pitfalls to Avoid:</strong></p>
+<ul>
+<li><p>Don’t use ARIMA on non-stationary data without
+differencing</p></li>
+<li><p>Don’t ignore seasonal patterns in monthly/quarterly data</p></li>
+<li><p>Don’t trust models with autocorrelated residuals</p></li>
+<li><p>Don’t over-fit (too many parameters relative to data
+length)</p></li>
+<li><p>Don’t forget biological interpretation of model
+parameters</p></li>
+</ul>
+<p><strong>Best Practices:</strong></p>
+<ul>
+<li><p>Always visualize your data first</p></li>
+<li><p>Start simple, add complexity only if needed</p></li>
+<li><p>Use automatic selection as a starting point</p></li>
+<li><p>Validate model assumptions thoroughly</p></li>
+<li><p>Consider multiple models and compare</p></li>
+<li><p>Interpret results in biological context</p></li>
+<li><p>Be cautious with long-term forecasts (uncertainty grows)</p></li>
+</ul>
+<p><strong>Minimum Data Requirements:</strong></p>
+<ul>
+<li><p>At least 50-100 observations for reliable ARIMA</p></li>
+<li><p>At least 2 full seasonal cycles for seasonal ARIMA</p></li>
+<li><p>More data = more reliable parameter estimates</p></li>
+<li><p>Consider simpler methods if data is limited</p></li>
+</ul>
+<p><strong>Further Resources:</strong></p>
+<ul>
+<li><p>“Time Series Analysis and Its Applications” by Shumway &amp;
+Stoffer</p></li>
+<li><p>“Forecasting: Principles and Practice” by Hyndman &amp;
+Athanasopoulos (free online)</p></li>
+<li><p>R packages: forecast, TSA, astsa, tseries</p></li>
+</ul>
 </div>
 </div>
 <div id="session" class="section level2">
