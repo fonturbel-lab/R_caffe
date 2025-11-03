@@ -200,6 +200,7 @@ Autoregressive integrated moving average (aka ARIMA) are intended to be used wit
 ARIMA models can be decomposed into three main components, denoted as **ARIMA(p, d, q)(P, D, Q)[s]**:
 
 **Non-seasonal components:**
+
 - **AR (p) - Autoregressive:** Uses past values to predict current value (p = order)
 
 - **I (d) - Integrated:** Differencing to make the series stationary (d = times differenced)
@@ -207,6 +208,7 @@ ARIMA models can be decomposed into three main components, denoted as **ARIMA(p,
 - **MA (q) - Moving Average:** Uses past forecast errors (q = order)
 
 **Seasonal components (for seasonal data like our monthly bird counts):**
+
 - **P:** Seasonal autoregressive order
 
 - **D:** Seasonal differencing order
