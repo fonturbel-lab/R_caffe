@@ -30,6 +30,9 @@ Let's use the `mtcars` dataset (included in R) to make an example of this
 
 ```{r data}
 library(confintr)
+library(ggplot2)
+library(dplyr)
+library(gridExtra)
 
 data<-mtcars[,c("mpg","disp","hp","wt")]
 attach(data)
@@ -102,13 +105,9 @@ shapiro.test(resid(mod2))
 
 Great, now they are normal.
 
-Last but not least, let's make a plot!
+Last but not least, let's make some nice plots!
 
 ```{r mod2_plot}
-library(ggplot2)
-library(dplyr)
-library(gridExtra)
-
 # Assuming mod2 is already fitted: mod2 <- lm(mpg ~ hp * wt, data = mtcars)
 
 # 1. 3D-style interaction plot showing the fitted surface
@@ -189,73 +188,12 @@ p3 <- ggplot(pred_data_hp, aes(x = wt, y = mpg_pred, color = hp_category,
   theme(plot.title = element_text(face = "bold", size = 12),
         legend.position = "bottom")
 
-# Plot 4: Observed vs Predicted values
-data_with_pred <- data
-data_with_pred$predicted <- fitted(mod2)
-data_with_pred$residuals <- residuals(mod2)
 
-p4 <- ggplot(data_with_pred, aes(x = predicted, y = mpg)) +
-  geom_abline(intercept = 0, slope = 1, linetype = "dashed", 
-              color = "red", size = 1) +
-  geom_point(size = 3, alpha = 0.7, color = "steelblue") +
-  geom_smooth(method = "lm", se = TRUE, color = "darkblue", 
-              fill = "lightblue", alpha = 0.3) +
-  labs(title = "Observed vs Predicted MPG",
-       subtitle = paste0("R² = ", round(summary(mod2)$r.squared, 3)),
-       x = "Predicted MPG",
-       y = "Observed MPG") +
-  theme_minimal() +
-  theme(plot.title = element_text(face = "bold", size = 12))
-
-# Plot 5: Residuals vs Fitted
-p5 <- ggplot(data_with_pred, aes(x = predicted, y = residuals)) +
-  geom_hline(yintercept = 0, linetype = "dashed", color = "red", size = 1) +
-  geom_point(size = 3, alpha = 0.7, color = "steelblue") +
-  geom_smooth(se = TRUE, color = "darkblue", fill = "lightblue", alpha = 0.3) +
-  labs(title = "Residuals vs Fitted Values",
-       subtitle = "Check for homoscedasticity and patterns",
-       x = "Fitted Values",
-       y = "Residuals") +
-  theme_minimal() +
-  theme(plot.title = element_text(face = "bold", size = 12))
-
-# Plot 6: Combined diagnostic panel
-p6_data <- data.frame(
-  residuals = residuals(mod2),
-  fitted = fitted(mod2),
-  standardized = rstandard(mod2),
-  index = 1:nrow(data)
-)
-
-p6a <- ggplot(p6_data, aes(sample = standardized)) +
-  stat_qq(color = "steelblue", size = 2) +
-  stat_qq_line(color = "red", linetype = "dashed", size = 1) +
-  labs(title = "Normal Q-Q Plot", x = "Theoretical Quantiles", 
-       y = "Standardized Residuals") +
-  theme_minimal()
-
-p6b <- ggplot(p6_data, aes(x = standardized)) +
-  geom_histogram(aes(y = ..density..), bins = 15, fill = "steelblue", 
-                 color = "white", alpha = 0.7) +
-  geom_density(color = "darkblue", size = 1) +
-  stat_function(fun = dnorm, args = list(mean = 0, sd = 1),
-                color = "red", linetype = "dashed", size = 1) +
-  labs(title = "Residual Distribution", x = "Standardized Residuals", 
-       y = "Density") +
-  theme_minimal()
 
 # Display all plots
 print(p1)
 print(p2)
 print(p3)
-print(p4)
-print(p5)
-grid.arrange(p6a, p6b, ncol = 2)
-
-# Optional: Create a comprehensive 4-panel figure
-combined_plot <- grid.arrange(p2, p3, p4, p5, ncol = 2, nrow = 2,
-                               top = "Comprehensive Model Diagnostics for mod2")
-print(combined_plot)
 ```
 
 
