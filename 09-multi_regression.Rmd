@@ -102,6 +102,163 @@ shapiro.test(resid(mod2))
 
 Great, now they are normal.
 
+Last but not least, let's make a plot!
+
+```{r mod2_plot}
+library(ggplot2)
+library(dplyr)
+library(gridExtra)
+
+# Assuming mod2 is already fitted: mod2 <- lm(mpg ~ hp * wt, data = mtcars)
+
+# 1. 3D-style interaction plot showing the fitted surface
+# Create a grid of hp and wt values for prediction
+hp_seq <- seq(min(data$hp), max(data$hp), length.out = 30)
+wt_seq <- seq(min(data$wt), max(data$wt), length.out = 30)
+pred_grid <- expand.grid(hp = hp_seq, wt = wt_seq)
+pred_grid$mpg_pred <- predict(mod2, newdata = pred_grid)
+
+# Plot 1: Contour plot showing the interaction surface
+p1 <- ggplot() +
+  geom_contour_filled(data = pred_grid, aes(x = hp, y = wt, z = mpg_pred), alpha = 0.7) +
+  geom_point(data = data, aes(x = hp, y = wt, size = mpg), shape = 21, 
+             fill = "white", color = "black", stroke = 1.5) +
+  scale_fill_viridis_d(name = "Predicted\nMPG") +
+  labs(title = "MPG as a Function of Horsepower and Weight",
+       subtitle = "Interaction model: mpg ~ hp * wt",
+       x = "Horsepower (hp)", 
+       y = "Weight (1000 lbs)",
+       size = "Observed\nMPG") +
+  theme_minimal() +
+  theme(plot.title = element_text(face = "bold", size = 14),
+        legend.position = "right")
+
+# Plot 2: Interaction plot - effect of hp at different wt levels
+wt_levels <- quantile(data$wt, probs = c(0.25, 0.5, 0.75))
+pred_data_wt <- expand.grid(
+  hp = seq(min(data$hp), max(data$hp), length.out = 100),
+  wt = wt_levels
+)
+pred_data_wt$mpg_pred <- predict(mod2, newdata = pred_data_wt)
+pred_data_wt$wt_category <- factor(pred_data_wt$wt,
+                                    labels = c("Light (25th %ile)", 
+                                             "Medium (50th %ile)", 
+                                             "Heavy (75th %ile)"))
+
+p2 <- ggplot(pred_data_wt, aes(x = hp, y = mpg_pred, color = wt_category, 
+                                linetype = wt_category)) +
+  geom_line(size = 1.2) +
+  geom_point(data = data, aes(x = hp, y = mpg), 
+             color = "black", alpha = 0.5, inherit.aes = FALSE) +
+  scale_color_manual(values = c("#2E86AB", "#A23B72", "#F18F01")) +
+  labs(title = "Effect of Horsepower on MPG at Different Weight Levels",
+       subtitle = "Lines show predicted values from interaction model",
+       x = "Horsepower (hp)",
+       y = "Miles per Gallon (MPG)",
+       color = "Vehicle Weight",
+       linetype = "Vehicle Weight") +
+  theme_minimal() +
+  theme(plot.title = element_text(face = "bold", size = 12),
+        legend.position = "bottom")
+
+# Plot 3: Interaction plot - effect of wt at different hp levels  
+hp_levels <- quantile(data$hp, probs = c(0.25, 0.5, 0.75))
+pred_data_hp <- expand.grid(
+  wt = seq(min(data$wt), max(data$wt), length.out = 100),
+  hp = hp_levels
+)
+pred_data_hp$mpg_pred <- predict(mod2, newdata = pred_data_hp)
+pred_data_hp$hp_category <- factor(pred_data_hp$hp,
+                                    labels = c("Low Power (25th %ile)", 
+                                             "Medium Power (50th %ile)", 
+                                             "High Power (75th %ile)"))
+
+p3 <- ggplot(pred_data_hp, aes(x = wt, y = mpg_pred, color = hp_category, 
+                                linetype = hp_category)) +
+  geom_line(size = 1.2) +
+  geom_point(data = data, aes(x = wt, y = mpg), 
+             color = "black", alpha = 0.5, inherit.aes = FALSE) +
+  scale_color_manual(values = c("#06A77D", "#D4A017", "#C73E1D")) +
+  labs(title = "Effect of Weight on MPG at Different Horsepower Levels",
+       subtitle = "Lines show predicted values from interaction model",
+       x = "Weight (1000 lbs)",
+       y = "Miles per Gallon (MPG)",
+       color = "Engine Power",
+       linetype = "Engine Power") +
+  theme_minimal() +
+  theme(plot.title = element_text(face = "bold", size = 12),
+        legend.position = "bottom")
+
+# Plot 4: Observed vs Predicted values
+data_with_pred <- data
+data_with_pred$predicted <- fitted(mod2)
+data_with_pred$residuals <- residuals(mod2)
+
+p4 <- ggplot(data_with_pred, aes(x = predicted, y = mpg)) +
+  geom_abline(intercept = 0, slope = 1, linetype = "dashed", 
+              color = "red", size = 1) +
+  geom_point(size = 3, alpha = 0.7, color = "steelblue") +
+  geom_smooth(method = "lm", se = TRUE, color = "darkblue", 
+              fill = "lightblue", alpha = 0.3) +
+  labs(title = "Observed vs Predicted MPG",
+       subtitle = paste0("R² = ", round(summary(mod2)$r.squared, 3)),
+       x = "Predicted MPG",
+       y = "Observed MPG") +
+  theme_minimal() +
+  theme(plot.title = element_text(face = "bold", size = 12))
+
+# Plot 5: Residuals vs Fitted
+p5 <- ggplot(data_with_pred, aes(x = predicted, y = residuals)) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "red", size = 1) +
+  geom_point(size = 3, alpha = 0.7, color = "steelblue") +
+  geom_smooth(se = TRUE, color = "darkblue", fill = "lightblue", alpha = 0.3) +
+  labs(title = "Residuals vs Fitted Values",
+       subtitle = "Check for homoscedasticity and patterns",
+       x = "Fitted Values",
+       y = "Residuals") +
+  theme_minimal() +
+  theme(plot.title = element_text(face = "bold", size = 12))
+
+# Plot 6: Combined diagnostic panel
+p6_data <- data.frame(
+  residuals = residuals(mod2),
+  fitted = fitted(mod2),
+  standardized = rstandard(mod2),
+  index = 1:nrow(data)
+)
+
+p6a <- ggplot(p6_data, aes(sample = standardized)) +
+  stat_qq(color = "steelblue", size = 2) +
+  stat_qq_line(color = "red", linetype = "dashed", size = 1) +
+  labs(title = "Normal Q-Q Plot", x = "Theoretical Quantiles", 
+       y = "Standardized Residuals") +
+  theme_minimal()
+
+p6b <- ggplot(p6_data, aes(x = standardized)) +
+  geom_histogram(aes(y = ..density..), bins = 15, fill = "steelblue", 
+                 color = "white", alpha = 0.7) +
+  geom_density(color = "darkblue", size = 1) +
+  stat_function(fun = dnorm, args = list(mean = 0, sd = 1),
+                color = "red", linetype = "dashed", size = 1) +
+  labs(title = "Residual Distribution", x = "Standardized Residuals", 
+       y = "Density") +
+  theme_minimal()
+
+# Display all plots
+print(p1)
+print(p2)
+print(p3)
+print(p4)
+print(p5)
+grid.arrange(p6a, p6b, ncol = 2)
+
+# Optional: Create a comprehensive 4-panel figure
+combined_plot <- grid.arrange(p2, p3, p4, p5, ncol = 2, nrow = 2,
+                               top = "Comprehensive Model Diagnostics for mod2")
+print(combined_plot)
+```
+
+
 
 ## Final thoughts
 
