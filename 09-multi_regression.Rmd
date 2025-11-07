@@ -36,7 +36,7 @@ attach(data)
 head(data)
 ```
 
-So, we have information on several car brands and models, obtained from their technical specifications. In this case, we want to know which factors determine car's efficiency in fuel use (represented by the variable mpg = miles per gallon) regarding three factors: cylinder displacement (disp), power(hp), and car's weight (wt). Let's fit a linear model for this:
+So, we have information on several car brands and models, obtained from their technical specifications. In this case, we want to know which factors determine car's efficiency in fuel use (represented by the variable mpg = miles per gallon) regarding three factors: cylinder displacement (disp), power (hp), and car's weight (wt). Let's fit a linear model for this:
 
 ```{r lm1}
 mod1<-lm(mpg~disp+hp+wt, data = data)
