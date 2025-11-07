@@ -1,7 +1,7 @@
 ---
 title: "09 - Multiple linear regression"
 author: "Francisco E. Fonturbel"
-date: "09/August/2022"
+date: "07/November/2025"
 output: 
   html_document:
     includes:
