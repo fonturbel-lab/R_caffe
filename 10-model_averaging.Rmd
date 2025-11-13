@@ -94,6 +94,23 @@ So, we have several variables in the models, some have significant effects but o
 
 ### The Akaike information criterion (AIC) and its relatives
 
+The Akaike Information Criterion (AIC) is a metric that balances model fit against complexity by penalizing models with more parameters, helping you select the most parsimonious model among competing alternatives.
+
+**AIC = 2k - 2ln(L)**
+
+where:
+
+k = number of estimated parameters in the model
+L = maximum likelihood value of the model
+
+Lower AIC values indicate better models!
+
+Other common variations are:
+
+- AICc = AIC corrected for small sample sizes (N ≤ 20)
+
+- BIC = Bayesian Information Criterion, 
+
 
 ### Model selection
 
