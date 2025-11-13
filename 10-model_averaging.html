@@ -389,6 +389,7 @@ library(ggplot2)
 library(GGally)
 library(tree)
 library(randomForest)
+library(gt)
 
 data&lt;-read.table(&quot;data/10_data_threat.txt&quot;, 
                      header=TRUE, 
@@ -588,287 +589,483 @@ similar way. We will consider only those models with a delta BIC &lt; 5
 (models with larger differences explain very little of the variance and
 can be discarded).</p>
 <pre class="r"><code>mamm3&lt;-dredge(thr_mamm_2017, rank = BIC)
-subset(mamm3, delta &lt;5)</code></pre>
-<pre><code>## Global model call: lmer(formula = tmamm17 ~ Urbanization + Pop_density + Literacy + 
-##     education_GDP + money_educ + perc_prot_land + protected_area + 
-##     (1 | Geography), na.action = &quot;na.fail&quot;)
-## ---
-## Model selection table 
-##      (Int) edct_GDP     Ltr prc_prot_lnd df   logLik   BIC delta weight
-## 4  -0.7286   -6.661 -1.0520               5 -152.910 330.5  0.00  0.543
-## 12 -0.4680   -7.425 -0.9158      -0.1909  6 -151.089 331.7  1.29  0.286
-## 3  -0.9123          -1.2030               4 -157.063 333.8  3.38  0.100
-## 10 -1.0900   -9.682              -0.2241  5 -154.949 334.5  4.08  0.071
-## Models ranked by BIC(x) 
-## Random terms (all models): 
-##   1 | Geography</code></pre>
-<pre class="r"><code>mamm3</code></pre>
-<pre><code>## Global model call: lmer(formula = tmamm17 ~ Urbanization + Pop_density + Literacy + 
-##     education_GDP + money_educ + perc_prot_land + protected_area + 
-##     (1 | Geography), na.action = &quot;na.fail&quot;)
-## ---
-## Model selection table 
-##       (Int) edct_GDP     Ltr   mny_educ prc_prot_lnd   Pop_dns  prtc_are
-## 4   -0.7286   -6.661 -1.0520                                            
-## 12  -0.4680   -7.425 -0.9158                 -0.1909                    
-## 3   -0.9123          -1.2030                                            
-## 10  -1.0900   -9.682                         -0.2241                    
-## 2   -1.5160   -9.168                                                    
-## 68  -0.7252   -6.687 -1.0120                                            
-## 11  -0.6909          -1.0920                 -0.1765                    
-## 76  -0.4660   -7.441 -0.8888                 -0.1907                    
-## 74  -0.8571   -9.114                         -0.2107                    
-## 66  -1.2080   -8.529                                                    
-## 67  -0.9110          -1.1820                                            
-## 75  -0.6907          -1.0860                 -0.1764                    
-## 1   -1.9470                                                             
-## 9   -1.5650                                  -0.2130                    
-## 65  -1.5650                                                             
-## 73  -1.2580                                  -0.1980                    
-## 20  -0.7424   -6.595 -1.0540                         3.342e-05          
-## 28  -0.4752   -7.392 -0.9170                 -0.1903 1.542e-05          
-## 19  -0.9298          -1.2030                         4.892e-05          
-## 26  -1.0940   -9.668                         -0.2239 7.272e-06          
-## 18  -1.5290   -9.117                                 2.753e-05          
-## 84  -0.7396   -6.621 -1.0040                         3.696e-05          
-## 27  -0.7046          -1.0930                 -0.1753 3.409e-05          
-## 92  -0.4739   -7.407 -0.8854                 -0.1900 1.772e-05          
-## 82  -1.2240   -8.405                                 5.612e-05          
-## 90  -0.8688   -9.038                         -0.2092 3.245e-05          
-## 83  -0.9284          -1.1690                         5.143e-05          
-## 8   -0.7201   -6.646 -1.0700  2.788e-07                                 
-## 36  -0.7227   -6.416 -1.0930                                   3.838e-07
-## 44  -0.4358   -7.137 -0.9632                 -0.2081           5.577e-07
-## 16  -0.4460   -7.412 -0.9462  5.261e-07      -0.1952                    
-## 91  -0.7043          -1.0770                 -0.1751 3.530e-05          
-## 17  -1.9650                                          4.908e-05          
-## 25  -1.5780                                  -0.2120 3.116e-05          
-## 81  -1.5810                                          7.960e-05          
-## 7   -0.9025          -1.2220  3.072e-07                                 
-## 35  -0.8979          -1.2430                                   4.375e-07
-## 89  -1.2740                                  -0.1955 5.915e-05          
-## 14  -1.0900   -9.694          1.017e-07      -0.2252                    
-## 42  -1.0900   -9.546                         -0.2392           4.446e-07
-## 43  -0.6465          -1.1360                 -0.1958           6.068e-07
-## 6   -1.5120   -9.144         -2.548e-07                                 
-## 72  -0.7150   -6.676 -1.0220  3.060e-07                                 
-## 15  -0.6680          -1.1230  5.394e-07      -0.1809                    
-## 100 -0.7168   -6.451 -1.0280                                   3.964e-07
-## 108 -0.4302   -7.170 -0.9011                 -0.2080           5.697e-07
-## 80  -0.4417   -7.439 -0.9033  5.501e-07      -0.1950                    
-## 106 -0.8276   -8.874                         -0.2277           5.510e-07
-## 34  -1.5310   -9.083                                           2.226e-07
-## 78  -0.8434   -9.133          4.189e-07      -0.2142                    
-## 70  -1.2060   -8.531          1.282e-07                                 
-## 98  -1.2080   -8.343                                           3.558e-07
-## 71  -0.8999          -1.1920  3.242e-07                                 
-## 99  -0.8941          -1.1940                                   4.474e-07
-## 107 -0.6432          -1.0910                 -0.1957           6.158e-07
-## 79  -0.6662          -1.1000  5.524e-07      -0.1808                    
-## 5   -1.9400                  -3.234e-07                                 
-## 13  -1.5650                   1.013e-08      -0.2131                    
-## 41  -1.5580                                  -0.2297           4.854e-07
-## 69  -1.5640                   1.128e-07                                 
-## 33  -1.9600                                                    2.700e-07
-## 105 -1.2140                                  -0.2171           6.058e-07
-## 97  -1.5560                                                    4.161e-07
-## 77  -1.2470                   3.849e-07      -0.2012                    
-## 24  -0.7340   -6.579 -1.0720  2.824e-07              3.393e-05          
-## 52  -0.7392   -6.332 -1.0960                         4.031e-05 3.916e-07
-## 60  -0.4466   -7.085 -0.9653                 -0.2073 2.367e-05 5.616e-07
-## 32  -0.4534   -7.378 -0.9474  5.270e-07      -0.1946 1.593e-05          
-## 23  -0.9200          -1.2220  3.121e-07              4.944e-05          
-## 51  -0.9176          -1.2440                         5.608e-05 4.474e-07
-## 30  -1.0940   -9.680          1.019e-07      -0.2249 7.363e-06          
-## 58  -1.0970   -9.520                         -0.2388 1.346e-05 4.466e-07
-## 59  -0.6630          -1.1380                 -0.1946 4.223e-05 6.132e-07
-## 88  -0.7296   -6.607 -1.0140  3.158e-07              3.826e-05          
-## 22  -1.5240   -9.093         -2.527e-07              2.726e-05          
-## 31  -0.6818          -1.1240  5.413e-07      -0.1797 3.457e-05          
-## 116 -0.7345   -6.361 -1.0190                         4.618e-05 4.080e-07
-## 124 -0.4427   -7.110 -0.8956                 -0.2071 2.899e-05 5.761e-07
-## 96  -0.4502   -7.401 -0.8996  5.542e-07      -0.1943 1.953e-05          
-## 122 -0.8428   -8.769                         -0.2261 4.355e-05 5.608e-07
-## 50  -1.5450   -9.022                                 3.142e-05 2.284e-07
-## 86  -1.2220   -8.407          1.448e-07              5.684e-05          
-## 94  -0.8554   -9.054          4.269e-07      -0.2128 3.404e-05          
-## 114 -1.2260   -8.192                                 6.479e-05 3.725e-07
-## 87  -0.9173          -1.1780  3.375e-07              5.279e-05          
-## 115 -0.9143          -1.1780                         6.122e-05 4.618e-07
-## 40  -0.7431   -6.314 -1.0690 -7.719e-07                        6.123e-07
-## 48  -0.4568   -7.028 -0.9355 -8.429e-07      -0.2090           8.080e-07
-## 123 -0.6604          -1.0800                 -0.1943 4.676e-05 6.255e-07
-## 95  -0.6801          -1.0910  5.601e-07      -0.1795 3.712e-05          
-## 21  -1.9580                  -3.189e-07              4.866e-05          
-## 29  -1.5790                   1.143e-08      -0.2121 3.122e-05          
-## 85  -1.5790                   1.366e-07              8.028e-05          
-## 57  -1.5740                                  -0.2286 3.754e-05 4.909e-07
-## 39  -0.9184          -1.2110 -9.013e-07                        7.033e-07
-## 46  -1.0940   -9.268         -1.319e-06      -0.2392           8.414e-07
-## 113 -1.5720                                          8.905e-05 4.375e-07
-## 121 -1.2320                                  -0.2146 7.053e-05 6.206e-07
-## 49  -1.9790                                          5.355e-05 2.793e-07
-## 47  -0.6672          -1.1010 -9.821e-07      -0.1971           8.976e-07
-## 93  -1.2620                   3.997e-07      -0.1988 6.069e-05          
-## 38  -1.5340   -8.805         -1.315e-06                        6.182e-07
-## 104 -0.7375   -6.346 -1.0140 -7.470e-07                        6.158e-07
-## 112 -0.4517   -7.059 -0.8846 -8.196e-07      -0.2089           8.111e-07
-## 110 -0.8450   -8.698         -1.014e-06      -0.2284           8.500e-07
-## 102 -1.2250   -8.174         -9.646e-07                        6.398e-07
-## 103 -0.9151          -1.1730 -8.843e-07                        7.061e-07
-## 111 -0.6645          -1.0680 -9.672e-07      -0.1970           8.998e-07
-## 45  -1.5450                  -1.631e-06      -0.2301           9.746e-07
-## 37  -1.9480                  -1.612e-06                        7.533e-07
-## 109 -1.2260                  -1.257e-06      -0.2182           9.751e-07
-## 101 -1.5690                  -1.196e-06                        7.666e-07
-## 56  -0.7613   -6.221 -1.0710 -7.920e-07              4.317e-05 6.267e-07
-## 64  -0.4693   -6.968 -0.9375 -8.550e-07      -0.2082 2.668e-05 8.161e-07
-## 55  -0.9398          -1.2120 -9.262e-07              5.909e-05 7.212e-07
-## 62  -1.1030   -9.229         -1.328e-06      -0.2387 1.855e-05 8.469e-07
-## 63  -0.6853          -1.1020 -1.001e-06      -0.1958 4.539e-05 9.100e-07
-## 120 -0.7564   -6.250 -1.0040 -7.636e-07              4.825e-05 6.327e-07
-## 54  -1.5510   -8.731         -1.333e-06              3.651e-05 6.303e-07
-## 128 -0.4654   -6.993 -0.8785 -8.300e-07      -0.2079 3.117e-05 8.211e-07
-## 126 -0.8613   -8.584         -1.027e-06      -0.2267 4.588e-05 8.642e-07
-## 118 -1.2450   -8.014         -9.844e-07              6.708e-05 6.629e-07
-## 119 -0.9365          -1.1570 -9.033e-07              6.335e-05 7.265e-07
-## 127 -0.6829          -1.0560 -9.813e-07      -0.1956 4.898e-05 9.142e-07
-## 61  -1.5630                  -1.649e-06      -0.2289 4.291e-05 9.863e-07
-## 53  -1.9690                  -1.637e-06              5.889e-05 7.709e-07
-## 117 -1.5860                  -1.217e-06              9.121e-05 7.947e-07
-## 125 -1.2440                  -1.273e-06      -0.2157 7.269e-05 9.951e-07
-##          Urb df   logLik   BIC delta weight
-## 4             5 -152.910 330.5  0.00  0.459
-## 12            6 -151.089 331.7  1.29  0.242
-## 3             4 -157.063 333.8  3.38  0.085
-## 10            5 -154.949 334.5  4.08  0.060
-## 2             4 -157.947 335.6  5.15  0.035
-## 68  -0.06280  6 -153.035 335.6  5.18  0.034
-## 11            5 -155.804 336.2  5.79  0.025
-## 76  -0.04233  7 -151.245 337.0  6.52  0.018
-## 74  -0.48400  6 -153.852 337.3  6.81  0.015
-## 66  -0.57570  5 -156.325 337.3  6.83  0.015
-## 67  -0.03236  5 -157.190 339.0  8.56  0.006
-## 75  -0.01024  6 -155.953 341.5 11.01  0.002
-## 1             3 -163.827 342.4 11.98  0.001
-## 9             4 -161.467 342.6 12.19  0.001
-## 65  -0.65010  4 -161.742 343.2 12.74  0.001
-## 73  -0.56870  5 -159.889 344.4 13.96  0.000
-## 20            6 -161.036 351.6 21.18  0.000
-## 28            7 -159.270 353.0 22.57  0.000
-## 19            5 -165.132 354.9 24.45  0.000
-## 26            6 -163.111 355.8 25.33  0.000
-## 18            5 -166.054 356.7 26.29  0.000
-## 84  -0.07822  7 -161.141 356.8 26.32  0.000
-## 27            6 -163.936 357.4 26.98  0.000
-## 92  -0.04980  8 -159.410 358.2 27.78  0.000
-## 82  -0.59290  6 -164.349 358.3 27.80  0.000
-## 90  -0.49460  7 -161.974 358.4 27.98  0.000
-## 83  -0.05424  6 -165.239 360.0 29.59  0.000
-## 8             6 -165.855 361.3 30.82  0.000
-## 36            6 -166.264 362.1 31.64  0.000
-## 44            7 -163.852 362.2 31.74  0.000
-## 16            7 -163.925 362.3 31.89  0.000
-## 91  -0.02543  7 -164.069 362.6 32.17  0.000
-## 17            4 -171.857 363.4 32.97  0.000
-## 25            5 -169.569 363.8 33.32  0.000
-## 81  -0.67300  5 -169.640 363.9 33.46  0.000
-## 7             5 -169.988 364.6 34.16  0.000
-## 35            5 -170.265 365.2 34.71  0.000
-## 89  -0.58670  6 -167.901 365.4 34.91  0.000
-## 14            6 -167.937 365.4 34.98  0.000
-## 42            6 -168.130 365.8 35.37  0.000
-## 43            6 -168.384 366.3 35.88  0.000
-## 6             5 -170.882 366.4 35.94  0.000
-## 72  -0.07827  7 -165.960 366.4 35.95  0.000
-## 15            6 -168.622 366.8 36.35  0.000
-## 100 -0.10370  7 -166.356 367.2 36.75  0.000
-## 108 -0.09921  8 -163.972 367.4 36.91  0.000
-## 80  -0.06965  8 -164.057 367.5 37.08  0.000
-## 106 -0.54490  7 -166.672 367.8 37.38  0.000
-## 34            5 -171.626 367.9 37.43  0.000
-## 78  -0.51030  7 -166.730 368.0 37.50  0.000
-## 70  -0.58420  6 -169.277 368.1 37.66  0.000
-## 98  -0.61980  6 -169.748 369.1 38.60  0.000
-## 71  -0.04879  6 -170.098 369.8 39.30  0.000
-## 99  -0.07971  6 -170.365 370.3 39.84  0.000
-## 107 -0.07298  7 -168.510 371.5 41.05  0.000
-## 79  -0.03769  7 -168.754 372.0 41.54  0.000
-## 5             4 -176.718 373.1 42.69  0.000
-## 13            5 -174.433 373.5 43.05  0.000
-## 41            5 -174.534 373.7 43.25  0.000
-## 69  -0.65760  5 -174.675 374.0 43.53  0.000
-## 33            4 -177.416 374.5 44.09  0.000
-## 105 -0.63330  6 -172.528 374.6 44.16  0.000
-## 97  -0.69980  5 -175.014 374.7 44.21  0.000
-## 77  -0.59300  6 -172.762 375.1 44.63  0.000
-## 24            7 -173.977 382.4 51.99  0.000
-## 52            7 -174.370 383.2 52.77  0.000
-## 60            8 -172.024 383.5 53.01  0.000
-## 32            8 -172.103 383.6 53.17  0.000
-## 23            6 -178.053 385.7 55.21  0.000
-## 51            6 -178.305 386.2 55.72  0.000
-## 30            7 -176.096 386.7 56.23  0.000
-## 58            7 -176.288 387.1 56.61  0.000
-## 59            7 -176.495 387.5 57.03  0.000
-## 88  -0.09473  8 -174.058 387.5 57.08  0.000
-## 22            6 -178.986 387.5 57.08  0.000
-## 31            7 -176.750 388.0 57.53  0.000
-## 116 -0.12410  8 -174.430 388.3 57.82  0.000
-## 124 -0.11210  9 -172.119 388.6 58.13  0.000
-## 96  -0.07809  9 -172.217 388.8 58.32  0.000
-## 122 -0.56020  8 -174.764 388.9 58.49  0.000
-## 50            6 -179.721 389.0 58.55  0.000
-## 86  -0.60270  7 -177.294 389.1 58.62  0.000
-## 94  -0.52190  8 -174.845 389.1 58.65  0.000
-## 114 -0.64180  7 -177.731 390.0 59.50  0.000
-## 87  -0.07192  7 -178.139 390.8 60.31  0.000
-## 115 -0.10730  7 -178.373 391.2 60.78  0.000
-## 40            7 -178.725 391.9 61.48  0.000
-## 48            8 -176.294 392.0 61.55  0.000
-## 123 -0.09409  8 -176.593 392.6 62.15  0.000
-## 95  -0.05403  8 -176.862 393.1 62.69  0.000
-## 21            5 -184.746 394.1 63.67  0.000
-## 29            6 -182.531 394.6 64.17  0.000
-## 85  -0.68220  6 -182.566 394.7 64.24  0.000
-## 57            6 -182.621 394.8 64.35  0.000
-## 39            6 -182.656 394.9 64.42  0.000
-## 46            7 -180.250 395.0 64.53  0.000
-## 113 -0.72790  6 -182.854 395.3 64.81  0.000
-## 121 -0.65630  7 -180.488 395.5 65.01  0.000
-## 49            5 -185.427 395.5 65.04  0.000
-## 47            7 -180.740 396.0 65.52  0.000
-## 93  -0.61240  7 -180.765 396.0 65.57  0.000
-## 38            6 -183.749 397.1 66.61  0.000
-## 104 -0.08860  8 -178.823 397.1 66.61  0.000
-## 112 -0.08264  9 -176.423 397.2 66.73  0.000
-## 110 -0.51440  8 -179.007 397.4 66.98  0.000
-## 102 -0.59100  7 -182.097 398.7 68.23  0.000
-## 103 -0.06231  7 -182.762 400.0 69.56  0.000
-## 111 -0.05391  8 -180.873 401.2 70.71  0.000
-## 45            6 -186.390 402.3 71.89  0.000
-## 37            5 -189.303 403.2 72.79  0.000
-## 109 -0.59320  7 -184.694 403.9 73.42  0.000
-## 101 -0.66200  6 -187.218 404.0 73.54  0.000
-## 56            8 -186.818 413.1 82.60  0.000
-## 64            9 -184.457 413.3 82.80  0.000
-## 55            7 -190.682 415.9 85.40  0.000
-## 62            8 -188.400 416.2 85.76  0.000
-## 63            8 -188.839 417.1 86.64  0.000
-## 120 -0.10960  9 -186.888 418.1 87.67  0.000
-## 54            7 -191.831 418.2 87.70  0.000
-## 128 -0.09626 10 -184.562 418.4 87.94  0.000
-## 126 -0.53010  9 -187.089 418.5 88.07  0.000
-## 118 -0.61310  8 -190.067 419.6 89.10  0.000
-## 119 -0.09046  8 -190.758 420.9 90.48  0.000
-## 127 -0.07573  9 -188.946 422.2 91.78  0.000
-## 61            7 -194.462 423.4 92.96  0.000
-## 53            6 -197.294 424.2 93.70  0.000
-## 117 -0.69020  7 -195.044 424.6 94.12  0.000
-## 125 -0.61640  8 -192.643 424.7 94.25  0.000
-## Models ranked by BIC(x) 
-## Random terms (all models): 
-##   1 | Geography</code></pre>
+mamm3s&lt;-subset(mamm3, delta &lt;5)
+#mamm3</code></pre>
+<pre class="r"><code>mamm3s %&gt;%
+  as.data.frame() %&gt;%
+  gt() %&gt;%
+  fmt_number(columns = c(BIC, delta, weight), decimals = 2)</code></pre>
+<div id="zwpfylwhzk" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>#zwpfylwhzk table {
+font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+-webkit-font-smoothing: antialiased;
+-moz-osx-font-smoothing: grayscale;
+}
+#zwpfylwhzk thead, #zwpfylwhzk tbody, #zwpfylwhzk tfoot, #zwpfylwhzk tr, #zwpfylwhzk td, #zwpfylwhzk th {
+border-style: none;
+}
+#zwpfylwhzk p {
+margin: 0;
+padding: 0;
+}
+#zwpfylwhzk .gt_table {
+display: table;
+border-collapse: collapse;
+line-height: normal;
+margin-left: auto;
+margin-right: auto;
+color: #333333;
+font-size: 16px;
+font-weight: normal;
+font-style: normal;
+background-color: #FFFFFF;
+width: auto;
+border-top-style: solid;
+border-top-width: 2px;
+border-top-color: #A8A8A8;
+border-right-style: none;
+border-right-width: 2px;
+border-right-color: #D3D3D3;
+border-bottom-style: solid;
+border-bottom-width: 2px;
+border-bottom-color: #A8A8A8;
+border-left-style: none;
+border-left-width: 2px;
+border-left-color: #D3D3D3;
+}
+#zwpfylwhzk .gt_caption {
+padding-top: 4px;
+padding-bottom: 4px;
+}
+#zwpfylwhzk .gt_title {
+color: #333333;
+font-size: 125%;
+font-weight: initial;
+padding-top: 4px;
+padding-bottom: 4px;
+padding-left: 5px;
+padding-right: 5px;
+border-bottom-color: #FFFFFF;
+border-bottom-width: 0;
+}
+#zwpfylwhzk .gt_subtitle {
+color: #333333;
+font-size: 85%;
+font-weight: initial;
+padding-top: 3px;
+padding-bottom: 5px;
+padding-left: 5px;
+padding-right: 5px;
+border-top-color: #FFFFFF;
+border-top-width: 0;
+}
+#zwpfylwhzk .gt_heading {
+background-color: #FFFFFF;
+text-align: center;
+border-bottom-color: #FFFFFF;
+border-left-style: none;
+border-left-width: 1px;
+border-left-color: #D3D3D3;
+border-right-style: none;
+border-right-width: 1px;
+border-right-color: #D3D3D3;
+}
+#zwpfylwhzk .gt_bottom_border {
+border-bottom-style: solid;
+border-bottom-width: 2px;
+border-bottom-color: #D3D3D3;
+}
+#zwpfylwhzk .gt_col_headings {
+border-top-style: solid;
+border-top-width: 2px;
+border-top-color: #D3D3D3;
+border-bottom-style: solid;
+border-bottom-width: 2px;
+border-bottom-color: #D3D3D3;
+border-left-style: none;
+border-left-width: 1px;
+border-left-color: #D3D3D3;
+border-right-style: none;
+border-right-width: 1px;
+border-right-color: #D3D3D3;
+}
+#zwpfylwhzk .gt_col_heading {
+color: #333333;
+background-color: #FFFFFF;
+font-size: 100%;
+font-weight: normal;
+text-transform: inherit;
+border-left-style: none;
+border-left-width: 1px;
+border-left-color: #D3D3D3;
+border-right-style: none;
+border-right-width: 1px;
+border-right-color: #D3D3D3;
+vertical-align: bottom;
+padding-top: 5px;
+padding-bottom: 6px;
+padding-left: 5px;
+padding-right: 5px;
+overflow-x: hidden;
+}
+#zwpfylwhzk .gt_column_spanner_outer {
+color: #333333;
+background-color: #FFFFFF;
+font-size: 100%;
+font-weight: normal;
+text-transform: inherit;
+padding-top: 0;
+padding-bottom: 0;
+padding-left: 4px;
+padding-right: 4px;
+}
+#zwpfylwhzk .gt_column_spanner_outer:first-child {
+padding-left: 0;
+}
+#zwpfylwhzk .gt_column_spanner_outer:last-child {
+padding-right: 0;
+}
+#zwpfylwhzk .gt_column_spanner {
+border-bottom-style: solid;
+border-bottom-width: 2px;
+border-bottom-color: #D3D3D3;
+vertical-align: bottom;
+padding-top: 5px;
+padding-bottom: 5px;
+overflow-x: hidden;
+display: inline-block;
+width: 100%;
+}
+#zwpfylwhzk .gt_spanner_row {
+border-bottom-style: hidden;
+}
+#zwpfylwhzk .gt_group_heading {
+padding-top: 8px;
+padding-bottom: 8px;
+padding-left: 5px;
+padding-right: 5px;
+color: #333333;
+background-color: #FFFFFF;
+font-size: 100%;
+font-weight: initial;
+text-transform: inherit;
+border-top-style: solid;
+border-top-width: 2px;
+border-top-color: #D3D3D3;
+border-bottom-style: solid;
+border-bottom-width: 2px;
+border-bottom-color: #D3D3D3;
+border-left-style: none;
+border-left-width: 1px;
+border-left-color: #D3D3D3;
+border-right-style: none;
+border-right-width: 1px;
+border-right-color: #D3D3D3;
+vertical-align: middle;
+text-align: left;
+}
+#zwpfylwhzk .gt_empty_group_heading {
+padding: 0.5px;
+color: #333333;
+background-color: #FFFFFF;
+font-size: 100%;
+font-weight: initial;
+border-top-style: solid;
+border-top-width: 2px;
+border-top-color: #D3D3D3;
+border-bottom-style: solid;
+border-bottom-width: 2px;
+border-bottom-color: #D3D3D3;
+vertical-align: middle;
+}
+#zwpfylwhzk .gt_from_md > :first-child {
+margin-top: 0;
+}
+#zwpfylwhzk .gt_from_md > :last-child {
+margin-bottom: 0;
+}
+#zwpfylwhzk .gt_row {
+padding-top: 8px;
+padding-bottom: 8px;
+padding-left: 5px;
+padding-right: 5px;
+margin: 10px;
+border-top-style: solid;
+border-top-width: 1px;
+border-top-color: #D3D3D3;
+border-left-style: none;
+border-left-width: 1px;
+border-left-color: #D3D3D3;
+border-right-style: none;
+border-right-width: 1px;
+border-right-color: #D3D3D3;
+vertical-align: middle;
+overflow-x: hidden;
+}
+#zwpfylwhzk .gt_stub {
+color: #333333;
+background-color: #FFFFFF;
+font-size: 100%;
+font-weight: initial;
+text-transform: inherit;
+border-right-style: solid;
+border-right-width: 2px;
+border-right-color: #D3D3D3;
+padding-left: 5px;
+padding-right: 5px;
+}
+#zwpfylwhzk .gt_stub_row_group {
+color: #333333;
+background-color: #FFFFFF;
+font-size: 100%;
+font-weight: initial;
+text-transform: inherit;
+border-right-style: solid;
+border-right-width: 2px;
+border-right-color: #D3D3D3;
+padding-left: 5px;
+padding-right: 5px;
+vertical-align: top;
+}
+#zwpfylwhzk .gt_row_group_first td {
+border-top-width: 2px;
+}
+#zwpfylwhzk .gt_row_group_first th {
+border-top-width: 2px;
+}
+#zwpfylwhzk .gt_summary_row {
+color: #333333;
+background-color: #FFFFFF;
+text-transform: inherit;
+padding-top: 8px;
+padding-bottom: 8px;
+padding-left: 5px;
+padding-right: 5px;
+}
+#zwpfylwhzk .gt_first_summary_row {
+border-top-style: solid;
+border-top-color: #D3D3D3;
+}
+#zwpfylwhzk .gt_first_summary_row.thick {
+border-top-width: 2px;
+}
+#zwpfylwhzk .gt_last_summary_row {
+padding-top: 8px;
+padding-bottom: 8px;
+padding-left: 5px;
+padding-right: 5px;
+border-bottom-style: solid;
+border-bottom-width: 2px;
+border-bottom-color: #D3D3D3;
+}
+#zwpfylwhzk .gt_grand_summary_row {
+color: #333333;
+background-color: #FFFFFF;
+text-transform: inherit;
+padding-top: 8px;
+padding-bottom: 8px;
+padding-left: 5px;
+padding-right: 5px;
+}
+#zwpfylwhzk .gt_first_grand_summary_row {
+padding-top: 8px;
+padding-bottom: 8px;
+padding-left: 5px;
+padding-right: 5px;
+border-top-style: double;
+border-top-width: 6px;
+border-top-color: #D3D3D3;
+}
+#zwpfylwhzk .gt_last_grand_summary_row_top {
+padding-top: 8px;
+padding-bottom: 8px;
+padding-left: 5px;
+padding-right: 5px;
+border-bottom-style: double;
+border-bottom-width: 6px;
+border-bottom-color: #D3D3D3;
+}
+#zwpfylwhzk .gt_striped {
+background-color: rgba(128, 128, 128, 0.05);
+}
+#zwpfylwhzk .gt_table_body {
+border-top-style: solid;
+border-top-width: 2px;
+border-top-color: #D3D3D3;
+border-bottom-style: solid;
+border-bottom-width: 2px;
+border-bottom-color: #D3D3D3;
+}
+#zwpfylwhzk .gt_footnotes {
+color: #333333;
+background-color: #FFFFFF;
+border-bottom-style: none;
+border-bottom-width: 2px;
+border-bottom-color: #D3D3D3;
+border-left-style: none;
+border-left-width: 2px;
+border-left-color: #D3D3D3;
+border-right-style: none;
+border-right-width: 2px;
+border-right-color: #D3D3D3;
+}
+#zwpfylwhzk .gt_footnote {
+margin: 0px;
+font-size: 90%;
+padding-top: 4px;
+padding-bottom: 4px;
+padding-left: 5px;
+padding-right: 5px;
+}
+#zwpfylwhzk .gt_sourcenotes {
+color: #333333;
+background-color: #FFFFFF;
+border-bottom-style: none;
+border-bottom-width: 2px;
+border-bottom-color: #D3D3D3;
+border-left-style: none;
+border-left-width: 2px;
+border-left-color: #D3D3D3;
+border-right-style: none;
+border-right-width: 2px;
+border-right-color: #D3D3D3;
+}
+#zwpfylwhzk .gt_sourcenote {
+font-size: 90%;
+padding-top: 4px;
+padding-bottom: 4px;
+padding-left: 5px;
+padding-right: 5px;
+}
+#zwpfylwhzk .gt_left {
+text-align: left;
+}
+#zwpfylwhzk .gt_center {
+text-align: center;
+}
+#zwpfylwhzk .gt_right {
+text-align: right;
+font-variant-numeric: tabular-nums;
+}
+#zwpfylwhzk .gt_font_normal {
+font-weight: normal;
+}
+#zwpfylwhzk .gt_font_bold {
+font-weight: bold;
+}
+#zwpfylwhzk .gt_font_italic {
+font-style: italic;
+}
+#zwpfylwhzk .gt_super {
+font-size: 65%;
+}
+#zwpfylwhzk .gt_footnote_marks {
+font-size: 75%;
+vertical-align: 0.4em;
+position: initial;
+}
+#zwpfylwhzk .gt_asterisk {
+font-size: 100%;
+vertical-align: 0;
+}
+#zwpfylwhzk .gt_indent_1 {
+text-indent: 5px;
+}
+#zwpfylwhzk .gt_indent_2 {
+text-indent: 10px;
+}
+#zwpfylwhzk .gt_indent_3 {
+text-indent: 15px;
+}
+#zwpfylwhzk .gt_indent_4 {
+text-indent: 20px;
+}
+#zwpfylwhzk .gt_indent_5 {
+text-indent: 25px;
+}
+#zwpfylwhzk .katex-display {
+display: inline-flex !important;
+margin-bottom: 0.75em !important;
+}
+#zwpfylwhzk div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
+height: 0px !important;
+}
+</style>
+<table class="gt_table" data-quarto-disable-processing="false" data-quarto-bootstrap="false">
+  <thead>
+    <tr class="gt_col_headings">
+      <th class="gt_col_heading gt_columns_bottom_border gt_right" rowspan="1" colspan="1" scope="col" id="a(Intercept)">(Intercept)</th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_right" rowspan="1" colspan="1" scope="col" id="education_GDP">education_GDP</th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_right" rowspan="1" colspan="1" scope="col" id="Literacy">Literacy</th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_right" rowspan="1" colspan="1" scope="col" id="money_educ">money_educ</th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_right" rowspan="1" colspan="1" scope="col" id="perc_prot_land">perc_prot_land</th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_right" rowspan="1" colspan="1" scope="col" id="Pop_density">Pop_density</th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_right" rowspan="1" colspan="1" scope="col" id="protected_area">protected_area</th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_right" rowspan="1" colspan="1" scope="col" id="Urbanization">Urbanization</th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_right" rowspan="1" colspan="1" scope="col" id="df">df</th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_right" rowspan="1" colspan="1" scope="col" id="logLik">logLik</th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_right" rowspan="1" colspan="1" scope="col" id="BIC">BIC</th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_right" rowspan="1" colspan="1" scope="col" id="delta">delta</th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_center" rowspan="1" colspan="1" scope="col" id="weight">weight</th>
+    </tr>
+  </thead>
+  <tbody class="gt_table_body">
+    <tr><td headers="(Intercept)" class="gt_row gt_right">-0.7285533</td>
+<td headers="education_GDP" class="gt_row gt_right">-6.661209</td>
+<td headers="Literacy" class="gt_row gt_right">-1.0524132</td>
+<td headers="money_educ" class="gt_row gt_right">NA</td>
+<td headers="perc_prot_land" class="gt_row gt_right">NA</td>
+<td headers="Pop_density" class="gt_row gt_right">NA</td>
+<td headers="protected_area" class="gt_row gt_right">NA</td>
+<td headers="Urbanization" class="gt_row gt_right">NA</td>
+<td headers="df" class="gt_row gt_right">5</td>
+<td headers="logLik" class="gt_row gt_right">-152.9098</td>
+<td headers="BIC" class="gt_row gt_right">330.46</td>
+<td headers="delta" class="gt_row gt_right">0.00</td>
+<td headers="weight" class="gt_row gt_center">0.54</td></tr>
+    <tr><td headers="(Intercept)" class="gt_row gt_right">-0.4679563</td>
+<td headers="education_GDP" class="gt_row gt_right">-7.424563</td>
+<td headers="Literacy" class="gt_row gt_right">-0.9158277</td>
+<td headers="money_educ" class="gt_row gt_right">NA</td>
+<td headers="perc_prot_land" class="gt_row gt_right">-0.1908908</td>
+<td headers="Pop_density" class="gt_row gt_right">NA</td>
+<td headers="protected_area" class="gt_row gt_right">NA</td>
+<td headers="Urbanization" class="gt_row gt_right">NA</td>
+<td headers="df" class="gt_row gt_right">6</td>
+<td headers="logLik" class="gt_row gt_right">-151.0888</td>
+<td headers="BIC" class="gt_row gt_right">331.74</td>
+<td headers="delta" class="gt_row gt_right">1.29</td>
+<td headers="weight" class="gt_row gt_center">0.29</td></tr>
+    <tr><td headers="(Intercept)" class="gt_row gt_right">-0.9122955</td>
+<td headers="education_GDP" class="gt_row gt_right">NA</td>
+<td headers="Literacy" class="gt_row gt_right">-1.2025778</td>
+<td headers="money_educ" class="gt_row gt_right">NA</td>
+<td headers="perc_prot_land" class="gt_row gt_right">NA</td>
+<td headers="Pop_density" class="gt_row gt_right">NA</td>
+<td headers="protected_area" class="gt_row gt_right">NA</td>
+<td headers="Urbanization" class="gt_row gt_right">NA</td>
+<td headers="df" class="gt_row gt_right">4</td>
+<td headers="logLik" class="gt_row gt_right">-157.0628</td>
+<td headers="BIC" class="gt_row gt_right">333.83</td>
+<td headers="delta" class="gt_row gt_right">3.38</td>
+<td headers="weight" class="gt_row gt_center">0.10</td></tr>
+    <tr><td headers="(Intercept)" class="gt_row gt_right">-1.0902493</td>
+<td headers="education_GDP" class="gt_row gt_right">-9.682271</td>
+<td headers="Literacy" class="gt_row gt_right">NA</td>
+<td headers="money_educ" class="gt_row gt_right">NA</td>
+<td headers="perc_prot_land" class="gt_row gt_right">-0.2241060</td>
+<td headers="Pop_density" class="gt_row gt_right">NA</td>
+<td headers="protected_area" class="gt_row gt_right">NA</td>
+<td headers="Urbanization" class="gt_row gt_right">NA</td>
+<td headers="df" class="gt_row gt_right">5</td>
+<td headers="logLik" class="gt_row gt_right">-154.9486</td>
+<td headers="BIC" class="gt_row gt_right">334.53</td>
+<td headers="delta" class="gt_row gt_right">4.08</td>
+<td headers="weight" class="gt_row gt_center">0.07</td></tr>
+  </tbody>
+  
+</table>
+</div>
 <p>Now that we have our models, we see that none of them explained
 &gt;80% of the variance alone (this can be found in the “weight”
 column), we will estimate the importance of each parameter by summing
@@ -904,7 +1101,7 @@ representing it using a barplot:</p>
 ## attr(,&quot;rank&quot;)
 ## function (x) 
 ## do.call(&quot;rank&quot;, list(x))
-## &lt;environment: 0x11f8ed190&gt;
+## &lt;environment: 0x1222da898&gt;
 ## attr(,&quot;call&quot;)
 ## BIC(x)
 ## attr(,&quot;class&quot;)
@@ -973,13 +1170,13 @@ response.</p>
 ## [8] base     
 ## 
 ## other attached packages:
-##  [1] randomForest_4.7-1.2 tree_1.0-45          GGally_2.3.0        
-##  [4] plyr_1.8.9           PairedData_1.1.1     lattice_0.22-7      
-##  [7] mvtnorm_1.3-3        gld_2.6.7            ggpubr_0.6.1        
-## [10] ggplot2_3.5.2        corrplot_0.95        MuMIn_1.48.11       
-## [13] pbkrtest_0.5.5       lmerTest_3.1-3       MASS_7.3-65         
-## [16] lme4_1.1-37          Matrix_1.7-3         mgcv_1.9-3          
-## [19] nlme_3.1-168        
+##  [1] gt_1.1.0             randomForest_4.7-1.2 tree_1.0-45         
+##  [4] GGally_2.3.0         plyr_1.8.9           PairedData_1.1.1    
+##  [7] lattice_0.22-7       mvtnorm_1.3-3        gld_2.6.7           
+## [10] ggpubr_0.6.1         ggplot2_3.5.2        corrplot_0.95       
+## [13] MuMIn_1.48.11        pbkrtest_0.5.5       lmerTest_3.1-3      
+## [16] MASS_7.3-65          lme4_1.1-37          Matrix_1.7-3        
+## [19] mgcv_1.9-3           nlme_3.1-168        
 ## 
 ## loaded via a namespace (and not attached):
 ##  [1] gtable_0.3.6        xfun_0.53           bslib_0.9.0        
@@ -1001,8 +1198,9 @@ response.</p>
 ## [49] withr_3.0.2         scales_1.4.0        backports_1.5.0    
 ## [52] rmarkdown_2.29      ggsignif_0.6.4      evaluate_1.0.4     
 ## [55] knitr_1.50          rbibutils_2.3       rlang_1.1.6        
-## [58] Rcpp_1.1.0          glue_1.8.0          rstudioapi_0.17.1  
-## [61] minqa_1.2.8         jsonlite_2.0.0      R6_2.6.1</code></pre>
+## [58] Rcpp_1.1.0          glue_1.8.0          xml2_1.4.0         
+## [61] rstudioapi_0.17.1   minqa_1.2.8         jsonlite_2.0.0     
+## [64] R6_2.6.1            fs_1.6.6</code></pre>
 </div>
 
 <!DOCTYPE html>

@@ -41,6 +41,7 @@ library(ggplot2)
 library(GGally)
 library(tree)
 library(randomForest)
+library(gt)
 
 data<-read.table("data/10_data_threat.txt", 
                      header=TRUE, 
@@ -121,9 +122,17 @@ We will use the `dredge` function from the `MuMIn` library to produce all possib
 
 ```{r mamm2}
 mamm3<-dredge(thr_mamm_2017, rank = BIC)
-subset(mamm3, delta <5)
-mamm3
+mamm3s<-subset(mamm3, delta <5)
+#mamm3
 ```
+
+```{r gt}
+mamm3s %>%
+  as.data.frame() %>%
+  gt() %>%
+  fmt_number(columns = c(BIC, delta, weight), decimals = 2)
+```
+
 
 Now that we have our models, we see that none of them explained >80% of the variance alone (this can be found in the "weight" column), we will estimate the importance of each parameter by summing the weights of all models including a given variable and then representing it using a barplot:
 
