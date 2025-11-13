@@ -107,9 +107,11 @@ Lower AIC values indicate better models!
 
 Other common variations are:
 
-- AICc = AIC corrected for small sample sizes (N ≤ 20)
+- AICc = AIC corrected for small sample sizes (N ≤ 20).
 
-- BIC = Bayesian Information Criterion, 
+- BIC = Bayesian Information Criterion, penalizes model complexity more severely.
+
+- qAIC = Quasi-AIC applies for models with overdispersion. Particularly useful when working with generalized linear models (GLMs) where variance assumptions are violated—very common in ecological datasets with count or binomial data.
 
 
 ### Model selection
