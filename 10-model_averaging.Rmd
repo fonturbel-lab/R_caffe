@@ -90,7 +90,14 @@ thr_mamm_2017<-lmer(tmamm17~Urbanization+Pop_density+Literacy+education_GDP+mone
 summary(thr_mamm_2017, ddf="Kenward-Roger")
 ```
 
-So, we have several variables in the models, some have significant effects but other don't. So, which variables are the most relevant in this case? We will use the `dredge` function from the `MuMIn` library to produce all possible models (yes, they are way too many to do this by hand!). There are different options to rank model performance, the most common is the Akaike Information Criterion (AIC) that have lower values when models perform better. In this case we will use the Bayesian Information Criterion (BIC), which works in a similar way. We will consider only those models with a delta BIC < 5 (models with larger differences explain very little of the variance and can be discarded).
+So, we have several variables in the models, some have significant effects but other don't. So, which variables are the most relevant in this case?
+
+### The Akaike information criterion (AIC) and its relatives
+
+
+### Model selection
+
+We will use the `dredge` function from the `MuMIn` library to produce all possible models (yes, they are way too many to do this by hand!). There are different options to rank model performance, the most common is the Akaike Information Criterion (AIC) that have lower values when models perform better. In this case we will use the Bayesian Information Criterion (BIC), which works in a similar way. We will consider only those models with a delta BIC < 5 (models with larger differences explain very little of the variance and can be discarded).
 
 
 ```{r mamm2}
