@@ -1,0 +1,800 @@
+---
+title: "12 - Generalized Estimation Equations and Special Distributions"
+author: "Francisco E. Fonturbel"
+date: "31/October/2025"
+output: 
+  html_document:
+    includes:
+        after_body: footer.html
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	echo = TRUE,
+	message = FALSE,
+	warning = FALSE
+)
+```
+
+```{r packages, include=FALSE}
+library(MASS)         # For glm.nb
+library(lme4)         # For mixed models comparison
+library(geepack)      # For GEE models
+library(pscl)         # For zero-inflated models
+library(ggplot2)      # For visualization
+library(dplyr)        # For data manipulation
+library(tidyr)        # For data reshaping
+library(DHARMa)       # For residual diagnostics
+library(AER)          # For dispersion tests
+library(performance)  # For model comparison
+```
+
+
+# Relaxing Model Assumptions Even Further
+
+Generalized Linear Models relax some assumptions (e.g., a normal distribution) and allow us to use count data or presence/absence data instead. In this opportunity, we will go beyond and relax other assumptions to properly analyze real life data.
+
+## The Challenge with Real-World Data
+
+Real ecological and biological data often violate standard GLM assumptions in two major ways:
+
+1. **Excess zeros:** Many datasets have more zeros than expected by standard distributions
+2. **Correlated observations:** Repeated measures or clustered data violate independence
+
+### When Standard GLMs Fail
+
+```{r conceptual_viz, fig.width=12, fig.height=4}
+set.seed(123)
+par(mfrow=c(1,3))
+
+# 1. Normal Poisson
+x_pois <- rpois(1000, lambda=3)
+hist(x_pois, main="Standard Poisson Distribution", 
+     xlab="Count", col="lightblue", breaks=20)
+
+# 2. Zero-inflated Poisson
+x_zip <- c(rep(0, 600), rpois(400, lambda=3))
+hist(x_zip, main="Zero-Inflated Poisson\n(60% extra zeros)", 
+     xlab="Count", col="salmon", breaks=20)
+
+# 3. Overdispersed data
+x_nb <- rnegbin(1000, mu=3, theta=1)
+hist(x_nb, main="Overdispersed (Negative Binomial)", 
+     xlab="Count", col="lightgreen", breaks=20)
+
+par(mfrow=c(1,1))
+```
+
+**In this lesson we will:**
+1. Compare regular GLMs with their zero-inflated alternatives
+2. Use Generalized Estimation Equations (GEE) that relax the independence assumption
+3. Learn how to diagnose and handle these data challenges
+
+## Zero-Inflated Distributions
+
+These are a special version of Poisson and negative binomial distributions in which we have an excess of zeros creating a deviation towards zero in the observed distribution. In many biological systems we face this problem, as capture/record events are rare. For example, when we set traps for capturing a given animal, in most cases the trapping success is lower than 20%. Thus, we will have a lot of zeros in our data, and therefore the conclusions from our GLM models may not be entirely reliable.
+
+### Understanding Zero-Inflation
+
+**Why do we get excess zeros?**
+- **Structural zeros:** The event cannot occur (e.g., infertile individuals cannot reproduce)
+- **Sampling zeros:** The event could occur but didn't during observation period
+- **Detection zeros:** The event occurred but wasn't detected
+
+**Zero-inflated models account for two processes:**
+1. **Zero-inflation process:** Binary process determining if zero or non-zero
+2. **Count process:** Standard count distribution (Poisson or Negative Binomial) for non-zeros
+
+### Example Data: Biochemist Publications
+
+In the past session we introduced different data distributions, but now we'll see zero-inflated models in action. To illustrate this we will use the _bioChemists_ dataset included in the `pscl` package, which contains publication counts for PhD biochemists.
+
+```{r data}
+data("bioChemists", package = "pscl")
+
+# Examine data structure
+str(bioChemists)
+head(bioChemists, 10)
+
+# Summary statistics
+summary(bioChemists)
+```
+
+### Exploratory Data Analysis
+
+```{r eda_biochem, fig.width=12, fig.height=8}
+# Check for zero-inflation
+n_zeros <- sum(bioChemists$art == 0)
+n_total <- nrow(bioChemists)
+prop_zeros <- n_zeros / n_total
+
+print(paste("Number of zeros:", n_zeros, "out of", n_total))
+print(paste("Proportion of zeros:", round(prop_zeros, 3)))
+
+# What would Poisson predict?
+mean_art <- mean(bioChemists$art)
+expected_zeros_poisson <- dpois(0, lambda = mean_art) * n_total
+print(paste("Expected zeros under Poisson:", round(expected_zeros_poisson, 1)))
+print(paste("Observed zeros:", n_zeros))
+print(paste("Excess zeros:", n_zeros - round(expected_zeros_poisson, 1)))
+
+# Visualizations
+par(mfrow=c(2,2))
+
+# 1. Distribution of publications
+hist(bioChemists$art, breaks=30, col="steelblue",
+     main="Distribution of Article Counts",
+     xlab="Number of Articles", ylab="Frequency")
+abline(v=mean_art, col="red", lwd=2, lty=2)
+text(mean_art + 1, max(table(bioChemists$art)) * 0.9, 
+     paste("Mean =", round(mean_art, 2)), col="red")
+
+# 2. Proportion of zeros
+barplot(c(prop_zeros, 1-prop_zeros), 
+        names.arg=c("Zero", "Non-zero"),
+        col=c("coral", "lightgreen"),
+        main="Proportion of Zeros vs Non-zeros",
+        ylab="Proportion")
+
+# 3. Publications by gender
+boxplot(art ~ fem, data=bioChemists, 
+        col=c("lightblue", "pink"),
+        names=c("Men", "Women"),
+        main="Publications by Gender",
+        ylab="Number of Articles")
+
+# 4. Publications by marital status
+boxplot(art ~ mar, data=bioChemists,
+        col=c("wheat", "lightgreen"),
+        names=c("Single", "Married"),
+        main="Publications by Marital Status",
+        ylab="Number of Articles")
+
+par(mfrow=c(1,1))
+
+# Check variance vs mean
+print(paste("Mean:", round(mean(bioChemists$art), 2)))
+print(paste("Variance:", round(var(bioChemists$art), 2)))
+print(paste("Variance/Mean ratio:", round(var(bioChemists$art)/mean(bioChemists$art), 2)))
+print("Ratio > 1 suggests overdispersion")
+```
+
+### Model 1: Standard Poisson GLM
+
+Now, let's make a regular GLM with this dataset:
+
+```{r m1}
+model1 <- glm(art ~ ., data = bioChemists, family = poisson)
+summary(model1)
+
+# Check for overdispersion
+library(AER)
+dispersion_test1 <- dispersiontest(model1)
+print(dispersion_test1)
+
+# Key diagnostics
+print(paste("Residual deviance:", round(model1$deviance, 2)))
+print(paste("Residual df:", model1$df.residual))
+print(paste("Deviance/df ratio:", round(model1$deviance/model1$df.residual, 2)))
+if(dispersion_test1$p.value < 0.05) {
+  print("✗ Significant overdispersion detected - standard Poisson may not be appropriate")
+}
+```
+
+Wow, we have a lot of significant terms in those results. However, the overdispersion test suggests this model may not be appropriate.
+
+### Model 2: Zero-Inflated Poisson (ZIP)
+
+What about running this same dataset with a zero-inflated Poisson distribution instead:
+
+```{r m1zi}
+# The formula art ~ . | . means:
+# Left side (art ~ .): Count model - predicts non-zero counts
+# Right side (| .): Zero-inflation model - predicts excess zeros
+model1zi <- zeroinfl(art ~ . | ., data = bioChemists, dist = "poisson")
+summary(model1zi)
+
+# Model interpretation
+print("Count model coefficients: Effect on the count when non-zero")
+print("Zero-inflation coefficients: Effect on probability of being a structural zero")
+```
+
+As we can see, some of the results change. The zero-inflated model separates two processes: what determines if someone publishes at all (zero-inflation part) versus how many articles they publish if they do publish (count part).
+
+### Model 3: Negative Binomial GLM
+
+Let's try the same models but using a negative binomial distribution instead of a Poisson distribution (to account for overdispersion):
+
+```{r m2}
+model2 <- glm.nb(art ~ ., data = bioChemists)
+summary(model2)
+
+print(paste("Theta (dispersion parameter):", round(model2$theta, 3)))
+print("Larger theta = less overdispersion, closer to Poisson")
+```
+
+OK, some terms are significant. The negative binomial accounts for overdispersion through the theta parameter.
+
+### Model 4: Zero-Inflated Negative Binomial (ZINB)
+
+So, how would the zero-inflated version of this model look like?
+
+```{r m2zi}
+model2zi <- zeroinfl(art ~ . | ., data = bioChemists, dist = "negbin")
+summary(model2zi)
+
+print(paste("Theta:", round(model2zi$theta, 3)))
+```
+
+The results change and we have different significant factors in this case. Thus, using the correct distribution for our data is crucial to obtain reliable results.
+
+### Comparing All Four Models
+
+```{r model_comparison, fig.width=10, fig.height=6}
+# AIC comparison
+aic_values <- c(
+  "Poisson" = AIC(model1),
+  "ZIP" = AIC(model1zi),
+  "Negative Binomial" = AIC(model2),
+  "ZINB" = AIC(model2zi)
+)
+
+print("AIC values (lower is better):")
+print(sort(aic_values))
+
+#Comparsing ZI models:
+print("Model Comparison: ZIP vs Poisson")
+print(paste("Poisson AIC:", round(AIC(model1), 2)))
+print(paste("ZIP AIC:", round(AIC(model1zi), 2)))
+print(paste("AIC difference:", round(AIC(model1) - AIC(model1zi), 2)))
+if(AIC(model1zi) < AIC(model1)) {
+  print("→ Zero-inflated model is preferred (lower AIC)")
+} else {
+  print("→ Standard Poisson model is preferred (lower AIC)")
+}
+
+print("")
+print("Model Comparison: ZINB vs Negative Binomial")
+print(paste("Negative Binomial AIC:", round(AIC(model2), 2)))
+print(paste("ZINB AIC:", round(AIC(model2zi), 2)))
+print(paste("AIC difference:", round(AIC(model2) - AIC(model2zi), 2)))
+if(AIC(model2zi) < AIC(model2)) {
+  print("→ Zero-inflated model is preferred (lower AIC)")
+} else {
+  print("→ Standard Negative Binomial model is preferred (lower AIC)")
+}
+
+# Visualize model fit
+par(mfrow=c(2,2))
+
+# Observed vs predicted for each model
+obs_freq <- table(factor(bioChemists$art, levels=0:max(bioChemists$art)))
+
+# Model 1: Poisson
+max_count <- max(bioChemists$art)
+pred1 <- numeric(max_count + 1)
+for(i in 0:max_count) {
+  pred1[i+1] <- sum(dpois(i, fitted(model1)))
+}
+plot(0:max(bioChemists$art), obs_freq, type="h", lwd=3, col="black",
+     main="Poisson GLM", xlab="Number of Articles", ylab="Frequency")
+lines(0:max(bioChemists$art), pred1, col="red", lwd=2)
+legend("topright", c("Observed", "Predicted"), col=c("black", "red"), lwd=2)
+
+# Model 2: Negative Binomial
+pred2 <- numeric(max_count + 1)
+for(i in 0:max_count) {
+  pred2[i+1] <- sum(dnbinom(i, mu=fitted(model2), size=model2$theta))
+}
+plot(0:max(bioChemists$art), obs_freq, type="h", lwd=3, col="black",
+     main="Negative Binomial GLM", xlab="Number of Articles", ylab="Frequency")
+lines(0:max(bioChemists$art), pred2, col="blue", lwd=2)
+legend("topright", c("Observed", "Predicted"), col=c("black", "blue"), lwd=2)
+
+# Model 3: ZIP
+pred1zi <- predict(model1zi, type="prob")[,1:(max(bioChemists$art)+1)]
+pred1zi_freq <- colSums(pred1zi)
+plot(0:max(bioChemists$art), obs_freq, type="h", lwd=3, col="black",
+     main="Zero-Inflated Poisson", xlab="Number of Articles", ylab="Frequency")
+lines(0:max(bioChemists$art), pred1zi_freq, col="orange", lwd=2)
+legend("topright", c("Observed", "Predicted"), col=c("black", "orange"), lwd=2)
+
+# Model 4: ZINB
+pred2zi <- predict(model2zi, type="prob")[,1:(max(bioChemists$art)+1)]
+pred2zi_freq <- colSums(pred2zi)
+plot(0:max(bioChemists$art), obs_freq, type="h", lwd=3, col="black",
+     main="Zero-Inflated Negative Binomial", xlab="Number of Articles", ylab="Frequency")
+lines(0:max(bioChemists$art), pred2zi_freq, col="purple", lwd=2)
+legend("topright", c("Observed", "Predicted"), col=c("black", "purple"), lwd=2)
+
+par(mfrow=c(1,1))
+```
+
+### Interpretation and Model Selection
+
+```{r interpretation}
+# Summary table
+model_summary <- data.frame(
+  Model = c("Poisson", "ZIP", "Neg Binomial", "ZINB"),
+  AIC = round(aic_values, 1),
+  Parameters = c(
+    length(coef(model1)),
+    length(coef(model1zi)),
+    length(coef(model2)) + 1,  # +1 for theta
+    length(coef(model2zi)) + 1
+  )
+)
+model_summary$Delta_AIC <- model_summary$AIC - min(model_summary$AIC)
+model_summary <- model_summary[order(model_summary$AIC),]
+
+print("Model Selection Summary:")
+print(model_summary)
+
+print("")
+print("Model Selection Guidelines:")
+print("- Delta AIC < 2: Models are essentially equivalent")
+print("- Delta AIC 2-7: Considerable support for best model")
+print("- Delta AIC > 10: Best model is strongly preferred")
+```
+
+## Generalized Estimation Equations
+
+There are many approaches to deal with non-normal data, but when our data has **correlated observations** (e.g., repeated measures, clustered data) we face additional challenges, as independence is one of the main assumptions of most statistical tests. Fortunately, there is an option to deal with correlated data: **Generalized Estimation Equations (GEE for short)**. 
+
+### Understanding GEE
+
+**When do we need GEE?**
+- Repeated measurements on the same subjects over time
+- Clustered/grouped observations (e.g., multiple observations per site)
+- Spatial or temporal correlation in the data
+
+**How GEE differs from GLM:**
+- **GLM:** Assumes all observations are independent
+- **GEE:** Accounts for correlation within clusters/subjects
+- **Mixed Models:** Similar purpose but different approach (random effects vs correlation structure)
+
+**Key concept:** GEE provides **population-averaged** estimates rather than subject-specific estimates (like mixed models).
+
+### GEE Correlation Structures
+
+GEE models require specifying a **working correlation structure**:
+
+1. **Independence:** No correlation (like standard GLM)
+2. **Exchangeable:** All observations within a cluster equally correlated
+3. **AR(1) - Autoregressive:** Correlation decreases with time/distance
+4. **Unstructured:** Estimate all correlations (requires more data)
+
+```{r correlation_viz, fig.width=10, fig.height=3}
+# Visualize correlation structures
+par(mfrow=c(1,4))
+
+# Independence
+m_ind <- matrix(c(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1), 4, 4)
+image(1:4, 1:4, m_ind, main="Independence", xlab="", ylab="", col=c("white", "steelblue"))
+
+# Exchangeable
+m_exch <- matrix(c(1,0.5,0.5,0.5, 0.5,1,0.5,0.5, 0.5,0.5,1,0.5, 0.5,0.5,0.5,1), 4, 4)
+image(1:4, 1:4, m_exch, main="Exchangeable", xlab="", ylab="", col=heat.colors(20))
+
+# AR(1)
+m_ar1 <- matrix(c(1,0.7,0.49,0.34, 0.7,1,0.7,0.49, 0.49,0.7,1,0.7, 0.34,0.49,0.7,1), 4, 4)
+image(1:4, 1:4, m_ar1, main="AR(1)", xlab="", ylab="", col=heat.colors(20))
+
+# Unstructured (example)
+m_unstr <- matrix(c(1,0.6,0.4,0.3, 0.6,1,0.7,0.5, 0.4,0.7,1,0.6, 0.3,0.5,0.6,1), 4, 4)
+image(1:4, 1:4, m_unstr, main="Unstructured", xlab="", ylab="", col=heat.colors(20))
+
+par(mfrow=c(1,1))
+```
+
+### Example Data: Pig Weight Gain
+
+To illustrate this point we will use the _dietox_ example data file from the `geepack` package. This dataset tracks pig weight over time under different copper supplementation treatments.
+
+```{r gee_data}
+data(dietox)
+
+# Convert Cu to factor
+dietox$Cu <- as.factor(dietox$Cu)
+
+# Examine structure
+str(dietox)
+head(dietox, 15)
+
+# Summary
+print("Number of pigs:")
+length(unique(dietox$Pig))
+
+print("Observations per pig:")
+table(table(dietox$Pig))
+
+print("Time points:")
+sort(unique(dietox$Time))
+```
+
+### Exploratory Analysis
+
+```{r gee_eda, fig.width=12, fig.height=5}
+# Visualize individual trajectories
+ggplot(dietox, aes(x=Time, y=Weight, group=Pig, color=Cu)) +
+  geom_line(alpha=0.3) +
+  geom_smooth(aes(group=Cu), method="loess", se=TRUE, size=1.5) +
+  facet_wrap(~Cu, labeller=label_both) +
+  labs(title="Pig Weight Trajectories by Copper Treatment",
+       x="Time (weeks)", y="Weight (kg)") +
+  theme_minimal() +
+  theme(legend.position="bottom")
+```
+
+Notice how observations from the same pig are clearly correlated - pigs that start heavy tend to stay heavy. This violates the independence assumption of standard GLM.
+
+### The Problem: What Happens When We Ignore Correlation?
+
+Before fitting GEE models, let's understand **why** ignoring correlation is problematic. When observations are correlated, standard GLM underestimates the standard errors, leading to inflated Type I error rates (false positives).
+
+```{r glm_problem, fig.width=10, fig.height=5}
+# Define model formula
+mf <- formula(Weight ~ Cu * (Time + I(Time^2) + I(Time^3)))
+
+# Fit standard GLM (ignoring correlation)
+glm_naive <- glm(mf, data=dietox, family=gaussian)
+
+# Fit GEE with proper correlation structure
+gee_ar1 <- geeglm(mf, data=dietox, id=Pig, family=gaussian, corstr="ar1")
+
+# Compare standard errors
+se_comparison <- data.frame(
+  Parameter = names(coef(glm_naive)),
+  Estimate = round(coef(glm_naive), 4),
+  SE_GLM = round(summary(glm_naive)$coefficients[,"Std. Error"], 4),
+  SE_GEE = round(summary(gee_ar1)$coefficients[,"Std.err"], 4)
+)
+se_comparison$SE_Ratio <- round(se_comparison$SE_GEE / se_comparison$SE_GLM, 2)
+
+print("=== Standard Error Comparison: GLM vs GEE ===")
+print(se_comparison)
+
+# Calculate average SE inflation
+avg_ratio <- mean(se_comparison$SE_Ratio)
+print(paste("\nAverage SE ratio (GEE/GLM):", round(avg_ratio, 2)))
+print("Values > 1 indicate GLM underestimates uncertainty")
+```
+
+**Key insight:** The GEE standard errors are typically larger than GLM standard errors because GEE properly accounts for the correlation structure. When we ignore correlation, we're essentially treating each observation as independent information, which artificially inflates our confidence in the estimates.
+
+### Comparing Inference: GLM vs GEE
+
+Let's see how this affects our conclusions:
+
+```{r inference_comparison, fig.width=12, fig.height=5}
+# Extract p-values from both models
+pval_glm <- summary(glm_naive)$coefficients[,"Pr(>|t|)"]
+pval_gee <- summary(gee_ar1)$coefficients[,"Pr(>|W|)"]
+
+inference_comparison <- data.frame(
+  Parameter = names(coef(glm_naive)),
+  Estimate = round(coef(glm_naive), 3),
+  pval_GLM = format.pval(pval_glm, digits=3),
+  pval_GEE = format.pval(pval_gee, digits=3),
+  Signif_GLM = ifelse(pval_glm < 0.05, "*", ""),
+  Signif_GEE = ifelse(pval_gee < 0.05, "*", "")
+)
+
+print("=== Inference Comparison: GLM vs GEE ===")
+print(inference_comparison)
+
+# Count differences in significance
+n_signif_glm <- sum(pval_glm < 0.05)
+n_signif_gee <- sum(pval_gee < 0.05)
+
+print(paste("\nSignificant terms (α = 0.05):"))
+print(paste("  GLM:", n_signif_glm, "terms"))
+print(paste("  GEE:", n_signif_gee, "terms"))
+
+if(n_signif_glm > n_signif_gee) {
+  print("\n⚠ GLM finds more 'significant' effects - likely inflated Type I error!")
+}
+
+# Visualize SE comparison
+par(mfrow=c(1,2))
+
+# Bar plot of SE ratios
+barplot(se_comparison$SE_Ratio, names.arg=1:nrow(se_comparison),
+        col=ifelse(se_comparison$SE_Ratio > 1, "coral", "lightgreen"),
+        main="SE Ratio (GEE/GLM) by Parameter",
+        xlab="Parameter Index", ylab="SE Ratio",
+        ylim=c(0, max(se_comparison$SE_Ratio) * 1.2))
+abline(h=1, lty=2, col="red", lwd=2)
+text(nrow(se_comparison)/2, max(se_comparison$SE_Ratio) * 1.1, 
+     paste("Mean ratio:", round(avg_ratio, 2)), col="darkred")
+
+# Scatter plot comparing SEs
+plot(se_comparison$SE_GLM, se_comparison$SE_GEE,
+     pch=19, col="steelblue", cex=1.5,
+     main="Standard Errors: GEE vs GLM",
+     xlab="GLM Standard Error", ylab="GEE Standard Error")
+abline(0, 1, lty=2, col="red", lwd=2)
+text(max(se_comparison$SE_GLM)*0.7, max(se_comparison$SE_GEE)*0.3,
+     "Points above line:\nGEE has larger SE\n(more conservative)", col="darkred")
+
+par(mfrow=c(1,1))
+```
+
+### Fitting GEE Models
+
+Now that we understand the problem, let's properly fit GEE models with different correlation structures.
+
+```{r geemod}
+# Fit GEE with AR(1) correlation structure (appropriate for time series)
+gee1 <- geeglm(mf, data=dietox, id=Pig, family=gaussian, corstr="ar1")
+
+summary(gee1)
+
+print("Estimated correlation parameter (alpha):")
+print(round(gee1$geese$alpha, 3))
+print("This represents the correlation between adjacent time points")
+```
+
+As you can see, GEE models operate in a similar way to GLM models and produce similar outputs, but with proper accounting for the correlation structure.
+
+### Comparing Different Correlation Structures
+
+```{r gee_corstr, fig.width=10, fig.height=5}
+# Fit models with different correlation structures
+gee_ind <- geeglm(mf, data=dietox, id=Pig, family=gaussian, corstr="independence")
+gee_exch <- geeglm(mf, data=dietox, id=Pig, family=gaussian, corstr="exchangeable")
+gee_ar1 <- geeglm(mf, data=dietox, id=Pig, family=gaussian, corstr="ar1")
+
+# Compare using QIC (quasi-likelihood information criterion)
+qic_values <- c(
+  "Independence" = QIC(gee_ind)[1],
+  "Exchangeable" = QIC(gee_exch)[1],
+  "AR(1)" = QIC(gee_ar1)[1]
+)
+
+print("QIC values (lower is better):")
+print(round(qic_values, 1))
+
+# Best model
+best_corstr <- names(which.min(qic_values))
+print(paste("\nBest correlation structure:", best_corstr))
+
+barplot(qic_values, col="steelblue", 
+        main="Model Comparison by QIC",
+        ylab="QIC Value")
+
+# Extract correlation parameters
+print("\nEstimated correlation parameters:")
+print(paste("Exchangeable alpha:", round(gee_exch$geese$alpha, 3)))
+print(paste("AR(1) alpha:", round(gee_ar1$geese$alpha, 3)))
+```
+
+### Comprehensive Model Comparison: GLM vs GEE vs Mixed Models
+
+```{r comprehensive_comparison, fig.width=12, fig.height=6}
+# Standard GLM (ignoring correlation)
+glm_model <- glm(mf, data=dietox, family=gaussian)
+
+# GEE with best correlation structure
+gee_model <- gee_ar1
+
+# Mixed model with random intercept
+lmer_model <- lmer(Weight ~ Cu * (Time + I(Time^2) + I(Time^3)) + (1|Pig), 
+                   data=dietox)
+
+# Create comprehensive comparison table
+comparison_df <- data.frame(
+  Parameter = names(coef(gee_model)),
+  
+  # Estimates (should be similar)
+  Est_GLM = round(coef(glm_model), 3),
+  Est_GEE = round(coef(gee_model), 3),
+  Est_Mixed = round(fixef(lmer_model), 3),
+  
+  # Standard Errors (key difference!)
+  SE_GLM = round(summary(glm_model)$coefficients[,"Std. Error"], 4),
+  SE_GEE = round(summary(gee_model)$coefficients[,"Std.err"], 4),
+  SE_Mixed = round(sqrt(diag(vcov(lmer_model))), 4)
+)
+
+print("=== Complete Model Comparison ===")
+print(comparison_df)
+
+# Summary statistics
+print("\n=== Summary ===")
+print(paste("Mean SE ratio (GEE/GLM):", 
+            round(mean(comparison_df$SE_GEE / comparison_df$SE_GLM), 2)))
+print(paste("Mean SE ratio (Mixed/GLM):", 
+            round(mean(comparison_df$SE_Mixed / comparison_df$SE_GLM), 2)))
+
+# Visualize the comparison
+par(mfrow=c(1,2))
+
+# Compare estimates (should be similar)
+plot(comparison_df$Est_GLM, comparison_df$Est_GEE, 
+     pch=19, col="steelblue", cex=1.5,
+     main="Coefficient Estimates\n(Should be similar)",
+     xlab="GLM Estimates", ylab="GEE Estimates")
+abline(0, 1, lty=2, col="red", lwd=2)
+
+# Compare SEs (GEE should be larger)
+plot(comparison_df$SE_GLM, comparison_df$SE_GEE, 
+     pch=19, col="coral", cex=1.5,
+     main="Standard Errors\n(GEE should be larger)",
+     xlab="GLM Standard Errors", ylab="GEE Standard Errors")
+abline(0, 1, lty=2, col="red", lwd=2)
+legend("topleft", "1:1 line", lty=2, col="red", lwd=2)
+
+par(mfrow=c(1,1))
+```
+
+### Key Differences: When to Use Each Approach
+
+```{r method_comparison}
+cat("
+=== GLM vs GEE vs Mixed Models: When to Use Each ===
+
+┌─────────────────┬──────────────────────────────────────────────────────┐
+│ Method          │ Use when...                                          │
+├─────────────────┼──────────────────────────────────────────────────────┤
+│ Standard GLM    │ • Observations are truly independent                 │
+│                 │ • No clustering or repeated measures                 │
+│                 │ • Simple cross-sectional studies                     │
+├─────────────────┼──────────────────────────────────────────────────────┤
+│ GEE             │ • Correlated observations (repeated measures)        │
+│                 │ • Interest in population-averaged effects            │
+│                 │ • Robust to correlation structure misspecification   │
+│                 │ • Focus on marginal (average) effects                │
+├─────────────────┼──────────────────────────────────────────────────────┤
+│ Mixed Models    │ • Interest in subject-specific effects               │
+│                 │ • Want to estimate between-subject variance          │
+│                 │ • Need predictions for individual subjects           │
+│                 │ • Unbalanced data or missing observations            │
+└─────────────────┴──────────────────────────────────────────────────────┘
+")
+```
+
+### Visualizing GEE Results
+
+```{r gee_viz, fig.width=12, fig.height=5}
+# Create prediction data
+pred_data <- expand.grid(
+  Cu = levels(dietox$Cu),
+  Time = seq(min(dietox$Time), max(dietox$Time), length.out=50)
+)
+
+# Get predictions from GEE model
+pred_data$Weight <- predict(gee_ar1, newdata=pred_data, type="response")
+
+# Plot predictions with observed data
+ggplot() +
+  geom_point(data=dietox, aes(x=Time, y=Weight, color=Cu), alpha=0.2) +
+  geom_line(data=pred_data, aes(x=Time, y=Weight, color=Cu), size=1.5) +
+  facet_wrap(~Cu, labeller=label_both) +
+  labs(title="GEE Model Predictions vs Observed Data",
+       subtitle="Polynomial growth curves with AR(1) correlation structure",
+       x="Time (weeks)", y="Weight (kg)") +
+  theme_minimal() +
+  theme(legend.position="bottom")
+```
+
+### Quick Diagnostic Check
+
+```{r gee_diagnostics, fig.width=10, fig.height=4}
+# Residuals
+residuals_gee <- residuals(gee_ar1, type="pearson")
+
+par(mfrow=c(1,2))
+
+# Residuals vs fitted
+plot(fitted(gee_ar1), residuals_gee,
+     xlab="Fitted Values", ylab="Pearson Residuals",
+     main="Residuals vs Fitted", pch=16, col=rgb(0,0,1,0.3))
+abline(h=0, col="red", lty=2)
+lines(lowess(fitted(gee_ar1), residuals_gee), col="red", lwd=2)
+
+# Q-Q plot
+qqnorm(residuals_gee, main="Normal Q-Q Plot", pch=16, col=rgb(0,0,1,0.3))
+qqline(residuals_gee, col="red")
+
+par(mfrow=c(1,1))
+```
+
+## When to Use Each Approach
+
+### Decision Tree for Count Data
+
+```{r decision_tree, echo=FALSE}
+cat("
+DECISION TREE FOR COUNT DATA ANALYSIS
+======================================
+
+1. Do you have COUNT data? (0, 1, 2, 3, ...)
+   YES → Continue
+   NO → Use appropriate GLM family (binomial, gamma, etc.)
+
+2. Are observations INDEPENDENT?
+   NO (repeated measures, clustered) → Use GEE or Mixed Models
+   YES → Continue
+
+3. Is there OVERDISPERSION? (Variance >> Mean)
+   NO → Try Poisson GLM
+   YES → Continue
+
+4. Are there EXCESS ZEROS?
+   NO → Use Negative Binomial GLM
+   YES → Continue
+
+5. Use ZERO-INFLATED models:
+   - If mild overdispersion → Zero-Inflated Poisson (ZIP)
+   - If strong overdispersion → Zero-Inflated Negative Binomial (ZINB)
+
+For correlated data with excess zeros:
+→ Consider zero-inflated mixed models (not covered here)
+")
+```
+
+### Summary Table
+
+```{r summary_table, echo=FALSE}
+comparison_table <- data.frame(
+  Method = c("Poisson GLM", "Negative Binomial", "ZIP", "ZINB", "GEE", "Mixed Models"),
+  `Use When` = c(
+    "Count data, no overdispersion, independent obs",
+    "Count data, overdispersion, independent obs",
+    "Excess zeros, mild overdispersion, independent",
+    "Excess zeros, strong overdispersion, independent",
+    "Correlated observations, population-level inference",
+    "Correlated observations, subject-level inference"
+  ),
+  Assumption = c(
+    "Independence, variance=mean",
+    "Independence, variance>mean",
+    "Independence, two processes",
+    "Independence, two processes + overdispersion",
+    "Specified correlation structure",
+    "Random effects structure"
+  ),
+  stringsAsFactors = FALSE
+)
+
+print("METHOD SELECTION GUIDE:")
+print(comparison_table)
+```
+
+## Final thoughts
+
+Relaxing other assumptions allows us to properly analyze other kinds of data. On the one hand, **zero-inflated models** allow us to fit Poisson and negative binomial GLMs when we have an excess of zeros in our dataset, correcting the estimates and P-values by modeling two separate processes: one determining whether a zero occurs, and another determining the count when non-zero. On the other hand, **GEE** works in a similar way to GLMs but is able to operate with correlated observations (such as repeated measures or clustered data), which represent a major assumption violation in standard linear models.
+
+### Key Takeaways:
+
+**Zero-Inflated Models:**
+- Essential when you have more zeros than expected by standard distributions
+- Model two processes: zero-inflation and count generation
+- Choose between ZIP and ZINB based on overdispersion
+
+**Generalized Estimation Equations:**
+- Appropriate for correlated/clustered data
+- Provide population-averaged (marginal) estimates
+- Require specification of correlation structure
+- More robust to misspecification than mixed models
+- Use QIC for model selection
+
+**The Critical Point about GEE:**
+- GLM underestimates standard errors when observations are correlated
+- This leads to inflated Type I error rates (too many false positives)
+- GEE provides correct standard errors by modeling the correlation structure
+- Coefficient estimates are similar, but inference can differ substantially
+
+**Best Practices:**
+1. Always visualize your data first
+2. Check for overdispersion using formal tests
+3. Compare multiple models using AIC/QIC
+4. Choose correlation structure based on data structure
+5. Compare GLM vs GEE standard errors to assess impact of correlation
+
+## Session
+
+```{r session, echo=TRUE}
+sessionInfo()
+```
