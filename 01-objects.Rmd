@@ -1,7 +1,7 @@
 ---
 title: "01 - Managing and operating objects in R"
-author: "Francisco E. Fonturbel"
-date: "December 2025"
+author: "Francisco E. Fonturbel & Sebastian Cordero"
+date: "22/December/2025"
 output: 
   html_document:
     includes:
@@ -438,9 +438,6 @@ Here's a summary of basic functions covered in this lesson:
 
 R is a useful tool to work with any kind of data. As long as we understand how objects work and learn some basic coding skills, we can accomplish virtually any data analysis task. A useful guide of basic R commands is available [here](https://iqss.github.io/dss-workshops/R/Rintro/base-r-cheat-sheet.pdf) to download as a PDF file.
 
-## Acknowledgments
-
-Some elements of this lesson were adapted from materials by Sebastián Cordero.
 
 ## Session
 
