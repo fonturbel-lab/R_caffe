@@ -1,11 +1,13 @@
 ---
 title: "01 - Managing and operating objects in R"
 author: "Francisco E. Fonturbel"
-date: "11/May/2022"
+date: "December 2025"
 output: 
   html_document:
     includes:
         after_body: footer.html
+    toc: true
+    toc_float: true
 ---
 
 ```{r setup, include=FALSE}
@@ -16,30 +18,191 @@ knitr::opts_chunk$set(
 )
 ```
 
-## Handling data in R
+## Introduction to R
 
-R is an open source platform that can be used to perform statistical analyses and many other things (genetics, maps, etc.). So, R is an object-based programming language, which means that it is based on creating, manipulating, and operating objects.
+R is an open source platform that can be used to perform statistical analyses and many other things (genetics, maps, etc.). R is an **object-based programming language**, which means that it is based on creating, manipulating, and operating objects.
 
-R objects are case sensitive, for example, "vector" and "Vector" are considered as different objects. Thus, if you are getting a recurrent error trying to call or operate an object, the first thing to do is check your spelling. Be sure that you are calling your object exactly as it was created (hint: the Environment tab on R Studio, located at the upper right corner, contains a list of all objects and functions currently loaded in R).
+R objects are **case sensitive**. For example, "vector" and "Vector" are considered as different objects. Thus, if you are getting a recurrent error trying to call or operate an object, the first thing to do is check your spelling. Be sure that you are calling your object exactly as it was created (hint: the Environment tab on RStudio, located at the upper right corner, contains a list of all objects and functions currently loaded in R).
+
+## Basic concepts
+
+Before diving into data analysis, let's understand some fundamental concepts that will make your R experience much smoother.
+
+### What is a function?
+
+A **function** is a command that receives information and returns a result. Think of it as a specialized machine that processes inputs and gives you outputs. The basic anatomy of a function is:
+
+`function_name(argument1, argument2, ...)`
+
+Here are some examples of basic functions:
+
+```{r functions_intro}
+# mean() calculates the average of a set of numbers
+mean(c(1, 2, 3, 4, 5))
+
+# length() counts how many elements are in a vector
+length(c("a", "b", "c"))
+
+# sqrt() calculates the square root
+sqrt(16)
+```
+
+### Basic arithmetic operators
+
+R can work as a powerful calculator. Here are the basic arithmetic operators:
+
+```{r arithmetic}
+# Addition
+2 + 3
+
+# Subtraction
+10 - 4
+
+# Multiplication (use asterisk *)
+5 * 6
+
+# Division (use forward slash /)
+20 / 4
+
+# Exponentiation (use caret ^)
+2^3
+```
+
+### What is a variable?
+
+A **variable** is a name that we assign to a value so we can reuse it later. The symbol `<-` assigns the value on the right to the name on the left:
+
+```{r variables}
+# Assigning values to variables
+temperature <- 25.5
+precipitation <- 120
+num_species <- 15
+
+# To access the value, simply type the variable name
+temperature
+precipitation
+num_species
+
+# We can use variables in calculations
+temperature + 5
+```
+
+### What is a vector?
+
+A **vector** stores multiple values of the same type in an ordered sequence. The function `c()` (which stands for "concatenate" or "combine") creates vectors:
+
+```{r vectors}
+# Creating numeric vectors
+week_temperatures <- c(22, 24, 26, 23, 25, 27, 24)
+species_per_plot <- c(12, 15, 8, 20, 18, 10, 14)
+
+# View the contents
+week_temperatures
+species_per_plot
+```
+
+### Basic statistical functions for vectors
+
+R has built-in functions to calculate statistics automatically:
+
+```{r vector_stats}
+# Calculate the mean (average)
+mean(week_temperatures)
+
+# Find the maximum value
+max(species_per_plot)
+
+# Find the minimum value
+min(species_per_plot)
+
+# Count how many elements are in the vector
+length(species_per_plot)
+
+# Calculate the standard deviation
+sd(week_temperatures)
+
+# Calculate the sum
+sum(species_per_plot)
+```
 
 ## Datasets
 
-The primordial input in science is data. Regardless of our study field, we all use data (collected after hard fieldwork or long lab hours) and the quality of our analyses and papers depend on the quality of our data. Likewise, properly managing our data is crucial to have a smooth experience in R. So, my first advice will be: "please, **AVOID** the `openxlsx` library; it might seem to make your life easier but most of the time it will make your experience with R very hard.
+The primordial input in science is data. Regardless of our study field, we all use data (collected after hard fieldwork or long lab hours) and the quality of our analyses and papers depend on the quality of our data. Likewise, properly managing our data is crucial to have a smooth experience in R.
+
+My first advice will be: please, **AVOID** the `openxlsx` library; it might seem to make your life easier but most of the time it will make your experience with R very hard.
 
 Tips for loading your data without problem:
 
 (1) Prefer csv (comma-separated text) or txt (tab-separated text) formats to input your data in R.
 
-(2) Avoid spaces, points, and commas in variable names.
+(2) Avoid spaces, periods, and commas in variable names.
 
 (3) Do not leave empty cells. If there is no data, use `NA` to fill those empty cells.
 
+### Creating a data frame from scratch
+
+A **data frame** is like a spreadsheet or table: it has rows and columns. We can create one by combining vectors:
+
+```{r create_dataframe}
+# First, create vectors for each column
+tree_names <- c("Oak", "Pine", "Eucalyptus", "Carob", "Quillay")
+height_m <- c(15.2, 22.8, 18.5, 12.1, 16.7)
+diameter_cm <- c(45, 62, 38, 29, 41)
+age_years <- c(25, 45, 30, 20, 35)
+
+# Combine vectors into a data frame
+tree_data <- data.frame(
+  Species = tree_names,
+  Height = height_m,
+  Diameter = diameter_cm,
+  Age = age_years
+)
+
+# View the data frame
+print(tree_data)
+```
+
+### Exploring data frames
+
+The `summary()` function provides a quick statistical overview of your data:
+
+```{r explore_df}
+summary(tree_data)
+```
+
+To access a specific column, use the `$` operator:
+
+```{r dollar_operator}
+# Access the Height column
+tree_data$Height
+
+# Access the Species column
+tree_data$Species
+
+# Calculate mean height
+mean(tree_data$Height)
+```
+
+### Adding new calculated columns
+
+We can create new variables based on existing ones and add them to our data frame:
+
+```{r new_column}
+# Estimate biomass using: Biomass = height × diameter² × 0.001
+biomass_estimated <- tree_data$Height * (tree_data$Diameter^2) * 0.001
+
+# Add the new column to our data frame
+tree_data$Biomass <- biomass_estimated
+
+# View the updated data frame
+print(tree_data)
+```
 
 ### Example datasets
 
 No data to test yet? Don't worry! R has several example datasets to work with. Just type `data()` to see the available data in base R (some additional datasets may be available within other packages as well).
 
-One of the nicests datasets is `iris`, which contains information on flower measurements of three species of the _Iris_ genus.
+One of the nicest datasets is `iris`, which contains information on flower measurements of three species of the *Iris* genus.
 
 ```{r iris}
 data(iris)
@@ -47,22 +210,28 @@ attach(iris)
 names(iris)
 ```
 
-Thus, this dataset contains four columns with quantitative data and a fifth column with categorical values, corresponding to the different species.
+This dataset contains four columns with quantitative data and a fifth column with categorical values, corresponding to the different species.
 
-Using the command `head()` we can examine the first 6 lines of the dataset and figure how it looks like:
+Using the command `head()` we can examine the first 6 lines of the dataset and figure out how it looks:
 
-```{r irish}
+```{r iris_head}
 head(iris)
 ```
 
-How many species are present in this dataset? we may count them one by one or... just ask R:
+And `tail()` shows us the last 6 rows:
+
+```{r iris_tail}
+tail(iris)
+```
+
+How many species are present in this dataset? We may count them one by one or... just ask R:
 
 ```{r splev}
-#Examining variable levels
+# Examining variable levels
 levels(Species)
 
-#Creating an object to quantify how many levels do we have
-spp<-levels(Species)
+# Creating an object to quantify how many levels we have
+spp <- levels(Species)
 length(spp)
 ```
 
@@ -70,44 +239,95 @@ In this case there are only three species, but this is particularly useful for l
 
 ## First-aid plots: viewing our data
 
-Before start analyzing our data, it is always a good idea to make simple plots to describe our data. For example, how are sepal lenght values distributed? let's make an histogram:
+Before starting to analyze our data, it is always a good idea to make simple plots to describe them. Data visualization helps us understand patterns, identify outliers, and check assumptions before running statistical tests.
+
+### Histograms
+
+How are sepal length values distributed? Let's make a histogram:
 
 ```{r hist1}
 hist(Sepal.Length)
 ```
 
-Interesting! there is some variation on sepal length but the color is so dull... why not giving it some color?
+Interesting! There is some variation on sepal length but the color is so dull... Why not give it some color?
 
 ```{r hist2}
-hist(Sepal.Length, col="blueviolet")
+hist(Sepal.Length, col = "blueviolet")
 ```
 
-Much better!
+Much better! We can also add better labels:
 
-And we may now wonder, how sepal length and with are related? let's make a scatterplot:
+```{r hist3}
+hist(Sepal.Length, 
+     col = "blueviolet",
+     main = "Distribution of Sepal Length",
+     xlab = "Sepal Length (cm)",
+     ylab = "Frequency")
+```
+
+### Barplots
+
+Barplots are useful for displaying categorical comparisons. Let's use our tree data:
+
+```{r barplot1}
+barplot(tree_data$Height,
+        names.arg = tree_data$Species,
+        main = "Height of different tree species",
+        ylab = "Height (meters)",
+        col = "#7CB9A8")
+```
+
+### Scatterplots
+
+How are sepal length and width related? Let's make a scatterplot:
 
 ```{r sp1}
-plot(Sepal.Length~Sepal.Width)
+plot(Sepal.Length ~ Sepal.Width)
 ```
 
-We may add some information to the plot:
+We can add more information to the plot:
 
 ```{r sp2}
-plot(Sepal.Length~Sepal.Width, main="Flower traits", xlab="Sepal length", ylab="Sepal width", col="dodgerblue2", pch=19)
-#Changing shape and border color
-plot(Sepal.Length~Sepal.Width, main="Flower traits", xlab="Sepal length", ylab="Sepal width", col="yellow", bg="blueviolet", pch=24)
-#Coloring each species with a different color
-plot(Sepal.Length~Sepal.Width, main="Flower traits", xlab="Sepal length", ylab="Sepal width", col=iris$Species, pch=19)
+# Basic customization
+plot(Sepal.Length ~ Sepal.Width, 
+     main = "Flower traits", 
+     xlab = "Sepal width (cm)", 
+     ylab = "Sepal length (cm)", 
+     col = "dodgerblue2", 
+     pch = 19)
+
+# Changing shape and border color
+plot(Sepal.Length ~ Sepal.Width, 
+     main = "Flower traits", 
+     xlab = "Sepal width (cm)", 
+     ylab = "Sepal length (cm)", 
+     col = "yellow", 
+     bg = "blueviolet", 
+     pch = 24)
+
+# Coloring each species with a different color
+plot(Sepal.Length ~ Sepal.Width, 
+     main = "Flower traits", 
+     xlab = "Sepal width (cm)", 
+     ylab = "Sepal length (cm)", 
+     col = iris$Species, 
+     pch = 19)
 ```
 
-
-What if we want to plot only _Iris setosa_?
+What if we want to plot only *Iris setosa*?
 
 ```{r sp3}
-#Subsetting data
-dataS<-subset(iris, Species=="setosa")
-#And making the plot:
-plot(Sepal.Length~Sepal.Width, main="Flower traits", xlab="Sepal length", ylab="Sepal width", col="dodgerblue2", pch=19, data=dataS)
+# Subsetting data
+dataS <- subset(iris, Species == "setosa")
+
+# And making the plot:
+plot(Sepal.Length ~ Sepal.Width, 
+     main = "Flower traits (I. setosa only)", 
+     xlab = "Sepal width (cm)", 
+     ylab = "Sepal length (cm)", 
+     col = "dodgerblue2", 
+     pch = 19, 
+     data = dataS)
 ```
 
 ### Boxplots: visually comparing variables
@@ -115,69 +335,112 @@ plot(Sepal.Length~Sepal.Width, main="Flower traits", xlab="Sepal length", ylab="
 Let's use boxplots to compare some variables:
 
 ```{r bp1}
-boxplot(Sepal.Length~Species, main="Sepal lenght variation", xlab="Plant species", ylab="Sepal lenght")
-boxplot(Sepal.Width~Species, main="Sepal width variation", xlab="Plant species", ylab="Sepal width")
-boxplot(Petal.Length~Species, main="Petal lenght variation", xlab="Plant species", ylab="Petal lenght")
-boxplot(Petal.Width~Species, main="Petal width variation", xlab="Plant species", ylab="Petal width")
+boxplot(Sepal.Length ~ Species, 
+        main = "Sepal length variation", 
+        xlab = "Plant species", 
+        ylab = "Sepal length (cm)")
 ```
 
-And what if we want to put the four boxplots into a single plot? Easy to do! let's use the `par(mfrow=c(row,col))` command:
+And what if we want to put four boxplots into a single figure? Easy to do! Let's use the `par(mfrow = c(rows, cols))` command:
 
 ```{r bp2, fig.width=10, fig.height=8}
-par(mfrow=c(2,2))
-boxplot(Sepal.Length~Species, main="Sepal lenght variation", xlab="Plant species", ylab="Sepal lenght")
-boxplot(Sepal.Width~Species, main="Sepal width variation", xlab="Plant species", ylab="Sepal width")
-boxplot(Petal.Length~Species, main="Petal lenght variation", xlab="Plant species", ylab="Petal lenght")
-boxplot(Petal.Width~Species, main="Petal width variation", xlab="Plant species", ylab="Petal width")
-par(mfrow=c(1,1))
+par(mfrow = c(2, 2))
+boxplot(Sepal.Length ~ Species, main = "Sepal length variation", 
+        xlab = "Plant species", ylab = "Sepal length (cm)")
+boxplot(Sepal.Width ~ Species, main = "Sepal width variation", 
+        xlab = "Plant species", ylab = "Sepal width (cm)")
+boxplot(Petal.Length ~ Species, main = "Petal length variation", 
+        xlab = "Plant species", ylab = "Petal length (cm)")
+boxplot(Petal.Width ~ Species, main = "Petal width variation", 
+        xlab = "Plant species", ylab = "Petal width (cm)")
+par(mfrow = c(1, 1))
 ```
-
 
 ## Operating objects
 
-We can make a series of mathematical and logical operations with our objects and some intuituive commands, for example use `log()` to obtain the logarith of a given number.
-
-Along with R sample datasets, we can also generate random data. With the code below, we will generate two variables `x` and `y` with a normal distribution and N = 500:
+We can make a series of mathematical and logical operations with our objects. Along with R sample datasets, we can also generate random data. With the code below, we will generate two variables `x` and `y` with a normal distribution and N = 500:
 
 ```{r randvars}
-x<-rnorm(500)
-y<-rnorm(500)
+x <- rnorm(500)
+y <- rnorm(500)
 ```
 
-And how they look like?
+And how do they look?
 
 ```{r bp3}
-hist(x, col="cornflowerblue")
-hist(y, col="coral")
+par(mfrow = c(1, 2))
+hist(x, col = "cornflowerblue", main = "Distribution of x")
+hist(y, col = "coral", main = "Distribution of y")
+par(mfrow = c(1, 1))
 ```
 
-How `x` and `y` are related?
+How are `x` and `y` related?
 
 ```{r sp4}
-plot(x,y, pch=19, col="firebrick2")
+plot(x, y, pch = 19, col = "firebrick2")
 ```
 
 ### Transforming variables
 
-What if, for example, we want to use `y` in logarithmic scale. Let's see hoy it affects the scatterplot:
+What if we want to use `y` in logarithmic scale? Let's see how it affects the scatterplot:
 
 ```{r sp5}
-#Y tambien podemos hacer operaciones matematicas con las variables:
-ylog<-log(y+1)
-plot(x,ylog, pch=19, col="forestgreen")
+# We can also perform mathematical operations with variables
+ylog <- log(y + 1)
+plot(x, ylog, pch = 19, col = "forestgreen",
+     main = "X vs log(Y+1)",
+     xlab = "X values",
+     ylab = "log(Y + 1)")
 ```
 
-And what if we want to multiply `x` by $\pi$
+And what if we want to multiply `x` by $\pi$?
 
 ```{r sp6}
-xs<-x*3.1416
-plot(xs,y, pch=19, col="darkslateblue")
+xs <- x * pi
+plot(xs, y, pch = 19, col = "darkslateblue",
+     main = expression(paste("X × ", pi, " vs Y")),
+     xlab = expression(paste("X × ", pi)),
+     ylab = "Y values")
 ```
 
+## Presenting results
+
+The `cat()` function is useful for printing formatted results:
+
+```{r cat_results}
+cat("Summary of our tree study:\n")
+cat("Mean height:", round(mean(tree_data$Height), 2), "meters\n")
+cat("Mean diameter:", round(mean(tree_data$Diameter), 2), "cm\n")
+cat("Total estimated biomass:", round(sum(tree_data$Biomass), 2), "kg\n")
+```
+
+## Quick reference: useful functions
+
+Here's a summary of basic functions covered in this lesson:
+
+| Function | Description | Example |
+|----------|-------------|---------|
+| `c()` | Combine values into a vector | `c(1, 2, 3)` |
+| `mean()` | Calculate the mean | `mean(x)` |
+| `sd()` | Calculate standard deviation | `sd(x)` |
+| `sum()` | Calculate the sum | `sum(x)` |
+| `min()` | Find minimum value | `min(x)` |
+| `max()` | Find maximum value | `max(x)` |
+| `length()` | Count elements | `length(x)` |
+| `head()` | View first rows | `head(data)` |
+| `tail()` | View last rows | `tail(data)` |
+| `summary()` | Statistical summary | `summary(data)` |
+| `levels()` | View factor levels | `levels(factor)` |
+| `subset()` | Subset data | `subset(data, condition)` |
+| `data.frame()` | Create a data frame | `data.frame(a = 1, b = 2)` |
 
 ## Final thoughts
 
-R is a useful tool to work with any kind of data. As long as we understand how objects work, and lear some basic coding skills (a useful guide of basic R commands are available [here](https://iqss.github.io/dss-workshops/R/Rintro/base-r-cheat-sheet.pdf) to download as a PDF file).
+R is a useful tool to work with any kind of data. As long as we understand how objects work and learn some basic coding skills, we can accomplish virtually any data analysis task. A useful guide of basic R commands is available [here](https://iqss.github.io/dss-workshops/R/Rintro/base-r-cheat-sheet.pdf) to download as a PDF file.
+
+## Acknowledgments
+
+Some elements of this lesson were adapted from materials by Sebastián Cordero.
 
 ## Session
 
