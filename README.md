@@ -64,7 +64,9 @@ This first edition (c) 2022-2026 is composed by 20 lessons, but more lessons are
 
 ### How to take the most of these lessons
 
-
+Reading this material is the first step, but just doing that won't get you any further. Also, running command lines without understanding what are doing won't teach you anything.
+So, the proper way to actually learn some statistics from these lessons is to read the text as many times as needed to really understand the theory (you may need to consult books or papers). 
+Then, check the sample data and run the entire script with the sample data. Once you manage to run
 
 
 ### Our social media :metal:
