@@ -66,7 +66,8 @@ This first edition (c) 2022-2026 is composed by 20 lessons, but more lessons are
 
 Reading this material is the first step, but just doing that won't get you any further. Also, running command lines without understanding what are doing won't teach you anything.
 So, the proper way to actually learn some statistics from these lessons is to read the text as many times as needed to really understand the theory (you may need to consult books or papers). 
-Then, check the sample data and run the entire script with the sample data. Once you manage to run
+Then, check the sample data and run the entire script with the sample data. Once you manage to run the whole script without errors, and understanding what each step means, try to 
+apply the code to your own data (or create a simulated dataset if you don't have it). This is the hard way, I know, but I promise that the long-term results would be much better!
 
 
 ### Our social media :metal:
