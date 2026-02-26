@@ -59,7 +59,7 @@ This repository presents a comprehensive R course intended for self-learning and
 20.- Circular statistics and daily activity patterns
 
 
-This first edition (c) 2022-2025 is composed by 20 lessons, but more lessons are expected to be added in the near future. If you have any suggestions, please let me know.
+This first edition (c) 2022-2026 is composed by 20 lessons, but more lessons are expected to be added in the near future. If you have any suggestions, please let me know.
 
 
 #### Our social media :metal:
