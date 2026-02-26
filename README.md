@@ -62,7 +62,12 @@ This repository presents a comprehensive R course intended for self-learning and
 This first edition (c) 2022-2026 is composed by 20 lessons, but more lessons are expected to be added in the near future. If you have any suggestions, please let me know.
 
 
-#### Our social media :metal:
+### How to take the most of these lessons
+
+
+
+
+### Our social media :metal:
 
 Follow Integrative Ecology lab on [X (fka Twitter)](https://twitter.com/IntegrativeEco) and [Instagram](https://www.instagram.com/integrative.ecolab) to see what's new.
 
