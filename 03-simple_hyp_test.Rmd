@@ -139,9 +139,127 @@ kruskal.test(Sepal.Length~Species)
 ```
 
 
+## Categorical data: Chi-square and Fisher's exact tests
+
+So far, we have been comparing **means** of continuous variables across groups. But what if our response variable is **categorical** — for example, whether an individual survived or not, whether a plant was visited by a pollinator, or whether a species was detected at a given site? In those cases, we work with **counts** arranged in contingency tables, and we need different tools.
+
+Both the chi-square test and Fisher's exact test ask the same question: **are two categorical variables independent of each other?** The null hypothesis is always that there is no association between them.
+
+### Chi-square test
+
+The chi-square test ($\chi^2$) compares **observed frequencies** against the **expected frequencies** under independence. It is appropriate for **large samples** where all expected cell counts are $\geq 5$.
+
+Let's use a biological example: we want to know whether the **presence of a parasitic mistletoe** (*Tristerix corymbosus*) is associated with the **type of host tree** (native vs. introduced). We sampled 120 trees and recorded whether each was infected or not.
+
+```{r chisq_data}
+# Build the contingency table manually
+mistletoe_table <- matrix(c(38, 12, 22, 48),
+                          nrow = 2,
+                          dimnames = list(
+                            Host = c("Native", "Introduced"),
+                            Infection = c("Infected", "Uninfected")
+                          ))
+
+mistletoe_table
+```
+
+Let's visualise the counts before running the test:
+
+```{r chisq_plot}
+barplot(t(mistletoe_table),
+        beside = TRUE,
+        col = c("darkorange1", "dodgerblue2"),
+        legend.text = colnames(mistletoe_table),
+        args.legend = list(x = "topright"),
+        xlab = "Host tree type",
+        ylab = "Number of trees",
+        main = "Mistletoe infection by host type")
+```
+
+Now let's run the chi-square test using the `chisq.test` function:
+
+```{r chisq_test}
+chisq.test(mistletoe_table)
+```
+
+The output gives us the $\chi^2$ statistic, degrees of freedom, and p-value. A significant result tells us that infection rates differ between host types — but not *how strong* the association is. For that, we can compute **Cramér's V** as an effect size:
+
+```{r cramers_v}
+# Cramér's V (requires the vcd package)
+# install.packages("vcd")
+library(vcd)
+assocstats(mistletoe_table)
+```
+
+Values of Cramér's V near 0 indicate no association, while values near 1 indicate a very strong association.
+
+We can also inspect whether expected cell counts meet the $\geq 5$ assumption:
+
+```{r expected_counts}
+chisq.test(mistletoe_table)$expected
+```
+
+All expected values are well above 5, so chi-square is appropriate here.
+
+---
+
+### Fisher's Exact Test
+
+Now suppose we have a **smaller dataset**: a field study where we only sampled 18 individuals of the marsupial *Dromiciops gliroides* and recorded whether each individual consumed mistletoe fruit (`Yes` / `No`) in two seasons (wet vs. dry). Small samples like this violate the chi-square assumption, so we use **Fisher's exact test** instead, which computes the exact probability of the observed table (or a more extreme one) under the null hypothesis.
+
+```{r fisher_data}
+# Build the contingency table
+dromiciops_table <- matrix(c(7, 2, 3, 6),
+                            nrow = 2,
+                            dimnames = list(
+                              Season = c("Wet", "Dry"),
+                              Consumption = c("Yes", "No")
+                            ))
+
+dromiciops_table
+```
+
+```{r fisher_plot}
+barplot(t(dromiciops_table),
+        beside = TRUE,
+        col = c("forestgreen", "coral2"),
+        legend.text = colnames(dromiciops_table),
+        args.legend = list(x = "topright"),
+        xlab = "Season",
+        ylab = "Number of individuals",
+        main = "Mistletoe fruit consumption by season")
+```
+
+Let's check expected counts first to confirm chi-square would be inappropriate:
+
+```{r fisher_expected}
+chisq.test(dromiciops_table)$expected
+```
+
+As expected, several cells fall below 5 — chi-square is not valid here. Let's use Fisher's exact test via `fisher.test`:
+
+```{r fisher_test}
+fisher.test(dromiciops_table)
+```
+
+The output provides the exact p-value and, for 2×2 tables, an **odds ratio** with its confidence interval. An odds ratio > 1 means consumption was more likely in the wet season, while an odds ratio < 1 means the opposite.
+
+---
+
+### Quick comparison: when to use each?
+
+| Situation | Use |
+|---|---|
+| Large sample, all expected counts ≥ 5 | Chi-square (`chisq.test`) |
+| Small sample or any expected count < 5 | Fisher's exact (`fisher.test`) |
+| 2×2 table | Either; Fisher's is always valid |
+| Larger tables (e.g., 3×4) | Chi-square (Fisher's becomes very slow) |
+| Need effect size | Add Cramér's V (chi-square) or odds ratio (Fisher's) |
+
+
 ## Final thoughts
 
-We have learned two simple methods for hypothesis testin today: _t-test_ and ANOVA. The first one is used when we are comparing two groups while the second one is used when we have more than two groups to avoid the multiple comparison problem. Both tests rely on some statistical assumptions, which can be tested using some statistical tests or by visual examination.
+We have learned several simple methods for hypothesis testing today: _t-test_, ANOVA, chi-square, and Fisher's exact test. The first two compare **means of continuous variables** across groups, while the last two are designed for **categorical (count) data** in contingency tables. All of these methods have their own assumptions and appropriate use cases, so choosing the right test for your data type is an essential first step in any analysis.
 
 ## Session
 
