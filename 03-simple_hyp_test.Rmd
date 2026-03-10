@@ -173,6 +173,7 @@ barplot(t(mistletoe_table),
         args.legend = list(x = "topright"),
         xlab = "Host tree type",
         ylab = "Number of trees",
+        ylim = c(0,65),
         main = "Mistletoe infection by host type")
 ```
 
