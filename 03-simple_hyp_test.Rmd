@@ -143,7 +143,7 @@ kruskal.test(Sepal.Length~Species)
 
 So far, we have been comparing **means** of continuous variables across groups. But what if our response variable is **categorical** — for example, whether an individual survived or not, whether a plant was visited by a pollinator, or whether a species was detected at a given site? In those cases, we work with **counts** arranged in contingency tables, and we need different tools.
 
-Both the `chi-square` test and `Fisher's exact test` ask the same question: **are two categorical variables independent of each other?** The null hypothesis is always that there is no association between them.
+Both the `chi-square` test and `Fisher's exact test` ask the same question: **are two categorical variables independent of each other?** The **null hypothesis** is always that there is no association between them.
 
 ### Chi-square test
 
