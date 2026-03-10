@@ -228,6 +228,7 @@ barplot(t(dromiciops_table),
         args.legend = list(x = "topright"),
         xlab = "Season",
         ylab = "Number of individuals",
+        ylim = c(0,8),
         main = "Mistletoe fruit consumption by season")
 ```
 
