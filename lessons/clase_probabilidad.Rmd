@@ -246,6 +246,208 @@ cat("P(colibrí | abeja no visitó) =",
     round(mean(visitas$colibri[visitas$abeja == 0]), 3), "\n")
 ```
 
+## Probabilidades no independientes: cadenas de Markov y métodos de Monte Carlo
+
+En la sección anterior vimos que la independencia es la excepción en ecología. En la práctica, el estado actual de un sistema suele depender de su estado anterior: la ocupación de un parche de hábitat este año depende de si estaba ocupado el año pasado, la probabilidad de que un animal se mueva a un sitio depende de dónde se encuentra ahora, y la composición de una comunidad depende de su historia de ensamblaje. Para modelar este tipo de dependencia secuencial existen las **cadenas de Markov**.
+
+### Cadenas de Markov
+
+Una cadena de Markov es un proceso estocástico donde la probabilidad de transitar al siguiente estado depende **únicamente del estado actual**, no de la historia completa. Esta es la **propiedad de Markov** (o de "sin memoria"):
+
+$$P(X_{t+1} = j \mid X_t = i, X_{t-1}, \ldots, X_0) = P(X_{t+1} = j \mid X_t = i)$$
+
+En otras palabras, si conocemos el presente, el pasado no aporta información adicional para predecir el futuro. La dinámica completa del sistema queda descrita por una **matriz de transición** $\mathbf{T}$, donde cada elemento $T_{ij}$ representa la probabilidad de pasar del estado $i$ al estado $j$ en un paso de tiempo.
+
+**Ejemplo ecológico:** Modelo de ocupación de parches para *D. gliroides* con tres estados: parche ocupado (O), parche vacío disponible (V) y parche degradado (D).
+
+```{r markov-ejemplo}
+# Matriz de transición para ocupación de parches
+# Filas = estado actual, Columnas = estado siguiente
+T_mat <- matrix(
+  c(0.75, 0.15, 0.10,   # Desde Ocupado: se mantiene, se vacía, se degrada
+    0.30, 0.50, 0.20,   # Desde Vacío: se coloniza, se mantiene, se degrada
+    0.05, 0.25, 0.70),  # Desde Degradado: se recupera, mejora, se mantiene
+  nrow = 3, byrow = TRUE,
+  dimnames = list(
+    Desde = c("Ocupado", "Vacío", "Degradado"),
+    Hacia = c("Ocupado", "Vacío", "Degradado")
+  )
+)
+
+knitr::kable(T_mat, digits = 2,
+             caption = "Matriz de transición: dinámica de parches de hábitat")
+```
+
+```{r markov-simulacion, fig.width=10, fig.height=5}
+# Simulación de la cadena de Markov por 50 pasos
+n_pasos <- 50
+n_parches <- 100
+estados <- c("Ocupado", "Vacío", "Degradado")
+
+# Estado inicial: 60% ocupado, 25% vacío, 15% degradado
+estado_actual <- sample(estados, n_parches, replace = TRUE,
+                        prob = c(0.60, 0.25, 0.15))
+
+# Registro de proporciones a lo largo del tiempo
+registro <- matrix(NA, nrow = n_pasos + 1, ncol = 3,
+                   dimnames = list(NULL, estados))
+registro[1, ] <- table(factor(estado_actual, levels = estados)) / n_parches
+
+set.seed(2025)
+for (t in 1:n_pasos) {
+  nuevo_estado <- character(n_parches)
+  for (i in 1:n_parches) {
+    fila <- match(estado_actual[i], estados)
+    nuevo_estado[i] <- sample(estados, 1, prob = T_mat[fila, ])
+  }
+  estado_actual <- nuevo_estado
+  registro[t + 1, ] <- table(factor(estado_actual, levels = estados)) / n_parches
+}
+
+# Distribución estacionaria teórica (autovector izquierdo de T)
+autov <- eigen(t(T_mat))
+pi_est <- Re(autov$vectors[, 1])
+pi_est <- pi_est / sum(pi_est)
+names(pi_est) <- estados
+
+# Gráfico
+df_markov <- data.frame(
+  paso = rep(0:n_pasos, 3),
+  proporcion = c(registro[, 1], registro[, 2], registro[, 3]),
+  estado = rep(estados, each = n_pasos + 1)
+)
+
+ggplot(df_markov, aes(x = paso, y = proporcion, color = estado)) +
+  geom_line(linewidth = 1) +
+  geom_hline(data = data.frame(estado = estados, y = pi_est),
+             aes(yintercept = y, color = estado),
+             linetype = "dashed", linewidth = 0.6) +
+  scale_color_manual(values = c("Degradado" = "#E8702A",
+                                "Ocupado" = "#2E86AB",
+                                "Vacío" = "#A23B72")) +
+  labs(
+    title = "Cadena de Markov: dinámica de ocupación de parches",
+    subtitle = "Líneas sólidas = simulación (100 parches), líneas punteadas = distribución estacionaria teórica",
+    x = "Paso de tiempo", y = "Proporción de parches",
+    color = "Estado"
+  ) +
+  theme(legend.position = "top")
+```
+
+```{r markov-estacionaria}
+cat("Distribución estacionaria (π):\n")
+cat(paste0("  ", estados, ": ", round(pi_est, 3), collapse = "\n"), "\n\n")
+cat("A largo plazo, sin importar el estado inicial, el sistema converge\n")
+cat("a estas proporciones de equilibrio.\n")
+```
+
+Una propiedad fundamental de las cadenas de Markov ergódicas (irreducibles y aperiódicas) es que convergen a una **distribución estacionaria** $\boldsymbol{\pi}$ que no depende del estado inicial. Esto es precisamente lo que aprovechan los métodos de Monte Carlo.
+
+### Métodos de Monte Carlo basados en cadenas de Markov (MCMC)
+
+Los métodos **MCMC** combinan las cadenas de Markov con el muestreo de Monte Carlo para extraer muestras de distribuciones de probabilidad complejas, típicamente distribuciones posteriores bayesianas que no tienen solución analítica.
+
+La idea central es construir una cadena de Markov cuya distribución estacionaria sea exactamente la distribución objetivo $p(\theta \mid \text{datos})$. Al dejar correr la cadena suficiente tiempo, las muestras generadas son representativas de la distribución posterior, y podemos usarlas para estimar parámetros, intervalos de credibilidad, y hacer predicciones.
+
+Los algoritmos más utilizados son:
+
+- **Metropolis-Hastings**: propone un salto aleatorio y lo acepta o rechaza según una razón de probabilidades. Es general pero puede ser lento en espacios de alta dimensión.
+- **Muestreo de Gibbs**: caso especial donde se muestrean las condicionales completas de cada parámetro por turno. Es eficiente cuando esas condicionales tienen forma conocida.
+- **Hamiltonian Monte Carlo (HMC)**: utiliza información del gradiente para proponer saltos más eficientes. Es el motor detrás de Stan y `brms`.
+
+```{r mcmc-demo, fig.width=10, fig.height=8}
+# Demostración simplificada de Metropolis-Hastings
+# Estimación de la media del peso de D. gliroides
+# Asumimos prior Normal(25, 10) y likelihood Normal(mu, sigma=5)
+
+set.seed(2025)
+datos_peso_obs <- rnorm(30, mean = 28, sd = 5)  # datos observados
+
+# Funciones
+log_posterior <- function(mu, datos, prior_mu = 25, prior_sd = 10, sigma = 5) {
+  log_lik <- sum(dnorm(datos, mean = mu, sd = sigma, log = TRUE))
+  log_prior <- dnorm(mu, mean = prior_mu, sd = prior_sd, log = TRUE)
+  log_lik + log_prior
+}
+
+# Metropolis-Hastings
+n_iter <- 10000
+cadena <- numeric(n_iter)
+cadena[1] <- 20  # valor inicial alejado del óptimo
+propuesta_sd <- 2
+aceptados <- 0
+
+for (i in 2:n_iter) {
+  propuesta <- rnorm(1, mean = cadena[i - 1], sd = propuesta_sd)
+  log_ratio <- log_posterior(propuesta, datos_peso_obs) -
+    log_posterior(cadena[i - 1], datos_peso_obs)
+
+  if (log(runif(1)) < log_ratio) {
+    cadena[i] <- propuesta
+    aceptados <- aceptados + 1
+  } else {
+    cadena[i] <- cadena[i - 1]
+  }
+}
+
+# Descartar burn-in
+burnin <- 2000
+muestras_post <- cadena[(burnin + 1):n_iter]
+
+# Gráficos de diagnóstico
+df_cadena <- data.frame(
+  iteracion = 1:n_iter,
+  mu = cadena
+)
+
+p_trace <- ggplot(df_cadena, aes(iteracion, mu)) +
+  geom_line(alpha = 0.5, color = "grey40", linewidth = 0.3) +
+  geom_vline(xintercept = burnin, linetype = "dashed",
+             color = "firebrick", linewidth = 0.6) +
+  annotate("text", x = burnin + 200, y = max(cadena) * 0.95,
+           label = "← burn-in", color = "firebrick", hjust = 0, size = 3.5) +
+  labs(title = "Traceplot de la cadena MCMC",
+       x = "Iteración", y = "μ estimado")
+
+p_post <- ggplot(data.frame(mu = muestras_post), aes(mu)) +
+  geom_histogram(aes(y = after_stat(density)),
+                 bins = 50, fill = "#2E86AB", alpha = 0.6) +
+  geom_density(color = "#A23B72", linewidth = 1) +
+  geom_vline(xintercept = mean(datos_peso_obs),
+             linetype = "dashed", color = "firebrick") +
+  annotate("text", x = mean(datos_peso_obs) + 0.3,
+           y = 0, label = "media observada",
+           color = "firebrick", hjust = 0, vjust = -0.5, size = 3.5) +
+  labs(title = "Distribución posterior de μ",
+       subtitle = paste0("Media posterior = ",
+                         round(mean(muestras_post), 2),
+                         " | IC 95% = [",
+                         round(quantile(muestras_post, 0.025), 2), ", ",
+                         round(quantile(muestras_post, 0.975), 2), "]"),
+       x = "μ (peso corporal, g)", y = "Densidad")
+
+p_trace / p_post +
+  plot_annotation(
+    title = "MCMC Metropolis-Hastings: estimación del peso medio de D. gliroides",
+    subtitle = paste0("Tasa de aceptación = ",
+                      round(aceptados / n_iter * 100, 1), "%")
+  )
+```
+
+```{r mcmc-resumen}
+cat("Resumen de la distribución posterior:\n")
+cat("  Media posterior:", round(mean(muestras_post), 3), "\n")
+cat("  Mediana posterior:", round(median(muestras_post), 3), "\n")
+cat("  DE posterior:", round(sd(muestras_post), 3), "\n")
+cat("  IC 95%: [", round(quantile(muestras_post, 0.025), 3), ",",
+    round(quantile(muestras_post, 0.975), 3), "]\n")
+cat("  Tasa de aceptación:", round(aceptados / n_iter * 100, 1), "%\n\n")
+cat("Nota: una tasa de aceptación entre 20-50% es generalmente\n")
+cat("deseable para Metropolis-Hastings en una dimensión.\n")
+```
+
+> **¿Por qué importa para ecólogos?** MCMC es el motor computacional detrás de los modelos bayesianos que usamos cotidianamente: `MCMCglmm`, `brms`, `JAGS`, `Stan`, y los modelos de ocupación (`unmarked`, `ubms`). Cada vez que ajustamos uno de estos modelos, internamente se está ejecutando una cadena de Markov que converge a la distribución posterior de los parámetros. Entender sus fundamentos nos permite diagnosticar problemas de convergencia e interpretar correctamente los resultados.
+
 ---
 
 # Distribuciones de Probabilidad
