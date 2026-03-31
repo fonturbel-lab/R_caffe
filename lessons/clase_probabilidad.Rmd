@@ -1,0 +1,1001 @@
+---
+title: "Teoría de Probabilidad, Distribuciones y Estadígrafos"
+subtitle: "Curso de Postgrado en Ecología y Biología Evolutiva"
+author: "Francisco E. Fontúrbel"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    toc: true
+    toc_depth: 3
+    toc_float: true
+    number_sections: true
+    theme: flatly
+    highlight: tango
+    code_folding: show
+    df_print: kable
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE,
+  message = FALSE,
+  warning = FALSE,
+  fig.align = "center",
+  fig.width = 8,
+  fig.height = 5,
+  comment = "#>"
+)
+```
+
+```{r librerias, message=FALSE}
+# Librerías necesarias
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+library(patchwork)
+library(moments)    # skewness, kurtosis
+library(MASS)       # fitdistr
+
+# Tema general para figuras
+theme_set(
+  theme_bw(base_size = 13) +
+    theme(
+      panel.grid.minor = element_blank(),
+      strip.background = element_rect(fill = "grey90")
+    )
+)
+
+# Semilla para reproducibilidad
+set.seed(2PA025)
+```
+
+---
+
+# Axiomas y Teoría de Probabilidad
+
+## El experimento aleatorio y el espacio muestral
+
+En ecología trabajamos constantemente con fenómenos cuyo resultado no podemos predecir con certeza: ¿llegará un polinizador a una flor en los próximos 10 minutos?, ¿cuántas semillas de *Tristerix corymbosus* serán dispersadas por *Dromiciops gliroides* en una noche? Estos son **experimentos aleatorios**.
+
+Definiciones fundamentales:
+
+- **Experimento aleatorio** ($\mathcal{E}$): un proceso cuyo resultado no se puede predecir con certeza.
+- **Espacio muestral** ($\Omega$): el conjunto de todos los resultados posibles.
+- **Evento** ($A \subseteq \Omega$): un subconjunto del espacio muestral.
+
+**Ejemplo ecológico:** Observamos un fruto maduro de *T. corymbosus* y registramos si es removido por un ave frugívora en 1 hora.
+
+$$\Omega = \{\text{removido}, \text{no removido}\}$$
+
+Si observamos 3 frutos simultáneamente:
+
+$$\Omega = \{(r, r, r),\ (r, r, n),\ (r, n, r),\ \ldots,\ (n, n, n)\}, \quad |\Omega| = 2^3 = 8$$
+
+## Axiomas de Kolmogorov (1933)
+
+Sea $\Omega$ un espacio muestral y $\mathcal{F}$ una $\sigma$-álgebra de eventos. Una **función de probabilidad** $P: \mathcal{F} \rightarrow [0, 1]$ satisface:
+
+1. **No negatividad:** $P(A) \geq 0$ para todo $A \in \mathcal{F}$.
+2. **Normalización:** $P(\Omega) = 1$.
+3. **Aditividad numerable:** Si $A_1, A_2, \ldots$ son mutuamente excluyentes:
+
+$$P\left(\bigcup_{i=1}^{\infty} A_i\right) = \sum_{i=1}^{\infty} P(A_i)$$
+
+### Consecuencias directas
+
+De estos tres axiomas se derivan propiedades clave:
+
+- $P(\emptyset) = 0$
+- $P(A^c) = 1 - P(A)$
+- Si $A \subseteq B$, entonces $P(A) \leq P(B)$
+- $P(A \cup B) = P(A) + P(B) - P(A \cap B)$ (regla de la suma)
+
+```{r axiomas-simulacion}
+# Simulación: probabilidad de visita de polinizadores
+# Supongamos que observamos una planta durante 100 intervalos de 10 min
+
+n_intervalos <- 100
+p_visita_abeja <- 0.35
+p_visita_colibri <- 0.15
+p_ambos <- 0.05  # visita simultánea
+
+# Regla de la suma
+p_al_menos_uno <- p_visita_abeja + p_visita_colibri - p_ambos
+
+cat("P(visita de abeja) =", p_visita_abeja, "\n")
+cat("P(visita de colibrí) =", p_visita_colibri, "\n")
+cat("P(ambos) =", p_ambos, "\n")
+cat("P(al menos un polinizador) =", p_al_menos_uno, "\n")
+cat("P(ningún polinizador) =", 1 - p_al_menos_uno, "\n")
+```
+
+## Probabilidad condicional
+
+La probabilidad de un evento $A$ dado que ocurrió $B$:
+
+$$P(A \mid B) = \frac{P(A \cap B)}{P(B)}, \quad P(B) > 0$$
+
+**Ejemplo ecológico:** En un bosque templado, la probabilidad de detectar a *D. gliroides* en una cámara trampa depende del tipo de hábitat.
+
+```{r prob-condicional}
+# Datos hipotéticos de detección de D. gliroides
+# Basados en proporciones típicas de estudios de cámaras trampa
+
+n_noches <- 200
+
+# Tabla de contingencia
+deteccion <- matrix(
+  c(42, 58, 12, 88),
+  nrow = 2, byrow = TRUE,
+  dimnames = list(
+    Habitat = c("Bosque nativo", "Plantación Eucalyptus"),
+    Deteccion = c("Detectado", "No detectado")
+  )
+)
+
+deteccion
+
+# P(Detectado | Bosque nativo)
+p_det_nativo <- deteccion["Bosque nativo", "Detectado"] /
+  sum(deteccion["Bosque nativo", ])
+
+# P(Detectado | Plantación)
+p_det_plant <- deteccion["Plantación Eucalyptus", "Detectado"] /
+  sum(deteccion["Plantación Eucalyptus", ])
+
+cat("P(Detección | Bosque nativo) =", round(p_det_nativo, 3), "\n")
+cat("P(Detección | Plantación) =", round(p_det_plant, 3), "\n")
+cat("Razón de detección nativo/plantación =",
+    round(p_det_nativo / p_det_plant, 2), "\n")
+```
+
+## Teorema de Bayes
+
+$$P(A \mid B) = \frac{P(B \mid A) \cdot P(A)}{P(B)}$$
+
+Donde $P(B)$ se puede expandir por el **teorema de probabilidad total**:
+
+$$P(B) = \sum_{i=1}^{n} P(B \mid A_i) \cdot P(A_i)$$
+
+### Aplicación: identificación de dispersores
+
+Supongamos que encontramos una semilla de *T. corymbosus* germinando en una rama. ¿Cuál es la probabilidad de que haya sido depositada por *D. gliroides* versus un ave frugívora?
+
+```{r bayes}
+# Datos basados en literatura
+p_dromiciops <- 0.30    # P(dispersor = D. gliroides)
+p_ave <- 0.70           # P(dispersor = ave)
+
+# P(semilla viable | dispersor)
+p_viable_dromiciops <- 0.85   # D. gliroides: alta viabilidad
+p_viable_ave <- 0.40          # Aves: viabilidad moderada
+
+# P(semilla viable) - probabilidad total
+p_viable <- p_viable_dromiciops * p_dromiciops +
+  p_viable_ave * p_ave
+
+# P(D. gliroides | semilla viable) - Bayes
+p_dromiciops_dado_viable <- (p_viable_dromiciops * p_dromiciops) / p_viable
+
+cat("P(semilla viable) =", round(p_viable, 3), "\n")
+cat("P(D. gliroides | semilla viable) =",
+    round(p_dromiciops_dado_viable, 3), "\n")
+cat("P(ave | semilla viable) =",
+    round(1 - p_dromiciops_dado_viable, 3), "\n")
+```
+
+> **Interpretación:** Aunque las aves son responsables del 70% de la dispersión, si encontramos una semilla viable, la probabilidad de que provenga de *D. gliroides* es `r round(p_dromiciops_dado_viable * 100, 1)`%. Esto refleja la mayor efectividad de este marsupial como dispersor legítimo.
+
+## Independencia
+
+Dos eventos $A$ y $B$ son **independientes** si y solo si:
+
+$$P(A \cap B) = P(A) \cdot P(B)$$
+
+Equivalentemente: $P(A \mid B) = P(A)$.
+
+En ecología, la independencia es una **asunción fuerte** que rara vez se cumple. La dependencia espacial, temporal y filogenética son la norma en datos ecológicos.
+
+```{r independencia}
+# Test de independencia: visitas de polinizadores
+# ¿Son independientes las visitas de abejas y colibríes a Tristerix?
+
+# Datos simulados de visitas en 150 flores
+set.seed(42)
+n_flores <- 150
+
+visitas <- data.frame(
+  abeja = rbinom(n_flores, 1, prob = 0.40),
+  colibri = rbinom(n_flores, 1, prob = 0.25)
+)
+
+# Introducir dependencia negativa (competencia por recurso)
+# Si la abeja visitó, reducimos P(colibrí)
+for (i in 1:n_flores) {
+  if (visitas$abeja[i] == 1) {
+    visitas$colibri[i] <- rbinom(1, 1, prob = 0.10)
+  }
+}
+
+tabla <- table(
+  Abeja = ifelse(visitas$abeja == 1, "Sí", "No"),
+  Colibri = ifelse(visitas$colibri == 1, "Sí", "No")
+)
+
+tabla
+
+# Test Chi-cuadrado de independencia
+test_chi <- chisq.test(tabla)
+test_chi
+```
+
+```{r independencia-interpretacion}
+cat("Bajo independencia, P(colibrí | abeja) debería ≈ P(colibrí)\n")
+cat("P(colibrí) =", round(mean(visitas$colibri), 3), "\n")
+cat("P(colibrí | abeja visitó) =",
+    round(mean(visitas$colibri[visitas$abeja == 1]), 3), "\n")
+cat("P(colibrí | abeja no visitó) =",
+    round(mean(visitas$colibri[visitas$abeja == 0]), 3), "\n")
+```
+
+---
+
+# Distribuciones de Probabilidad
+
+## Variables aleatorias
+
+Una **variable aleatoria** $X$ es una función que asigna un valor numérico a cada resultado del espacio muestral: $X: \Omega \rightarrow \mathbb{R}$.
+
+- **Discreta:** toma valores contables (conteos de individuos, número de semillas).
+- **Continua:** toma cualquier valor en un intervalo (biomasa, longitud corporal, temperatura).
+
+## Distribuciones discretas
+
+### Bernoulli y Binomial
+
+Si cada ensayo tiene probabilidad $p$ de éxito, y realizamos $n$ ensayos independientes:
+
+$$X \sim \text{Binomial}(n, p), \quad P(X = k) = \binom{n}{k} p^k (1-p)^{n-k}$$
+
+- $E[X] = np$
+- $\text{Var}(X) = np(1-p)$
+
+```{r binomial}
+# Ejemplo: germinación de semillas de T. corymbosus
+# Experimento: 20 semillas, P(germinación) = 0.65
+
+n_semillas <- 20
+p_germ <- 0.65
+x <- 0:n_semillas
+
+prob_binom <- dbinom(x, size = n_semillas, prob = p_germ)
+
+p1 <- ggplot(data.frame(x, prob = prob_binom), aes(x, prob)) +
+  geom_col(fill = "#2E86AB", width = 0.7, alpha = 0.85) +
+  geom_vline(xintercept = n_semillas * p_germ,
+             linetype = "dashed", color = "firebrick", linewidth = 0.8) +
+  annotate("text", x = n_semillas * p_germ + 1.5,
+           y = max(prob_binom) * 0.9,
+           label = paste0("E[X] = ", n_semillas * p_germ),
+           color = "firebrick", size = 4) +
+  labs(
+    title = "Distribución Binomial: germinación de T. corymbosus",
+    subtitle = paste0("n = ", n_semillas, ", p = ", p_germ),
+    x = "Número de semillas germinadas",
+    y = "P(X = k)"
+  )
+
+p1
+```
+
+### Poisson
+
+Modela conteos de eventos raros en un intervalo fijo. Si $\lambda$ es la tasa media:
+
+$$X \sim \text{Poisson}(\lambda), \quad P(X = k) = \frac{e^{-\lambda} \lambda^k}{k!}$$
+
+- $E[X] = \lambda$
+- $\text{Var}(X) = \lambda$ (equidispersión)
+
+```{r poisson}
+# Ejemplo: conteo de visitas de D. gliroides por cámara-trampa por noche
+lambda_visitas <- 2.3
+x_pois <- 0:12
+
+prob_pois <- dpois(x_pois, lambda = lambda_visitas)
+
+p2 <- ggplot(data.frame(x = x_pois, prob = prob_pois), aes(x, prob)) +
+  geom_col(fill = "#A23B72", width = 0.7, alpha = 0.85) +
+  geom_vline(xintercept = lambda_visitas,
+             linetype = "dashed", color = "darkgreen", linewidth = 0.8) +
+  annotate("text", x = lambda_visitas + 1.8,
+           y = max(prob_pois) * 0.9,
+           label = paste0("λ = ", lambda_visitas),
+           color = "darkgreen", size = 4) +
+  labs(
+    title = "Distribución Poisson: visitas de D. gliroides por noche",
+    subtitle = paste0("λ = ", lambda_visitas),
+    x = "Número de visitas",
+    y = "P(X = k)"
+  )
+
+p2
+```
+
+### Binomial Negativa
+
+Cuando hay **sobredispersión** ($\text{Var}(X) > E[X]$), la Poisson no es adecuada. La binomial negativa añade un parámetro de dispersión $\theta$ (o $k$):
+
+$$\text{Var}(X) = \mu + \frac{\mu^2}{\theta}$$
+
+Cuando $\theta \rightarrow \infty$, converge a Poisson.
+
+```{r negbin}
+# Ejemplo: abundancia de insectos polinizadores por trampa (sobredispersión)
+mu_insectos <- 5
+theta_val <- 1.2  # sobredispersión fuerte
+
+x_nb <- 0:25
+
+prob_nb <- dnbinom(x_nb, mu = mu_insectos, size = theta_val)
+prob_pois_comp <- dpois(x_nb, lambda = mu_insectos)
+
+df_comp <- data.frame(
+  x = rep(x_nb, 2),
+  prob = c(prob_nb, prob_pois_comp),
+  Distribucion = rep(c("Binomial Negativa", "Poisson"), each = length(x_nb))
+)
+
+p3 <- ggplot(df_comp, aes(x, prob, fill = Distribucion)) +
+  geom_col(position = "dodge", width = 0.7, alpha = 0.8) +
+  scale_fill_manual(values = c("#E8702A", "#2E86AB")) +
+  labs(
+    title = "Poisson vs. Binomial Negativa: abundancia de polinizadores",
+    subtitle = paste0("μ = ", mu_insectos,
+                      ", θ = ", theta_val,
+                      " | Var(NB) = ",
+                      round(mu_insectos + mu_insectos^2 / theta_val, 1),
+                      " vs Var(Pois) = ", mu_insectos),
+    x = "Número de individuos por trampa",
+    y = "P(X = k)"
+  ) +
+  theme(legend.position = "top")
+
+p3
+```
+
+> **Nota para ecólogos:** La sobredispersión es *la regla* en datos de abundancia ecológica. Siempre evalúen la relación media-varianza antes de asumir Poisson. La función `glm.nb()` de `MASS` o `glmmTMB()` son alternativas robustas.
+
+## Distribuciones continuas
+
+### Normal (Gaussiana)
+
+$$X \sim \mathcal{N}(\mu, \sigma^2), \quad f(x) = \frac{1}{\sigma\sqrt{2\pi}} \exp\left(-\frac{(x-\mu)^2}{2\sigma^2}\right)$$
+
+```{r normal}
+# Ejemplo: longitud corporal de D. gliroides (mm)
+mu_lc <- 85    # media en mm
+sigma_lc <- 8  # desviación estándar
+
+x_norm <- seq(55, 115, length.out = 300)
+
+df_norm <- data.frame(
+  x = x_norm,
+  densidad = dnorm(x_norm, mean = mu_lc, sd = sigma_lc)
+)
+
+p4 <- ggplot(df_norm, aes(x, densidad)) +
+  geom_line(color = "#2E86AB", linewidth = 1.2) +
+  geom_area(alpha = 0.2, fill = "#2E86AB") +
+  geom_vline(xintercept = mu_lc, linetype = "dashed", color = "firebrick") +
+  geom_vline(xintercept = c(mu_lc - sigma_lc, mu_lc + sigma_lc),
+             linetype = "dotted", color = "grey40") +
+  annotate("text", x = mu_lc + 1, y = max(df_norm$densidad) * 0.95,
+           label = paste0("μ = ", mu_lc), color = "firebrick",
+           hjust = 0, size = 4) +
+  annotate("segment",
+           x = mu_lc - sigma_lc, xend = mu_lc + sigma_lc,
+           y = max(df_norm$densidad) * 0.5,
+           yend = max(df_norm$densidad) * 0.5,
+           arrow = arrow(ends = "both", length = unit(0.1, "inches")),
+           color = "grey40") +
+  annotate("text", x = mu_lc, y = max(df_norm$densidad) * 0.55,
+           label = "68.3%", color = "grey30", size = 3.5) +
+  labs(
+    title = "Distribución Normal: longitud corporal de D. gliroides",
+    subtitle = paste0("μ = ", mu_lc, " mm, σ = ", sigma_lc, " mm"),
+    x = "Longitud corporal (mm)",
+    y = "Densidad"
+  )
+
+p4
+```
+
+### Log-Normal
+
+Si $\ln(X) \sim \mathcal{N}(\mu, \sigma^2)$, entonces $X$ sigue una distribución log-normal. Muy común en ecología para variables positivas con asimetría derecha (biomasa, área de distribución, tamaño poblacional).
+
+```{r lognormal}
+# Ejemplo: área de home range de D. gliroides (ha) estimada por AKDE
+mu_log <- 0.8
+sigma_log <- 0.6
+
+x_ln <- seq(0.01, 15, length.out = 300)
+
+df_ln <- data.frame(
+  x = x_ln,
+  densidad = dlnorm(x_ln, meanlog = mu_log, sdlog = sigma_log)
+)
+
+p5 <- ggplot(df_ln, aes(x, densidad)) +
+  geom_line(color = "#A23B72", linewidth = 1.2) +
+  geom_area(alpha = 0.2, fill = "#A23B72") +
+  geom_vline(xintercept = exp(mu_log), linetype = "dashed",
+             color = "firebrick") +
+  annotate("text", x = exp(mu_log) + 0.5,
+           y = max(df_ln$densidad) * 0.9,
+           label = paste0("Mediana = ", round(exp(mu_log), 2), " ha"),
+           color = "firebrick", hjust = 0, size = 4) +
+  labs(
+    title = "Distribución Log-Normal: home range de D. gliroides (AKDE)",
+    subtitle = paste0("μ_log = ", mu_log, ", σ_log = ", sigma_log),
+    x = "Área de home range (ha)",
+    y = "Densidad"
+  )
+
+p5
+```
+
+### Gamma
+
+Útil para modelar tiempos de espera o variables positivas continuas con asimetría variable:
+
+$$X \sim \text{Gamma}(\alpha, \beta), \quad E[X] = \alpha/\beta, \quad \text{Var}(X) = \alpha/\beta^2$$
+
+```{r gamma}
+# Ejemplo: tiempo entre visitas sucesivas de polinizadores (minutos)
+shape_val <- 2.5
+rate_val <- 0.3
+
+x_gam <- seq(0.01, 30, length.out = 300)
+
+df_gam <- data.frame(
+  x = x_gam,
+  densidad = dgamma(x_gam, shape = shape_val, rate = rate_val)
+)
+
+p6 <- ggplot(df_gam, aes(x, densidad)) +
+  geom_line(color = "#E8702A", linewidth = 1.2) +
+  geom_area(alpha = 0.2, fill = "#E8702A") +
+  labs(
+    title = "Distribución Gamma: intervalo entre visitas de polinizadores",
+    subtitle = paste0("shape = ", shape_val, ", rate = ", rate_val,
+                      " | E[X] = ", round(shape_val / rate_val, 1), " min"),
+    x = "Tiempo entre visitas (min)",
+    y = "Densidad"
+  )
+
+p6
+```
+
+### Beta
+
+Modela proporciones y probabilidades ($X \in [0, 1]$):
+
+$$X \sim \text{Beta}(\alpha, \beta), \quad E[X] = \frac{\alpha}{\alpha + \beta}$$
+
+```{r beta}
+# Ejemplo: proporción de frutos removidos por sitio
+alphas <- c(2, 5, 1, 0.5)
+betas  <- c(5, 5, 3, 0.5)
+
+x_beta <- seq(0.001, 0.999, length.out = 300)
+
+df_beta <- purrr::map2_dfr(alphas, betas, function(a, b) {
+  data.frame(
+    x = x_beta,
+    densidad = dbeta(x_beta, a, b),
+    params = paste0("α=", a, ", β=", b)
+  )
+})
+
+p7 <- ggplot(df_beta, aes(x, densidad, color = params)) +
+  geom_line(linewidth = 1.1) +
+  scale_color_brewer(palette = "Set1") +
+  labs(
+    title = "Distribución Beta: proporción de frutos removidos",
+    x = "Proporción removida",
+    y = "Densidad",
+    color = "Parámetros"
+  ) +
+  theme(legend.position = "top")
+
+p7
+```
+
+## Panel comparativo de distribuciones
+
+```{r panel-distribuciones, fig.width=12, fig.height=10}
+(p1 + p2) / (p4 + p5) +
+  plot_annotation(
+    title = "Panorama de distribuciones relevantes en ecología",
+    theme = theme(plot.title = element_text(size = 16, face = "bold"))
+  )
+```
+
+## ¿Cómo elegir la distribución adecuada?
+
+```{r tabla-distribuciones}
+tabla_dist <- data.frame(
+  Distribución = c("Binomial", "Poisson", "Binomial Neg.",
+                    "Normal", "Log-Normal", "Gamma", "Beta"),
+  Tipo = c("Discreta", "Discreta", "Discreta",
+           "Continua", "Continua", "Continua", "Continua"),
+  Soporte = c("{0,...,n}", "{0,1,2,...}", "{0,1,2,...}",
+              "(-∞, +∞)", "(0, +∞)", "(0, +∞)", "(0, 1)"),
+  `Uso ecológico` = c(
+    "Presencia/ausencia, germinación, éxito reproductivo",
+    "Conteos de individuos, eventos raros (equidispersión)",
+    "Conteos sobredispersos (abundancia, parásitos)",
+    "Medidas morfométricas, rasgos continuos simétricos",
+    "Biomasa, área, tamaño poblacional, home range",
+    "Tiempos de espera, precipitación, concentraciones",
+    "Proporciones, cobertura vegetal, tasas de remoción"
+  ),
+  `Relación media-varianza` = c(
+    "Var < μ (subdispersión posible)",
+    "Var = μ",
+    "Var > μ (sobredispersión)",
+    "Var independiente de μ",
+    "Var crece con μ",
+    "Var crece con μ²",
+    "Var depende de α y β"
+  )
+)
+
+knitr::kable(tabla_dist, caption = "Guía para selección de distribuciones")
+```
+
+---
+
+# Estadígrafos Descriptivos
+
+Los estadígrafos son funciones de los datos muestrales que resumen información clave de la distribución subyacente. Se organizan en tres familias principales.
+
+## Medidas de tendencia central
+
+```{r datos-ejemplo}
+# Datos simulados: peso corporal de D. gliroides (g)
+# Dos poblaciones: bosque nativo vs. borde de plantación
+set.seed(123)
+
+peso_nativo <- rnorm(45, mean = 28, sd = 4.5)
+peso_borde  <- c(rnorm(35, mean = 24, sd = 5), rnorm(10, mean = 38, sd = 3))
+
+datos_peso <- data.frame(
+  peso = c(peso_nativo, peso_borde),
+  habitat = rep(c("Bosque nativo", "Borde plantación"),
+                c(length(peso_nativo), length(peso_borde)))
+)
+```
+
+### Media aritmética, mediana y moda
+
+$$\bar{x} = \frac{1}{n}\sum_{i=1}^{n} x_i$$
+
+La **mediana** ($\tilde{x}$) es el valor que divide la distribución en dos mitades iguales. Es más robusta a valores extremos.
+
+```{r tendencia-central}
+resumen_tc <- datos_peso %>%
+  group_by(habitat) %>%
+  summarise(
+    n = n(),
+    media = round(mean(peso), 2),
+    mediana = round(median(peso), 2),
+    media_recortada_10 = round(mean(peso, trim = 0.10), 2),
+    .groups = "drop"
+  )
+
+knitr::kable(resumen_tc,
+             caption = "Medidas de tendencia central del peso de D. gliroides")
+```
+
+```{r fig-tendencia-central}
+ggplot(datos_peso, aes(x = peso, fill = habitat)) +
+  geom_histogram(aes(y = after_stat(density)),
+                 bins = 20, alpha = 0.6, position = "identity") +
+  geom_density(aes(color = habitat), linewidth = 1, fill = NA) +
+  geom_vline(data = resumen_tc,
+             aes(xintercept = media, color = habitat),
+             linetype = "dashed", linewidth = 0.8) +
+  geom_vline(data = resumen_tc,
+             aes(xintercept = mediana, color = habitat),
+             linetype = "dotted", linewidth = 0.8) +
+  scale_fill_manual(values = c("#2E86AB", "#E8702A")) +
+  scale_color_manual(values = c("#2E86AB", "#E8702A")) +
+  facet_wrap(~habitat, ncol = 1, scales = "free_y") +
+  labs(
+    title = "Distribución del peso corporal de D. gliroides",
+    subtitle = "Línea punteada = mediana, línea segmentada = media",
+    x = "Peso corporal (g)",
+    y = "Densidad"
+  ) +
+  theme(legend.position = "none")
+```
+
+> **Punto clave:** Cuando media ≠ mediana, la distribución es asimétrica. La diferencia entre ambas indica el grado y dirección de la asimetría.
+
+## Medidas de dispersión
+
+### Varianza, desviación estándar y coeficiente de variación
+
+$$s^2 = \frac{1}{n-1}\sum_{i=1}^{n}(x_i - \bar{x})^2, \quad s = \sqrt{s^2}, \quad CV = \frac{s}{\bar{x}} \times 100$$
+
+### Rango intercuartílico (IQR) y MAD
+
+El **IQR** = $Q_3 - Q_1$ y la **MAD** (median absolute deviation) son alternativas robustas.
+
+```{r dispersion}
+resumen_disp <- datos_peso %>%
+  group_by(habitat) %>%
+  summarise(
+    varianza = round(var(peso), 2),
+    DE = round(sd(peso), 2),
+    CV_pct = round(sd(peso) / mean(peso) * 100, 1),
+    IQR = round(IQR(peso), 2),
+    MAD = round(mad(peso), 2),
+    rango = round(diff(range(peso)), 2),
+    .groups = "drop"
+  )
+
+knitr::kable(resumen_disp,
+             caption = "Medidas de dispersión del peso de D. gliroides")
+```
+
+```{r boxplot-violin, fig.width=7, fig.height=5}
+ggplot(datos_peso, aes(x = habitat, y = peso, fill = habitat)) +
+  geom_violin(alpha = 0.3, width = 0.8) +
+  geom_boxplot(width = 0.15, outlier.shape = 21,
+               outlier.fill = "firebrick", alpha = 0.7) +
+  geom_jitter(width = 0.05, alpha = 0.3, size = 1.5) +
+  scale_fill_manual(values = c("#2E86AB", "#E8702A")) +
+  labs(
+    title = "Peso corporal de D. gliroides por hábitat",
+    subtitle = "Violin + boxplot + datos crudos",
+    x = NULL, y = "Peso corporal (g)"
+  ) +
+  theme(legend.position = "none")
+```
+
+## Medidas de forma
+
+### Asimetría (skewness)
+
+$$g_1 = \frac{n}{(n-1)(n-2)} \sum_{i=1}^{n}\left(\frac{x_i - \bar{x}}{s}\right)^3$$
+
+- $g_1 = 0$: simétrica
+- $g_1 > 0$: cola derecha (positiva)
+- $g_1 < 0$: cola izquierda (negativa)
+
+### Curtosis (kurtosis)
+
+$$g_2 = \frac{n(n+1)}{(n-1)(n-2)(n-3)} \sum_{i=1}^{n}\left(\frac{x_i - \bar{x}}{s}\right)^4 - \frac{3(n-1)^2}{(n-2)(n-3)}$$
+
+- $g_2 = 0$: mesocúrtica (como la normal)
+- $g_2 > 0$: leptocúrtica (colas pesadas)
+- $g_2 < 0$: platicúrtica (colas livianas)
+
+```{r forma}
+resumen_forma <- datos_peso %>%
+  group_by(habitat) %>%
+  summarise(
+    skewness = round(skewness(peso), 3),
+    kurtosis_exc = round(kurtosis(peso) - 3, 3),  # exceso de curtosis
+    .groups = "drop"
+  )
+
+knitr::kable(resumen_forma,
+             caption = "Medidas de forma de la distribución del peso")
+```
+
+```{r qq-plots, fig.width=10, fig.height=4}
+ggplot(datos_peso, aes(sample = peso)) +
+  stat_qq(alpha = 0.6, color = "#2E86AB") +
+  stat_qq_line(color = "firebrick", linetype = "dashed") +
+  facet_wrap(~habitat, scales = "free") +
+  labs(
+    title = "Q-Q plots: evaluación de normalidad",
+    subtitle = "Desviaciones de la línea indican alejamiento de la distribución normal",
+    x = "Cuantiles teóricos",
+    y = "Cuantiles muestrales"
+  )
+```
+
+## Resumen visual integrado
+
+```{r resumen-integrado, fig.width=10, fig.height=4}
+# Función para panel de diagnóstico rápido
+diagnostico_distribucion <- function(x, nombre = "Variable") {
+  df <- data.frame(x = x)
+
+  p_hist <- ggplot(df, aes(x)) +
+    geom_histogram(aes(y = after_stat(density)),
+                   bins = 20, fill = "#2E86AB", alpha = 0.6) +
+    geom_density(color = "#A23B72", linewidth = 1) +
+    labs(title = "Histograma + densidad", x = nombre, y = "Densidad")
+
+  p_box <- ggplot(df, aes(y = x)) +
+    geom_boxplot(fill = "#2E86AB", alpha = 0.5, width = 0.3) +
+    labs(title = "Boxplot", y = nombre) +
+    theme(axis.text.x = element_blank(), axis.ticks.x = element_blank())
+
+  p_qq <- ggplot(df, aes(sample = x)) +
+    stat_qq(color = "#2E86AB", alpha = 0.6) +
+    stat_qq_line(color = "firebrick", linetype = "dashed") +
+    labs(title = "Q-Q plot", x = "Teóricos", y = "Muestrales")
+
+  p_hist + p_box + p_qq +
+    plot_annotation(
+      title = paste("Diagnóstico:", nombre),
+      subtitle = paste0(
+        "n = ", length(x),
+        " | media = ", round(mean(x), 2),
+        " | DE = ", round(sd(x), 2),
+        " | skewness = ", round(skewness(x), 2),
+        " | kurtosis exc. = ", round(kurtosis(x) - 3, 2)
+      )
+    )
+}
+
+diagnostico_distribucion(peso_borde, "Peso D. gliroides - Borde plantación (g)")
+```
+
+---
+
+# Teorema Central del Límite y Convergencia
+
+## Teorema Central del Límite (TCL)
+
+Sea $X_1, X_2, \ldots, X_n$ una muestra aleatoria de una población con media $\mu$ y varianza finita $\sigma^2$. Entonces, a medida que $n \rightarrow \infty$:
+
+$$\bar{X}_n = \frac{1}{n}\sum_{i=1}^{n} X_i \xrightarrow{d} \mathcal{N}\left(\mu, \frac{\sigma^2}{n}\right)$$
+
+O equivalentemente:
+
+$$Z_n = \frac{\bar{X}_n - \mu}{\sigma / \sqrt{n}} \xrightarrow{d} \mathcal{N}(0, 1)$$
+
+**Esto vale sin importar la forma de la distribución original**, siempre que la varianza sea finita.
+
+### Demostración visual
+
+```{r tcl-simulacion, fig.width=12, fig.height=10}
+# Demostración del TCL con distintas distribuciones de origen
+set.seed(2025)
+n_sim <- 5000
+
+# Distribuciones de origen
+distribuciones <- list(
+  "Exponencial (λ=1)" = function(n) rexp(n, rate = 1),
+  "Uniforme (0, 1)"   = function(n) runif(n, 0, 1),
+  "Poisson (λ=3)"     = function(n) rpois(n, lambda = 3),
+  "Beta (0.5, 0.5)"   = function(n) rbeta(n, 0.5, 0.5)
+)
+
+tamanios <- c(1, 5, 15, 30)
+
+# Simulación
+tcl_datos <- purrr::map_dfr(names(distribuciones), function(dist_nombre) {
+  rfun <- distribuciones[[dist_nombre]]
+  purrr::map_dfr(tamanios, function(n) {
+    medias <- replicate(n_sim, mean(rfun(n)))
+    data.frame(
+      media = medias,
+      n = paste0("n = ", n),
+      distribucion = dist_nombre
+    )
+  })
+})
+
+tcl_datos$n <- factor(tcl_datos$n,
+                       levels = paste0("n = ", tamanios))
+
+ggplot(tcl_datos, aes(x = media)) +
+  geom_histogram(aes(y = after_stat(density)),
+                 bins = 50, fill = "#2E86AB", alpha = 0.6) +
+  geom_density(color = "#A23B72", linewidth = 0.8) +
+  facet_grid(distribucion ~ n, scales = "free") +
+  labs(
+    title = "Teorema Central del Límite: convergencia a la normalidad",
+    subtitle = paste0(
+      "Distribución de X̄ para ", n_sim,
+      " simulaciones | Columnas: tamaño de muestra (n)"
+    ),
+    x = "Media muestral",
+    y = "Densidad"
+  ) +
+  theme(strip.text = element_text(size = 10))
+```
+
+> **Observación clave:** Con $n = 30$, la distribución de $\bar{X}$ es prácticamente normal incluso cuando la distribución de origen es fuertemente asimétrica (Exponencial) o bimodal (Beta con parámetros < 1). Sin embargo, para distribuciones muy sesgadas, puede necesitarse $n > 30$.
+
+### Implicancias para ecología
+
+```{r tcl-ecologia}
+# Ejemplo práctico: estimación de riqueza de polinizadores
+# Distribución de origen: Poisson con λ = 8 especies por sitio
+
+lambda_riq <- 8
+tamanos_muestra <- c(3, 5, 10, 20, 50)
+
+tcl_riqueza <- purrr::map_dfr(tamanos_muestra, function(n) {
+  medias <- replicate(10000, mean(rpois(n, lambda_riq)))
+  data.frame(
+    media = medias,
+    n = n,
+    ee_teorico = sqrt(lambda_riq / n),
+    ee_observado = sd(medias)
+  )
+})
+
+# Comparar error estándar teórico vs observado
+ee_comp <- tcl_riqueza %>%
+  group_by(n) %>%
+  summarise(
+    ee_teorico = first(ee_teorico),
+    ee_simulado = sd(media),
+    .groups = "drop"
+  ) %>%
+  mutate(across(starts_with("ee"), ~round(.x, 4)))
+
+knitr::kable(ee_comp,
+             caption = "Error estándar teórico (σ/√n) vs. simulado")
+```
+
+## Tipos de convergencia
+
+Es importante distinguir los distintos modos de convergencia en probabilidad:
+
+### 1. Convergencia en distribución ($\xrightarrow{d}$)
+
+$$F_{X_n}(x) \rightarrow F_X(x) \text{ para todo } x \text{ donde } F_X \text{ es continua}$$
+
+Es la más débil. El TCL es un ejemplo canónico.
+
+### 2. Convergencia en probabilidad ($\xrightarrow{P}$)
+
+$$P(|X_n - X| > \epsilon) \rightarrow 0 \text{ para todo } \epsilon > 0$$
+
+La **Ley (Débil) de los Grandes Números**: $\bar{X}_n \xrightarrow{P} \mu$.
+
+### 3. Convergencia casi segura ($\xrightarrow{c.s.}$)
+
+$$P\left(\lim_{n \rightarrow \infty} X_n = X\right) = 1$$
+
+La **Ley Fuerte de los Grandes Números**: $\bar{X}_n \xrightarrow{c.s.} \mu$.
+
+### Relación entre convergencias
+
+$$\text{c.s.} \Rightarrow \text{en probabilidad} \Rightarrow \text{en distribución}$$
+
+(Las implicaciones inversas no son válidas en general.)
+
+```{r ley-grandes-numeros, fig.width=10, fig.height=5}
+# Visualización de la Ley de los Grandes Números
+set.seed(42)
+
+# Simulamos muestreos acumulativos de riqueza de especies
+# Distribución real: Poisson(λ = 12)
+n_max <- 500
+x_lgn <- rpois(n_max, lambda = 12)
+
+media_acum <- cumsum(x_lgn) / seq_along(x_lgn)
+
+df_lgn <- data.frame(
+  n = 1:n_max,
+  media_acumulada = media_acum
+)
+
+ggplot(df_lgn, aes(n, media_acumulada)) +
+  geom_line(color = "#2E86AB", alpha = 0.8) +
+  geom_hline(yintercept = 12, linetype = "dashed",
+             color = "firebrick", linewidth = 0.8) +
+  annotate("text", x = n_max * 0.8, y = 12.5,
+           label = "μ = 12 (valor verdadero)",
+           color = "firebrick", size = 4) +
+  labs(
+    title = "Ley de los Grandes Números",
+    subtitle = "Media acumulada de riqueza de polinizadores (Poisson, λ = 12)",
+    x = "Número de sitios muestreados (n)",
+    y = "Media acumulada de riqueza"
+  ) +
+  scale_x_continuous(breaks = seq(0, 500, 50))
+```
+
+## Error estándar y tamaño muestral
+
+El **error estándar** de la media decrece con $\sqrt{n}$:
+
+$$SE(\bar{X}) = \frac{\sigma}{\sqrt{n}}$$
+
+Esto tiene implicancias directas para el diseño de muestreo ecológico.
+
+```{r error-estandar, fig.width=8, fig.height=5}
+sigma_ejemplo <- 5
+n_vals <- 2:200
+
+df_se <- data.frame(
+  n = n_vals,
+  SE = sigma_ejemplo / sqrt(n_vals)
+)
+
+# Líneas de referencia para reducciones clave
+n_refs <- c(5, 10, 25, 50, 100)
+
+ggplot(df_se, aes(n, SE)) +
+  geom_line(color = "#2E86AB", linewidth = 1.2) +
+  geom_point(data = df_se %>% filter(n %in% n_refs),
+             color = "firebrick", size = 3) +
+  geom_text(data = df_se %>% filter(n %in% n_refs),
+            aes(label = paste0("n=", n, "\nSE=", round(SE, 2))),
+            vjust = -0.8, size = 3, color = "firebrick") +
+  labs(
+    title = "Decaimiento del error estándar con el tamaño muestral",
+    subtitle = paste0("σ = ", sigma_ejemplo,
+                      " | Ley de rendimiento decreciente: ",
+                      "duplicar n solo reduce SE en ~30%"),
+    x = "Tamaño muestral (n)",
+    y = "Error estándar (SE)"
+  )
+```
+
+> **Consejo práctico:** Aumentar el tamaño muestral de 25 a 100 (4x) solo reduce el SE a la mitad. En diseños de muestreo ecológico, a menudo es más eficiente invertir en estratificación o en reducir la variabilidad dentro de las unidades que en simplemente aumentar $n$.
+
+---
+
+# Ejercicios Propuestos
+
+## Ejercicio 1: Probabilidad condicional y Bayes
+
+En un estudio de polinización en el desierto florido, se sabe que:
+
+- El 60% de las visitas florales son de abejas nativas y el 40% de *Apis mellifera*.
+- La probabilidad de polinización efectiva dado una visita de abeja nativa es 0.75.
+- La probabilidad de polinización efectiva dado una visita de *Apis* es 0.30.
+
+a) ¿Cuál es la probabilidad de que una visita cualquiera resulte en polinización efectiva?
+b) Si observamos polinización efectiva, ¿cuál es la probabilidad de que el visitante haya sido una abeja nativa?
+
+## Ejercicio 2: Selección de distribución
+
+Usted tiene los siguientes conjuntos de datos ecológicos. Para cada uno, justifique qué distribución utilizaría y por qué:
+
+a) Número de parásitos por hospedero (media = 3.2, varianza = 18.7).
+b) Proporción de cobertura vegetal por cuadrante (valores entre 0 y 1).
+c) Peso seco de biomasa foliar (g) de plantas de una misma especie.
+d) Presencia/ausencia de *D. gliroides* en 50 cámaras trampa durante una noche.
+
+## Ejercicio 3: Estadígrafos y diagnóstico
+
+Cargue un conjunto de datos ecológicos de su elección y aplique la función `diagnostico_distribucion()` definida en esta clase. Interprete los resultados en términos de:
+
+- ¿Es apropiado usar la media como medida de tendencia central?
+- ¿Qué medida de dispersión es más informativa?
+- ¿Qué distribución teórica se ajustaría mejor?
+
+## Ejercicio 4: TCL en acción
+
+Simule 10,000 medias muestrales de tamaño $n = 5, 10, 30, 100$ a partir de una distribución Binomial Negativa con $\mu = 4$ y $\theta = 0.8$ (fuertemente sobredispersa). ¿A partir de qué $n$ la distribución de $\bar{X}$ se aproxima razonablemente a una normal?
+
+---
+
+# Lecturas Recomendadas
+
+- **Bolker, B.M.** (2008). *Ecological Models and Data in R*. Princeton University Press. Capítulos 4-5.
+- **Gotelli, N.J. & Ellison, A.M.** (2013). *A Primer of Ecological Statistics*. 2nd ed. Sinauer. Capítulos 2-4.
+- **Casella, G. & Berger, R.L.** (2002). *Statistical Inference*. 2nd ed. Duxbury. Capítulos 1-5 (para profundizar en teoría).
+
+---
+
+```{r session-info}
+sessionInfo()
+```
