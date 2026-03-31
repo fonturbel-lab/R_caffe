@@ -46,7 +46,7 @@ theme_set(
 )
 
 # Semilla para reproducibilidad
-set.seed(2PA025)
+set.seed(2025)
 ```
 
 ---
