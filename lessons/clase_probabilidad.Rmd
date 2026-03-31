@@ -81,14 +81,16 @@ Sea $\Omega$ un espacio muestral y $\mathcal{F}$ una $\sigma$-álgebra de evento
 
 $$P\left(\bigcup_{i=1}^{\infty} A_i\right) = \sum_{i=1}^{\infty} P(A_i)$$
 
+En palabras: (1) las probabilidades nunca son negativas, (2) la probabilidad de que ocurra *algo* es 1, y (3) si dos o más eventos no pueden ocurrir simultáneamente, la probabilidad de que ocurra al menos uno de ellos es simplemente la suma de sus probabilidades individuales. Toda la teoría de probabilidad se construye a partir de estas tres reglas.
+
 ### Consecuencias directas
 
 De estos tres axiomas se derivan propiedades clave:
 
-- $P(\emptyset) = 0$
-- $P(A^c) = 1 - P(A)$
-- Si $A \subseteq B$, entonces $P(A) \leq P(B)$
-- $P(A \cup B) = P(A) + P(B) - P(A \cap B)$ (regla de la suma)
+- $P(\emptyset) = 0$ — lo imposible tiene probabilidad cero.
+- $P(A^c) = 1 - P(A)$ — la probabilidad de que un evento *no* ocurra es el complemento de que sí ocurra.
+- Si $A \subseteq B$, entonces $P(A) \leq P(B)$ — un evento contenido dentro de otro no puede ser más probable que este.
+- $P(A \cup B) = P(A) + P(B) - P(A \cap B)$ — la regla de la suma: al sumar las probabilidades de dos eventos, debemos restar la intersección para no contarla dos veces.
 
 ```{r axiomas-simulacion}
 # Simulación: probabilidad de visita de polinizadores
@@ -114,6 +116,8 @@ cat("P(ningún polinizador) =", 1 - p_al_menos_uno, "\n")
 La probabilidad de un evento $A$ dado que ocurrió $B$:
 
 $$P(A \mid B) = \frac{P(A \cap B)}{P(B)}, \quad P(B) > 0$$
+
+Es decir, si ya sabemos que ocurrió $B$, la probabilidad de $A$ se recalcula considerando solo aquellos casos donde ambos eventos ocurren juntos, dividido por la probabilidad de $B$. Intuitivamente, condicionar es "reducir el universo" al subconjunto donde $B$ ya sucedió.
 
 **Ejemplo ecológico:** En un bosque templado, la probabilidad de detectar a *D. gliroides* en una cámara trampa depende del tipo de hábitat.
 
@@ -157,6 +161,8 @@ Donde $P(B)$ se puede expandir por el **teorema de probabilidad total**:
 
 $$P(B) = \sum_{i=1}^{n} P(B \mid A_i) \cdot P(A_i)$$
 
+Bayes nos permite "invertir" la dirección de una probabilidad condicional: si conocemos la probabilidad de observar cierta evidencia dado cada posible causa, podemos calcular la probabilidad de cada causa dado que observamos esa evidencia. El denominador $P(B)$ actúa como un factor de normalización que se obtiene sumando sobre todas las causas posibles.
+
 ### Aplicación: identificación de dispersores
 
 Supongamos que encontramos una semilla de *T. corymbosus* germinando en una rama. ¿Cuál es la probabilidad de que haya sido depositada por *D. gliroides* versus un ave frugívora?
@@ -193,6 +199,8 @@ Dos eventos $A$ y $B$ son **independientes** si y solo si:
 $$P(A \cap B) = P(A) \cdot P(B)$$
 
 Equivalentemente: $P(A \mid B) = P(A)$.
+
+En términos simples, dos eventos son independientes cuando saber que uno ocurrió no cambia en nada la probabilidad del otro. Bajo independencia, la probabilidad conjunta es simplemente el producto de las probabilidades marginales.
 
 En ecología, la independencia es una **asunción fuerte** que rara vez se cumple. La dependencia espacial, temporal y filogenética son la norma en datos ecológicos.
 
