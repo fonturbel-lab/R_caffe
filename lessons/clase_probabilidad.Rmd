@@ -1,6 +1,6 @@
 ---
 title: "Teoría de Probabilidad, Distribuciones y Estadígrafos"
-subtitle: "Curso de Postgrado en Ecología y Biología Evolutiva"
+subtitle: "Curso de Diseño Experimental y Bioestadística"
 author: "Francisco E. Fontúrbel"
 date: "`r Sys.Date()`"
 output:
