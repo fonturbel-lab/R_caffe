@@ -895,6 +895,91 @@ $$g_2 = \frac{n(n+1)}{(n-1)(n-2)(n-3)} \sum_{i=1}^{n}\left(\frac{x_i - \bar{x}}{
 - $g_2 > 0$: leptocúrtica (colas pesadas)
 - $g_2 < 0$: platicúrtica (colas livianas)
 
+```{r fig-skewness, fig.width=10, fig.height=4}
+# Figura ilustrativa de asimetría (skewness)
+x_seq <- seq(-6, 6, length.out = 500)
+
+df_skew <- rbind(
+  data.frame(
+    x = x_seq,
+    densidad = dbeta(pnorm(x_seq), 5, 2) * dnorm(x_seq),
+    tipo = "Asimetría negativa (g1 < 0)"
+  ),
+  data.frame(
+    x = x_seq,
+    densidad = dnorm(x_seq, 0, 1),
+    tipo = "Simétrica (g1 = 0)"
+  ),
+  data.frame(
+    x = x_seq,
+    densidad = dbeta(pnorm(x_seq), 2, 5) * dnorm(x_seq),
+    tipo = "Asimetría positiva (g1 > 0)"
+  )
+)
+
+# Normalizar cada panel para que se vean como densidades
+df_skew <- df_skew %>%
+  group_by(tipo) %>%
+  mutate(densidad = densidad / max(densidad)) %>%
+  ungroup()
+
+df_skew$tipo <- factor(df_skew$tipo,
+                        levels = c("Asimetría negativa (g1 < 0)",
+                                   "Simétrica (g1 = 0)",
+                                   "Asimetría positiva (g1 > 0)"))
+
+ggplot(df_skew, aes(x, densidad)) +
+  geom_area(fill = "#2E86AB", alpha = 0.35) +
+  geom_line(color = "#2E86AB", linewidth = 1) +
+  facet_wrap(~tipo, scales = "free_y") +
+  labs(
+    title = "Tipos de asimetría (skewness)",
+    subtitle = "Cola larga hacia la izquierda (negativa), distribución simétrica, y cola larga hacia la derecha (positiva)",
+    x = NULL, y = NULL
+  ) +
+  theme(axis.text = element_blank(), axis.ticks = element_blank())
+```
+
+```{r fig-kurtosis, fig.width=10, fig.height=4}
+# Figura ilustrativa de curtosis
+x_seq2 <- seq(-5, 5, length.out = 500)
+
+df_kurt <- rbind(
+  data.frame(
+    x = x_seq2,
+    densidad = dunif(x_seq2, -3, 3),
+    tipo = "Platicúrtica (g2 < 0)\ncolas livianas, aplanada"
+  ),
+  data.frame(
+    x = x_seq2,
+    densidad = dnorm(x_seq2, 0, 1),
+    tipo = "Mesocúrtica (g2 = 0)\nnormal"
+  ),
+  data.frame(
+    x = x_seq2,
+    densidad = dt(x_seq2, df = 3),
+    tipo = "Leptocúrtica (g2 > 0)\ncolas pesadas, puntiaguda"
+  )
+)
+
+df_kurt$tipo <- factor(df_kurt$tipo,
+                        levels = c(
+                          "Platicúrtica (g2 < 0)\ncolas livianas, aplanada",
+                          "Mesocúrtica (g2 = 0)\nnormal",
+                          "Leptocúrtica (g2 > 0)\ncolas pesadas, puntiaguda"))
+
+ggplot(df_kurt, aes(x, densidad)) +
+  geom_area(fill = "#A23B72", alpha = 0.35) +
+  geom_line(color = "#A23B72", linewidth = 1) +
+  facet_wrap(~tipo, scales = "free_y") +
+  labs(
+    title = "Tipos de curtosis",
+    subtitle = "Desde distribución aplanada (platicúrtica) hasta puntiaguda con colas pesadas (leptocúrtica)",
+    x = NULL, y = NULL
+  ) +
+  theme(axis.text = element_blank(), axis.ticks = element_blank())
+```
+
 ```{r forma}
 resumen_forma <- datos_peso %>%
   group_by(habitat) %>%
