@@ -62,7 +62,6 @@ This repository presents a comprehensive R course intended for self-learning and
 ### Bonus lessons :gift:
 
 - Probability Theory, Distributions, and Summary Statistics (English version: `lessons/English/`)
-- Teoría de Probabilidad, Distribuciones y Estadígrafos (versión en español: `lessons/Spanish/`)
 
 
 This first edition (c) 2022-2026 is composed by 20 lessons plus bonus content, but more lessons are expected to be added in the near future. If you have any suggestions, please let me know.
