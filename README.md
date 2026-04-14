@@ -16,7 +16,7 @@ This repository presents a comprehensive R course intended for self-learning and
 
 02.- Making awesome plots in R
 
-03.- Simple hypothesis test in R (t test and ANOVA)
+03.- Simple hypothesis test in R
 
 04.- Other ANOVA designs part 1
 
@@ -35,31 +35,37 @@ This repository presents a comprehensive R course intended for self-learning and
 
 ### Part 2 - Advanced statistics :man_beard:
 
-11.- Common data distributions and Generalized Linear Models (GLM)
+11.- Generalized Linear Models and data distributions
 
-12.- Generalized Estimation Equations (GEE) and special distributions
+12.- Generalized Estimation Equations and special distributions
 
-13.- Generalized Additive Models (GAM)
+13.- Generalized Additive Models
 
-14.- Mixed-effects Generalized Linear/Additive Models (GLMM)
+14.- Generalized Mixed-Effects Linear Models
 
 15.- Spatially-explicit Generalized Linear/Additive Models
 
 
 ### Part 3 - Applied statistics :older_adult:
 
-16.- ANOSIM, SIMPER, and MVABUND
+16.- ANOSIM, SIMPER, and mvabund for Community Analysis
 
 17.- PCA and nMDS
 
-18.- Biodiversity analysis in R
+18.- Biodiversity analysis
 
-19.- Basic time series analysis
+19.- Time series analysis
 
 20.- Circular statistics and daily activity patterns
 
 
-This first edition (c) 2022-2026 is composed by 20 lessons, but more lessons are expected to be added in the near future. If you have any suggestions, please let me know.
+### Bonus lessons :gift:
+
+- Probability Theory, Distributions, and Summary Statistics (English version: `lessons/English/`)
+- Teoría de Probabilidad, Distribuciones y Estadígrafos (versión en español: `lessons/Spanish/`)
+
+
+This first edition (c) 2022-2026 is composed by 20 lessons plus bonus content, but more lessons are expected to be added in the near future. If you have any suggestions, please let me know.
 
 
 ### How to take the most of these lessons
