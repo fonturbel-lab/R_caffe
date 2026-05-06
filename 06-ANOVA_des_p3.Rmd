@@ -420,6 +420,7 @@ summary(full_model)
 
 # Reduced model without covariate interactions
 reduced_model <- lm(lnfecund ~ size + site * microhab, data = dataf)
+summary(reduced_model)
 
 # Test the assumption using ANOVA
 slope_test <- anova(reduced_model, full_model)
