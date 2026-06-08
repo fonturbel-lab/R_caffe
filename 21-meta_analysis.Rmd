@@ -16,11 +16,9 @@ knitr::opts_chunk$set(
 )
 ```
 
-## A meta-analysis on the effectiveness of biological control on crop pests
+## A meta-analysis example based on the effectiveness of biological control on crop pests
 
-_Pablo Díaz, Natalia Olmos, Juan Luis Celis & Francisco E. Fontúrbel_
-
-This meta-analysis assess the effects of biological control on crop damage, pest abundance, and crop yield. In this first file we assessed how crop damage changes in absence of natural enemies, comparing different crops and productive systems.
+Today we will use some data of [Diaz-Siefer et al. 2022](https://link.springer.com/article/10.1007/s10340-021-01438-4) as a working example. This dataset contains data of crop damage made by pest insects under different agricultural managment scenarios.
 
 ```{r data}
 #Loading data file
