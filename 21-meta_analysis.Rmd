@@ -1,0 +1,226 @@
+---
+title: "01 - Crop damage"
+author: "Francisco E. Fonturbel"
+date: "08/jul/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	echo = FALSE,
+	message = FALSE,
+	warning = FALSE
+)
+```
+
+## A meta-analysis on the effectiveness of biological control on crop pests
+
+_Pablo Díaz, Natalia Olmos, Juan Luis Celis & Francisco E. Fontúrbel_
+
+This meta-analysis assess the effects of biological control on crop damage, pest abundance, and crop yield. In this first file we assessed how crop damage changes in absence of natural enemies, comparing different crops and productive systems.
+
+```{r data}
+#Loading data file
+data<-read.table("./data/data_damage.txt", header = T)
+attach(data)
+
+#Loading packages required
+library(meta)
+```
+
+## Overall effects
+
+How important is biological control on crop damage?
+
+Let's see it using a random-effects model:
+
+```{r overall}
+overall.mod<-metacont(Ne, Xe, Se, Nc, Xc, Sc, data = data,
+                      studlab = paste(caseID),
+                      comb.fixed = FALSE,
+                      comb.random = TRUE,
+                      method.tau = "REML",
+                      hakn = TRUE,
+                      prediction = TRUE,
+                      sm = "SMD",
+                      method.smd = "Hedges")
+
+summary.meta(overall.mod)
+#forest.meta(overall.mod,
+#            comb.random = TRUE)
+```
+
+Great! biological control has a **significant overall effect** on crop damage. Also, there is a **significant heterogeneity** in the model (which is expected in this kind of models)
+
+Before examining the results using the `moderator variables` defined, we must assess the robustness of our data, using three tests:
+
+#### (1) Funnel plot
+
+```{r funnel}
+funnel.meta(overall.mod, studlab = TRUE)
+```
+
+Is there a significant bias on this? let's test it;
+
+```{r metabias}
+metabias(overall.mod)
+```
+
+Fucking hell! this funnel plot has a significant asymmetry problem. It seems that case D45 is making noise, let's try again after excluding it.
+
+```{r sensitiv}
+data1<-data[-c(45),]
+ovsens.mod<-metacont(Ne, Xe, Se, Nc, Xc, Sc, data = data1,
+                      studlab = paste(caseID),
+                      comb.fixed = FALSE,
+                      comb.random = TRUE,
+                      method.tau = "REML",
+                      hakn = TRUE,
+                      prediction = TRUE,
+                      sm = "SMD",
+                      method.smd = "Hedges")
+
+summary.meta(ovsens.mod)
+
+funnel.meta(ovsens.mod)
+
+metabias(ovsens.mod)
+```
+
+Excluding D45 does not solve the problem.
+
+
+#### (2) Baujat plot
+
+The Baujat plot allows us to visually explore heterogeneity in our meta-analysis, visualizing the individual contribution of each case study on overall heterogeneity and the influence in the result.
+
+```{r baujat}
+baujat(overall.mod)
+```
+
+#### (3) Correlation
+
+```{r kcorr}
+cor.test(overall.mod$TE, overall.mod$seTE, method="kendall", continuity = TRUE, alternative = "two.sided")
+```
+
+
+We will examine the correlation between the effect size and sample size using Kendall's approach.
+
+Opps! we have a significant correlation in here.
+
+#### (4) Trim & Fill
+
+Duval & Twieedie's approach 'balances' the model by _trimming_ some case studies and _filling_ others to balance the funnel plot (i.e., approaching to a symmetric model) and recalculates model estimates. If the meta-analysis is robust, we should not see any change in the direction and significance of the overall effect.
+
+```{r trimfill}
+trimfill(overall.mod)
+```
+
+Well, well, well... it seems that our meta-analysis is robust and our results are reliable. Now that we have checked it, we'll examine our moderator variables to disentangle the complexity of these responses:
+
+
+## Examining zone effect (tropical vs temperate)
+
+```{r zone}
+zone.mod<-update.meta(overall.mod,
+                      byvar = zone)
+summary.meta(zone.mod)
+forest.meta(zone.mod,
+            comb.random = TRUE,
+            layout = "subgroup",
+            overall = FALSE,
+            prediction = FALSE,
+            hetstat = FALSE,
+            xlim=c(-1,1))
+```
+
+
+## Examining crop effects
+
+```{r crop1}
+crop.mod<-update.meta(overall.mod,
+                      byvar = crop)
+summary.meta(crop.mod)
+forest.meta(crop.mod,
+            comb.random = TRUE,
+            layout = "subgroup",
+            overall = FALSE,
+            prediction = FALSE,
+            hetstat = FALSE,
+            xlim=c(-1,2.5))
+```
+
+
+#### Excluding levels with N < 4:
+
+
+```{r crop2}
+sel<-crop.mod$bylevs[crop.mod$k.w > 3]
+
+crop2.mod<-update.meta(overall.mod,
+                      subset = crop %in% sel,
+                      byvar = crop)
+summary.meta(crop2.mod)
+forest.meta(crop2.mod,
+            comb.random = TRUE,
+            layout = "subgroup",
+            overall = FALSE,
+            prediction = FALSE,
+            hetstat = FALSE,
+            xlim=c(-1,2))
+```
+
+## Examining experiment effects
+
+```{r exper}
+exp.mod<-update.meta(overall.mod,
+                      byvar = experiment)
+summary.meta(exp.mod)
+forest.meta(exp.mod,
+            comb.random = TRUE,
+            layout = "subgroup",
+            overall = FALSE,
+            prediction = FALSE,
+            hetstat = FALSE,
+            xlim=c(-0.5,2))
+```
+
+
+## Examining agriculture effects
+
+```{r agric}
+agric.mod<-update.meta(overall.mod,
+                      byvar = agriculture)
+summary.meta(agric.mod)
+forest.meta(agric.mod,
+            comb.random = TRUE,
+            layout = "subgroup",
+            overall = FALSE,
+            prediction = FALSE,
+            hetstat = FALSE,
+            xlim=c(-1,1.5))
+```
+
+
+## Examining pest effects
+
+```{r pest}
+pest.mod<-update.meta(overall.mod,
+                      byvar = pest)
+summary.meta(pest.mod)
+forest.meta(pest.mod,
+            comb.random = TRUE,
+            layout = "subgroup",
+            overall = FALSE,
+            prediction = FALSE,
+            hetstat = FALSE,
+            xlim=c(-0.5,2))
+```
+
+
+## Session
+
+```{r session, echo=T}
+sessionInfo()
+```
