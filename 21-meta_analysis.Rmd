@@ -57,7 +57,7 @@ Before examining the results using the `moderator variables` defined, we must as
 #### (1) Funnel plot
 
 ```{r funnel}
-funnel.meta(overall.mod, studlab = TRUE)
+funnel(overall.mod, studlab = TRUE)
 ```
 
 Is there a significant bias on this? let's test it;
@@ -82,7 +82,7 @@ ovsens.mod<-metacont(Ne, Xe, Se, Nc, Xc, Sc, data = data1,
 
 summary(ovsens.mod)
 
-funnel.meta(ovsens.mod)
+funnel(ovsens.mod)
 
 metabias(ovsens.mod)
 ```
