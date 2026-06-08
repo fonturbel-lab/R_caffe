@@ -46,7 +46,7 @@ overall.mod<-metacont(Ne, Xe, Se, Nc, Xc, Sc, data = data,
                       method.smd = "Hedges")
 
 summary(overall.mod)
-#forest.meta(overall.mod,
+#forest(overall.mod,
 #            comb.random = TRUE)
 ```
 
@@ -126,7 +126,7 @@ Well, well, well... it seems that our meta-analysis is robust and our results ar
 zone.mod<-update(overall.mod,
                       byvar = zone)
 summary(zone.mod)
-forest.meta(zone.mod,
+forest(zone.mod,
             comb.random = TRUE,
             layout = "subgroup",
             overall = FALSE,
@@ -142,7 +142,7 @@ forest.meta(zone.mod,
 crop.mod<-update(overall.mod,
                       byvar = crop)
 summary(crop.mod)
-forest.meta(crop.mod,
+forest(crop.mod,
             comb.random = TRUE,
             layout = "subgroup",
             overall = FALSE,
@@ -162,7 +162,7 @@ crop2.mod<-update(overall.mod,
                       subset = crop %in% sel,
                       byvar = crop)
 summary(crop2.mod)
-forest.meta(crop2.mod,
+forest(crop2.mod,
             comb.random = TRUE,
             layout = "subgroup",
             overall = FALSE,
@@ -177,7 +177,7 @@ forest.meta(crop2.mod,
 exp.mod<-update(overall.mod,
                       byvar = experiment)
 summary(exp.mod)
-forest.meta(exp.mod,
+forest(exp.mod,
             comb.random = TRUE,
             layout = "subgroup",
             overall = FALSE,
@@ -193,7 +193,7 @@ forest.meta(exp.mod,
 agric.mod<-update(overall.mod,
                       byvar = agriculture)
 summary(agric.mod)
-forest.meta(agric.mod,
+forest(agric.mod,
             comb.random = TRUE,
             layout = "subgroup",
             overall = FALSE,
@@ -209,7 +209,7 @@ forest.meta(agric.mod,
 pest.mod<-update(overall.mod,
                       byvar = pest)
 summary(pest.mod)
-forest.meta(pest.mod,
+forest(pest.mod,
             comb.random = TRUE,
             layout = "subgroup",
             overall = FALSE,
