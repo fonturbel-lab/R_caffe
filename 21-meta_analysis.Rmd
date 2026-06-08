@@ -45,7 +45,7 @@ overall.mod<-metacont(Ne, Xe, Se, Nc, Xc, Sc, data = data,
                       sm = "SMD",
                       method.smd = "Hedges")
 
-summary.meta(overall.mod)
+summary(overall.mod)
 #forest.meta(overall.mod,
 #            comb.random = TRUE)
 ```
@@ -80,7 +80,7 @@ ovsens.mod<-metacont(Ne, Xe, Se, Nc, Xc, Sc, data = data1,
                       sm = "SMD",
                       method.smd = "Hedges")
 
-summary.meta(ovsens.mod)
+summary(ovsens.mod)
 
 funnel.meta(ovsens.mod)
 
@@ -125,7 +125,7 @@ Well, well, well... it seems that our meta-analysis is robust and our results ar
 ```{r zone}
 zone.mod<-update.meta(overall.mod,
                       byvar = zone)
-summary.meta(zone.mod)
+summary(zone.mod)
 forest.meta(zone.mod,
             comb.random = TRUE,
             layout = "subgroup",
@@ -141,7 +141,7 @@ forest.meta(zone.mod,
 ```{r crop1}
 crop.mod<-update.meta(overall.mod,
                       byvar = crop)
-summary.meta(crop.mod)
+summary(crop.mod)
 forest.meta(crop.mod,
             comb.random = TRUE,
             layout = "subgroup",
@@ -161,7 +161,7 @@ sel<-crop.mod$bylevs[crop.mod$k.w > 3]
 crop2.mod<-update.meta(overall.mod,
                       subset = crop %in% sel,
                       byvar = crop)
-summary.meta(crop2.mod)
+summary(crop2.mod)
 forest.meta(crop2.mod,
             comb.random = TRUE,
             layout = "subgroup",
@@ -176,7 +176,7 @@ forest.meta(crop2.mod,
 ```{r exper}
 exp.mod<-update.meta(overall.mod,
                       byvar = experiment)
-summary.meta(exp.mod)
+summary(exp.mod)
 forest.meta(exp.mod,
             comb.random = TRUE,
             layout = "subgroup",
@@ -192,7 +192,7 @@ forest.meta(exp.mod,
 ```{r agric}
 agric.mod<-update.meta(overall.mod,
                       byvar = agriculture)
-summary.meta(agric.mod)
+summary(agric.mod)
 forest.meta(agric.mod,
             comb.random = TRUE,
             layout = "subgroup",
@@ -208,7 +208,7 @@ forest.meta(agric.mod,
 ```{r pest}
 pest.mod<-update.meta(overall.mod,
                       byvar = pest)
-summary.meta(pest.mod)
+summary(pest.mod)
 forest.meta(pest.mod,
             comb.random = TRUE,
             layout = "subgroup",
