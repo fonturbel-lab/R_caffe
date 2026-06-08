@@ -2,7 +2,10 @@
 title: "21 - Meta analysis"
 author: "Francisco E. Fonturbel"
 date: "08/June/2026"
-output: html_document
+output: 
+  html_document:
+    includes:
+        after_body: footer.html
 ---
 
 ```{r setup, include=FALSE}
