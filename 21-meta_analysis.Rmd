@@ -1,5 +1,5 @@
 ---
-title: "01 - Crop damage"
+title: "21 - Meta analysis"
 author: "Francisco E. Fonturbel"
 date: "08/jul/2021"
 output: html_document
@@ -21,7 +21,7 @@ This meta-analysis assess the effects of biological control on crop damage, pest
 
 ```{r data}
 #Loading data file
-data<-read.table("./data/data_damage.txt", header = T)
+data<-read.table("./data/21_data_meta_damage.txt", header = T)
 attach(data)
 
 #Loading packages required
