@@ -123,7 +123,7 @@ Well, well, well... it seems that our meta-analysis is robust and our results ar
 ## Examining zone effect (tropical vs temperate)
 
 ```{r zone}
-zone.mod<-update.meta(overall.mod,
+zone.mod<-update(overall.mod,
                       byvar = zone)
 summary(zone.mod)
 forest.meta(zone.mod,
@@ -139,7 +139,7 @@ forest.meta(zone.mod,
 ## Examining crop effects
 
 ```{r crop1}
-crop.mod<-update.meta(overall.mod,
+crop.mod<-update(overall.mod,
                       byvar = crop)
 summary(crop.mod)
 forest.meta(crop.mod,
@@ -158,7 +158,7 @@ forest.meta(crop.mod,
 ```{r crop2}
 sel<-crop.mod$bylevs[crop.mod$k.w > 3]
 
-crop2.mod<-update.meta(overall.mod,
+crop2.mod<-update(overall.mod,
                       subset = crop %in% sel,
                       byvar = crop)
 summary(crop2.mod)
@@ -174,7 +174,7 @@ forest.meta(crop2.mod,
 ## Examining experiment effects
 
 ```{r exper}
-exp.mod<-update.meta(overall.mod,
+exp.mod<-update(overall.mod,
                       byvar = experiment)
 summary(exp.mod)
 forest.meta(exp.mod,
@@ -190,7 +190,7 @@ forest.meta(exp.mod,
 ## Examining agriculture effects
 
 ```{r agric}
-agric.mod<-update.meta(overall.mod,
+agric.mod<-update(overall.mod,
                       byvar = agriculture)
 summary(agric.mod)
 forest.meta(agric.mod,
@@ -206,7 +206,7 @@ forest.meta(agric.mod,
 ## Examining pest effects
 
 ```{r pest}
-pest.mod<-update.meta(overall.mod,
+pest.mod<-update(overall.mod,
                       byvar = pest)
 summary(pest.mod)
 forest.meta(pest.mod,
