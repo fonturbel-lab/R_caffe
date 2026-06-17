@@ -118,7 +118,7 @@ Duval & Twieedie's approach 'balances' the model by _trimming_ some case studies
 trimfill(overall.mod)
 ```
 
-Well, well, well... it seems that our meta-analysis is robust and our results are reliable. Now that we have checked it, we'll examine our moderator variables to disentangle the complexity of these responses:
+Well, well, well... it seems that our meta-analysis is robust and our results are reliable, despite the heterogeneity issues detected above. Now that we have checked it, we'll examine our moderator variables to disentangle the complexity of these responses:
 
 
 ## Examining zone effect (tropical vs temperate)
