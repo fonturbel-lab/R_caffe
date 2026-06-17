@@ -220,6 +220,11 @@ forest(pest.mod,
 ```
 
 
+## Further reading
+
+Wanna explore more about meta-analysis? Check Mathias Harrer's guide: https://doing-meta.guide
+
+
 ## Session
 
 ```{r session, echo=T}
