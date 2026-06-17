@@ -67,7 +67,7 @@ Is there a significant bias on this? let's test it;
 metabias(overall.mod)
 ```
 
-Fucking hell! this funnel plot has a significant asymmetry problem. It seems that case D45 is making noise, let's try again after excluding it.
+Ooops! this funnel plot has a significant asymmetry problem. It seems that case D45 is making noise, let's try again after excluding it.
 
 ```{r sensitiv}
 data1<-data[-c(45),]
