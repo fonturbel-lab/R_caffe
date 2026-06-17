@@ -88,7 +88,7 @@ funnel(ovsens.mod)
 metabias(ovsens.mod)
 ```
 
-Excluding D45 does not solve the problem.
+Excluding D45 did not solve the problem.
 
 
 #### (2) Baujat plot
