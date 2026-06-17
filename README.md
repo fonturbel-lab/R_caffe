@@ -58,6 +58,8 @@ This repository presents a comprehensive R course intended for self-learning and
 
 20.- Circular statistics and daily activity patterns
 
+21.- Meta analysis (bonus track)
+
 
 ### Bonus lessons :gift:
 
