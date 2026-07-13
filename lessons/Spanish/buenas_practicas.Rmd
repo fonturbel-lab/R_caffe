@@ -164,7 +164,7 @@ contenido científico por un especialista taxónomo/curador.
 
 ---
 
-# Ideas para mejorar (propuestas concretas para Fonturbel Lab)
+# Ideas para mejorar (propuestas concretas)
 
 1. **Nunca capturar `scientificName` como texto libre.** Construirlo siempre por concatenación
    programática desde columnas atómicas. Esto elimina de raíz las categorías de error más
@@ -205,8 +205,8 @@ Esta sección sintetiza lo discutido en la reunión del laboratorio y lo conecta
 - En configuración regional en español, Excel usa `,` como separador decimal y `.` como separador
   de miles (o viceversa según configuración), lo que genera errores silenciosos al exportar a CSV
   o al abrir el archivo en otro computador con configuración distinta.
-- **Regla del laboratorio: Excel se usa solo para *ver* datos, nunca como herramienta de
-  limpieza/depuración final.**
+- **Regla del laboratorio**: Excel se usa solo para **ver** datos, nunca como herramienta de
+  limpieza/depuración final.
 
 ## Herramientas de depuración recomendadas
 
