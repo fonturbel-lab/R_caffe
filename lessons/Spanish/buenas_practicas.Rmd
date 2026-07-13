@@ -30,7 +30,7 @@ library(kableExtra)
 
 # Objetivo de este documento
 
-Este documento tiene dos propósitos para el laboratorio:
+Este documento tiene dos propósitos:
 
 1. **Diseccionar un caso real** de auditoría de datos: el informe técnico que Pensoft
    (editorial de *PhytoKeys/ZooKeys/BDJ*) encargó al Dr. Robert Mesibov sobre el dataset del
