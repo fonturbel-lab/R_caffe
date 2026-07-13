@@ -1,7 +1,6 @@
 ---
 title: "Buenas prácticas de gestión y depuración de datos biológicos"
-subtitle: "Caso de estudio: auditoría técnica del Herbario PUCV (GBIF/Pensoft) — Laboratorio de Ecología de Interacciones (Fonturbel Lab)"
-author: "Laboratorio de Ecología de Interacciones"
+author: "Francisco E. Fontúrbel""
 date: "`r format(Sys.Date(), '%d de %B de %Y')`"
 output:
   html_document:
