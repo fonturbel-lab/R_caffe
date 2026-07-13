@@ -1,5 +1,5 @@
 ---
-title: "Buenas prácticas de gestión y depuración de datos biológicos"
+title: "Buenas prácticas de gestión y análisis de datos biológicos"
 author: "Francisco E. Fontúrbel""
 date: "`r format(Sys.Date(), '%d de %B de %Y')`"
 output:
