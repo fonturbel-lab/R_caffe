@@ -49,6 +49,18 @@ Este documento tiene dos propósitos:
 > de los errores citados en el informe**, para que las funciones se puedan probar y reutilizar
 > directamente sobre datos reales del laboratorio.
 
+Ambos objetivos apuntan al mismo marco de referencia: los principios **FAIR** (*Findable,
+Accessible, Interoperable, Reusable*). Aquí no los tratamos como una casilla que marcar para
+cumplir con una política editorial, sino como la consecuencia directa de un puñado de hábitos de
+trabajo diario. El caso PUCV (Sección 2) expone sobre todo fallas de **Interoperabilidad** (un
+dataset que no cumple realmente el estándar Darwin Core, aunque diga que sí) y de
+**Findability** (identificadores duplicados, campos descritos en el paper pero ausentes en la
+tabla). Las prácticas de gestión y análisis que resume la Sección 5 cubren mayormente
+**Accessibility** (formatos abiertos, no atados a una licencia de software) y **Reusability**
+(código versionado, documentación, estructura de proyecto que cualquiera puede reconstruir). Un
+dataset o un análisis solo es FAIR si se sostiene en las cuatro patas a la vez; basta con que
+falle una para que el resto del esfuerzo pierda buena parte de su valor.
+
 ---
 
 # El caso: auditoría técnica del Herbario PUCV
@@ -229,6 +241,24 @@ Esta sección sintetiza lo discutido en la reunión del laboratorio y lo conecta
   cero y auditar exactamente qué transformación se aplicó (lo opuesto a editar el Excel a mano,
   que no deja rastro).
 
+## Respaldo de la información
+
+Un archivo crudo "read-only" no sirve de nada si vive en una sola copia sobre un disco que puede
+fallar. El respaldo es la otra mitad de la regla de oro:
+
+- **Regla 3-2-1** como mínimo razonable: al menos **3** copias de cualquier dataset importante,
+  en **2** medios distintos (por ejemplo, disco local y nube), con **1** copia fuera del equipo de
+  trabajo diario (Google Drive, GitHub, un disco externo que no viaja con el computador).
+- Los datos crudos de campo (planillas, fotos de cámaras trampa, archivos GPX) se respaldan **el
+  mismo día** de la salida a terreno, antes de que el archivo original quede como única copia en
+  una tarjeta SD o en un celular.
+- Un repositorio de Git respalda el código y su historial, pero **no reemplaza** el respaldo de
+  los datos crudos pesados (fotos, rásters, archivos de más de un par de MB): para eso, Drive u
+  otro almacenamiento en la nube.
+- Antes de cualquier limpieza o reestructuración fuerte de un dataset, conviene confirmar que la
+  versión anterior sigue disponible en algún respaldo, no solo en el historial de "deshacer" del
+  editor que se esté usando.
+
 ## Estructura de proyecto en R
 
 ```
@@ -253,6 +283,32 @@ nombre_proyecto/
 - **Usar Proyectos de R (`.Rproj`)** para que las rutas sean siempre relativas al proyecto: al
   compartir la carpeta (o clonar el repo) nadie tiene que reescribir rutas absolutas.
 - **No usar `setwd()` con rutas absolutas** dentro de scripts que se van a compartir.
+
+## Nombres de archivos y objetos
+
+Un nombre de archivo o de objeto en R tiene que poder leerse y entenderse sin abrir el archivo ni
+correr el script. Dos extremos igual de problemáticos:
+
+- **Demasiado corto** (`d1.csv`, `df2`, `m3`): nadie recuerda seis meses después qué contenía o
+  qué modelo representaba.
+- **Demasiado largo** (`datos_finales_definitivos_v3_corregido_usar_este_22marzo.csv`): además de
+  incómodo para escribir, suele ser señal de que falta un sistema de versionado real (para eso
+  está Git, no el nombre del archivo).
+
+Convenciones prácticas del laboratorio:
+
+- Nombres descriptivos y cortos, en minúsculas, con guion bajo como separador
+  (`snake_case`): `nahuelbuta_aves_2024.csv`, no `Datos Nahuelbuta AVES (2024) FINAL.csv`.
+- Sin espacios, tildes ni `ñ` en nombres de archivo (los espacios generan problemas al llamar
+  rutas desde la terminal o desde otros sistemas operativos).
+- Scripts numerados según el orden en que se ejecutan (`01_import.R`, `02_clean.R`,
+  `03_analysis.R`), como ya se indicó en la estructura de proyecto.
+- Los nombres de objetos dentro del script siguen la misma lógica: `fit_glmm_fruitset` es más
+  útil que `modelo3` o
+  `modelo_glmm_binomial_negativo_con_efectos_aleatorios_por_sitio_final`.
+- El versionado va en Git (commits con mensaje descriptivo), no en el nombre del archivo
+  (`_v1`, `_v2_final`, `_final_final`). Si un archivo necesita un sufijo de versión para que se
+  entienda, es una señal de que falta control de versiones, no de que falte un sufijo mejor.
 
 ## Git / GitHub
 
@@ -289,6 +345,32 @@ nombre_proyecto/
 - Guardar siempre los scripts en codificación **UTF-8** explícita.
 - Los acentos y `ñ` sí pueden (y deben) usarse en el **texto narrativo** de un `.Rmd` (como en
   este documento) — la restricción aplica al código, no a la prosa.
+
+## Idioma de trabajo: partir en el idioma de destino
+
+Si el resultado final va a una revista en inglés, el script, los comentarios, los nombres de
+objetos y las figuras se escriben en inglés **desde el primer día**, no al final como paso de
+"traducción". Razones concretas, no solo de estilo:
+
+- Traducir al final duplica el trabajo y es una fuente clásica de errores de transcripción: un
+  eje de figura traducido a mano, una etiqueta que quedó a medio traducir, un comentario en
+  español que ya no coincide con el nombre en inglés del objeto que describe.
+- Si el dataset o el código eventualmente se deposita en un repositorio (Sección "Referencias") o
+  se comparte como material suplementario, el idioma consistente es parte de la
+  **Interoperabilidad** FAIR: un script en español mezclado con nombres de columnas en inglés es
+  más difícil de reutilizar para cualquier otro grupo.
+- Esto no compite con la Sección anterior: el código (nombres de objetos, columnas, comentarios)
+  va en el idioma de destino de la publicación; la prosa narrativa de un `.Rmd` de uso interno del
+  laboratorio (como este documento) puede seguir en español.
+
+## Pensar en el largo plazo
+
+Todas las prácticas anteriores —proyectos de R, nombres claros, respaldo, control de versiones,
+Rmarkdown documentado, idioma consistente— responden a una sola pregunta: **¿podría otra persona,
+o yo mismo en un año más, entender y reproducir esto sin tener que preguntarme?** Esa es, en el
+fondo, la definición práctica de la R de FAIR (*Reusable*): no basta con que el análisis haya
+funcionado una vez en un computador; tiene que poder volver a correr en otro computador, con otra
+persona al mando del teclado, y llegar al mismo resultado.
 
 ---
 
