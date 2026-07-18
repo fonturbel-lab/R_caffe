@@ -1811,7 +1811,7 @@ border-radius: 0px;
 <h1 class="title toc-ignore">Buenas prácticas de gestión y análisis de
 datos biológicos</h1>
 <h4 class="author">Francisco E. Fontúrbel</h4>
-<h4 class="date">13 de July de 2026</h4>
+<h4 class="date">18 de July de 2026</h4>
 
 </div>
 
@@ -1844,6 +1844,22 @@ sintéticos que replican la estructura exacta de los errores citados en
 el informe</strong>, para que las funciones se puedan probar y
 reutilizar directamente sobre datos reales del laboratorio.</p>
 </blockquote>
+<p>Ambos objetivos apuntan al mismo marco de referencia: los principios
+<strong>FAIR</strong> (<em>Findable, Accessible, Interoperable,
+Reusable</em>). Aquí no los tratamos como una casilla que marcar para
+cumplir con una política editorial, sino como la consecuencia directa de
+un puñado de hábitos de trabajo diario. El caso PUCV (Sección 2) expone
+sobre todo fallas de <strong>Interoperabilidad</strong> (un dataset que
+no cumple realmente el estándar Darwin Core, aunque diga que sí) y de
+<strong>Findability</strong> (identificadores duplicados, campos
+descritos en el paper pero ausentes en la tabla). Las prácticas de
+gestión y análisis que resume la Sección 5 cubren mayormente
+<strong>Accessibility</strong> (formatos abiertos, no atados a una
+licencia de software) y <strong>Reusability</strong> (código versionado,
+documentación, estructura de proyecto que cualquiera puede reconstruir).
+Un dataset o un análisis solo es FAIR si se sostiene en las cuatro patas
+a la vez; basta con que falle una para que el resto del esfuerzo pierda
+buena parte de su valor.</p>
 <hr />
 </div>
 <div id="el-caso-auditoría-técnica-del-herbario-pucv" class="section level1" number="2">
@@ -2375,8 +2391,34 @@ se aplicó (lo opuesto a editar el Excel a mano, que no deja
 rastro).</li>
 </ul>
 </div>
-<div id="estructura-de-proyecto-en-r" class="section level2" number="5.4">
-<h2><span class="header-section-number">5.4</span> Estructura de
+<div id="respaldo-de-la-información" class="section level2" number="5.4">
+<h2><span class="header-section-number">5.4</span> Respaldo de la
+información</h2>
+<p>Un archivo crudo “read-only” no sirve de nada si vive en una sola
+copia sobre un disco que puede fallar. El respaldo es la otra mitad de
+la regla de oro:</p>
+<ul>
+<li><strong>Regla 3-2-1</strong> como mínimo razonable: al menos
+<strong>3</strong> copias de cualquier dataset importante, en
+<strong>2</strong> medios distintos (por ejemplo, disco local y nube),
+con <strong>1</strong> copia fuera del equipo de trabajo diario (Google
+Drive, GitHub, un disco externo que no viaja con el computador).</li>
+<li>Los datos crudos de campo (planillas, fotos de cámaras trampa,
+archivos GPX) se respaldan <strong>el mismo día</strong> de la salida a
+terreno, antes de que el archivo original quede como única copia en una
+tarjeta SD o en un celular.</li>
+<li>Un repositorio de Git respalda el código y su historial, pero
+<strong>no reemplaza</strong> el respaldo de los datos crudos pesados
+(fotos, rásters, archivos de más de un par de MB): para eso, Drive u
+otro almacenamiento en la nube.</li>
+<li>Antes de cualquier limpieza o reestructuración fuerte de un dataset,
+conviene confirmar que la versión anterior sigue disponible en algún
+respaldo, no solo en el historial de “deshacer” del editor que se esté
+usando.</li>
+</ul>
+</div>
+<div id="estructura-de-proyecto-en-r" class="section level2" number="5.5">
+<h2><span class="header-section-number">5.5</span> Estructura de
 proyecto en R</h2>
 <pre><code>nombre_proyecto/
 ├── nombre_proyecto.Rproj      # usar Proyectos de R: rutas relativas, portabilidad total
@@ -2402,8 +2444,47 @@ clonar el repo) nadie tiene que reescribir rutas absolutas.</li>
 dentro de scripts que se van a compartir.</li>
 </ul>
 </div>
-<div id="git-github" class="section level2" number="5.5">
-<h2><span class="header-section-number">5.5</span> Git / GitHub</h2>
+<div id="nombres-de-archivos-y-objetos" class="section level2" number="5.6">
+<h2><span class="header-section-number">5.6</span> Nombres de archivos y
+objetos</h2>
+<p>Un nombre de archivo o de objeto en R tiene que poder leerse y
+entenderse sin abrir el archivo ni correr el script. Dos extremos igual
+de problemáticos:</p>
+<ul>
+<li><strong>Demasiado corto</strong> (<code>d1.csv</code>,
+<code>df2</code>, <code>m3</code>): nadie recuerda seis meses después
+qué contenía o qué modelo representaba.</li>
+<li><strong>Demasiado largo</strong>
+(<code>datos_finales_definitivos_v3_corregido_usar_este_22marzo.csv</code>):
+además de incómodo para escribir, suele ser señal de que falta un
+sistema de versionado real (para eso está Git, no el nombre del
+archivo).</li>
+</ul>
+<p>Convenciones prácticas del laboratorio:</p>
+<ul>
+<li>Nombres descriptivos y cortos, en minúsculas, con guion bajo como
+separador (<code>snake_case</code>):
+<code>nahuelbuta_aves_2024.csv</code>, no
+<code>Datos Nahuelbuta AVES (2024) FINAL.csv</code>.</li>
+<li>Sin espacios, tildes ni <code>ñ</code> en nombres de archivo (los
+espacios generan problemas al llamar rutas desde la terminal o desde
+otros sistemas operativos).</li>
+<li>Scripts numerados según el orden en que se ejecutan
+(<code>01_import.R</code>, <code>02_clean.R</code>,
+<code>03_analysis.R</code>), como ya se indicó en la estructura de
+proyecto.</li>
+<li>Los nombres de objetos dentro del script siguen la misma lógica:
+<code>fit_glmm_fruitset</code> es más útil que <code>modelo3</code> o
+<code>modelo_glmm_binomial_negativo_con_efectos_aleatorios_por_sitio_final</code>.</li>
+<li>El versionado va en Git (commits con mensaje descriptivo), no en el
+nombre del archivo (<code>_v1</code>, <code>_v2_final</code>,
+<code>_final_final</code>). Si un archivo necesita un sufijo de versión
+para que se entienda, es una señal de que falta control de versiones, no
+de que falte un sufijo mejor.</li>
+</ul>
+</div>
+<div id="git-github" class="section level2" number="5.7">
+<h2><span class="header-section-number">5.7</span> Git / GitHub</h2>
 <ul>
 <li><strong>Historial de cambios real</strong>: cada <code>commit</code>
 queda registrado con autor, fecha y diff exacto (qué línea cambió, quién
@@ -2425,8 +2506,8 @@ integración nativa con Git (panel “Git”: commit, push, pull, historial)
 sin salir del IDE.</li>
 </ul>
 </div>
-<div id="markdown-y-r-markdown" class="section level2" number="5.6">
-<h2><span class="header-section-number">5.6</span> Markdown y R
+<div id="markdown-y-r-markdown" class="section level2" number="5.8">
+<h2><span class="header-section-number">5.8</span> Markdown y R
 Markdown</h2>
 <ul>
 <li><strong>Markdown (<code>.md</code>)</strong>: archivos de texto
@@ -2443,8 +2524,8 @@ los datos reales, evitando copiar y pegar resultados a mano (otra fuente
 clásica de errores de transcripción).</li>
 </ul>
 </div>
-<div id="codificación-de-caracteres-en-código-r" class="section level2" number="5.7">
-<h2><span class="header-section-number">5.7</span> Codificación de
+<div id="codificación-de-caracteres-en-código-r" class="section level2" number="5.9">
+<h2><span class="header-section-number">5.9</span> Codificación de
 caracteres en código R</h2>
 <ul>
 <li><strong>No usar <code>ñ</code> ni tildes en nombres de objetos,
@@ -2458,6 +2539,43 @@ explícita.</li>
 <strong>texto narrativo</strong> de un <code>.Rmd</code> (como en este
 documento) — la restricción aplica al código, no a la prosa.</li>
 </ul>
+</div>
+<div id="idioma-de-trabajo-partir-en-el-idioma-de-destino" class="section level2" number="5.10">
+<h2><span class="header-section-number">5.10</span> Idioma de trabajo:
+partir en el idioma de destino</h2>
+<p>Si el resultado final va a una revista en inglés, el script, los
+comentarios, los nombres de objetos y las figuras se escriben en inglés
+<strong>desde el primer día</strong>, no al final como paso de
+“traducción”. Razones concretas, no solo de estilo:</p>
+<ul>
+<li>Traducir al final duplica el trabajo y es una fuente clásica de
+errores de transcripción: un eje de figura traducido a mano, una
+etiqueta que quedó a medio traducir, un comentario en español que ya no
+coincide con el nombre en inglés del objeto que describe.</li>
+<li>Si el dataset o el código eventualmente se deposita en un
+repositorio (Sección “Referencias”) o se comparte como material
+suplementario, el idioma consistente es parte de la
+<strong>Interoperabilidad</strong> FAIR: un script en español mezclado
+con nombres de columnas en inglés es más difícil de reutilizar para
+cualquier otro grupo.</li>
+<li>Esto no compite con la Sección anterior: el código (nombres de
+objetos, columnas, comentarios) va en el idioma de destino de la
+publicación; la prosa narrativa de un <code>.Rmd</code> de uso interno
+del laboratorio (como este documento) puede seguir en español.</li>
+</ul>
+</div>
+<div id="pensar-en-el-largo-plazo" class="section level2" number="5.11">
+<h2><span class="header-section-number">5.11</span> Pensar en el largo
+plazo</h2>
+<p>Todas las prácticas anteriores —proyectos de R, nombres claros,
+respaldo, control de versiones, Rmarkdown documentado, idioma
+consistente— responden a una sola pregunta: <strong>¿podría otra
+persona, o yo mismo en un año más, entender y reproducir esto sin tener
+que preguntarme?</strong> Esa es, en el fondo, la definición práctica de
+la R de FAIR (<em>Reusable</em>): no basta con que el análisis haya
+funcionado una vez en un computador; tiene que poder volver a correr en
+otro computador, con otra persona al mando del teclado, y llegar al
+mismo resultado.</p>
 <hr />
 </div>
 </div>
