@@ -9,14 +9,13 @@ output:
     toc_float: true
     number_sections: true
     theme: flatly
-    code_folding: show
 editor_options:
   markdown:
     wrap: 100
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
 
 # Paquetes usados en este documento
 # install.packages(c("dplyr", "stringr", "knitr", "janitor", "lubridate", "kableExtra"))
@@ -30,206 +29,66 @@ library(kableExtra)
 
 # Objetivo de este documento
 
-Este documento tiene dos propósitos:
+Este documento reúne las buenas prácticas de gestión y análisis de datos que discutimos en la
+última reunión de laboratorio, organizadas como protocolo de referencia para el laboratorio y para
+quienes están haciendo tesis o postgrado con nosotros. La idea es simple: que un dataset o un
+script del laboratorio pueda ser encontrado, abierto, entendido y reutilizado por cualquier
+persona (incluido uno mismo, un año después), sin depender de que quien lo generó esté disponible
+para explicarlo.
 
-1. **Diseccionar un caso real** de auditoría de datos: el informe técnico que Pensoft
-   (editorial de *PhytoKeys/ZooKeys/BDJ*) encargó al Dr. Robert Mesibov sobre el dataset del
-   Herbario de la Pontificia Universidad Católica de Valparaíso (PUCV), descargado de GBIF el
-   2022-07-13. Este informe es un ejemplo excepcionalmente completo de **qué tipo de errores
-   aparecen sistemáticamente** en bases de datos de biodiversidad construidas a mano o migradas
-   desde Excel.
-2. **Convertir esos hallazgos en un protocolo replicable** (funciones de R + checklist +
-   estructura de proyecto) que el laboratorio pueda aplicar *antes* de publicar o compartir
-   cualquier dataset propio, en lugar de descubrir los problemas cuando un revisor externo los
-   encuentra.
+Ese objetivo tiene nombre: los principios **FAIR** (*Findable, Accessible, Interoperable,
+Reusable*), que usamos como hilo conductor de todo el documento en vez de tratarlos como una
+casilla que marcar para cumplir con una política editorial.
 
-> **Nota sobre los datos usados aquí:** no tenemos acceso al archivo `occurrence.txt` original
-> (Pensoft y GBIF no lo adjuntan en el informe técnico, solo listan los problemas). Por lo tanto,
-> los chunks de código de la Sección 6 usan **datos sintéticos que replican la estructura exacta
-> de los errores citados en el informe**, para que las funciones se puedan probar y reutilizar
-> directamente sobre datos reales del laboratorio.
+- **Findable (encontrable)**: identificadores únicos y consistentes, metadatos completos, nombres
+  de archivo y de objeto que se entienden sin abrir el archivo.
+- **Accessible (accesible)**: formatos abiertos (texto plano, CSV) en vez de formatos atados a una
+  licencia de software; datos crudos respaldados y disponibles.
+- **Interoperable (interoperable)**: estándares reconocidos (p. ej. Darwin Core para datos de
+  biodiversidad), listas controladas en vez de tipeo libre, idioma consistente entre código y
+  publicación.
+- **Reusable (reutilizable)**: código versionado y comentado, estructura de proyecto reproducible,
+  documentación suficiente para que otra persona repita el análisis sin adivinar.
 
-Ambos objetivos apuntan al mismo marco de referencia: los principios **FAIR** (*Findable,
-Accessible, Interoperable, Reusable*). Aquí no los tratamos como una casilla que marcar para
-cumplir con una política editorial, sino como la consecuencia directa de un puñado de hábitos de
-trabajo diario. El caso PUCV (Sección 2) expone sobre todo fallas de **Interoperabilidad** (un
-dataset que no cumple realmente el estándar Darwin Core, aunque diga que sí) y de
-**Findability** (identificadores duplicados, campos descritos en el paper pero ausentes en la
-tabla). Las prácticas de gestión y análisis que resume la Sección 5 cubren mayormente
-**Accessibility** (formatos abiertos, no atados a una licencia de software) y **Reusability**
-(código versionado, documentación, estructura de proyecto que cualquiera puede reconstruir). Un
-dataset o un análisis solo es FAIR si se sostiene en las cuatro patas a la vez; basta con que
-falle una para que el resto del esfuerzo pierda buena parte de su valor.
+Como ilustración de lo que pasa cuando alguna de estas cuatro patas falla, la Sección 7 resume un
+caso real de auditoría de datos de biodiversidad; el resto del documento (Secciones 2 a 6) es el
+protocolo general que aplica a cualquier dataset o análisis del laboratorio, haya o no un caso
+como ese de por medio.
 
 ---
 
-# El caso: auditoría técnica del Herbario PUCV
+# Buenas prácticas de gestión de datos
 
-## Contexto del proceso
+## Por qué Excel no basta
 
-Pensoft publica "data papers" (p. ej. en *PhytoKeys*, *ZooKeys*, *Biodiversity Data Journal*),
-que son artículos científicos cuyo objeto es *describir un dataset* ya publicado en GBIF u otro
-repositorio, no presentar resultados de investigación. Antes de enviar el manuscrito a revisión
-por pares, Pensoft encarga una **evaluación técnica automatizada + manual del dataset en sí**.
-El revisor (aquí, Mesibov) es explícito sobre el alcance de este chequeo:
-
-> *"Pensoft does not check the details of the content of a dataset, for example whether the
-> correct author is given for a scientific name, or whether the correct latitude/longitude is
-> given for a locality."*
-
-Esto es clave y lo retomamos en la Sección 4: **es un control de consistencia estructural, no un
-control de veracidad científica**.
-
-## Taxonomía de los problemas encontrados
-
-Agrupamos los 16 hallazgos del informe en seis categorías. Esta tabla es útil como plantilla de
-"tipos de error" a buscar en cualquier dataset nuevo del laboratorio.
-
-```{r tabla-errores}
-errores <- tribble(
-  ~categoria, ~hallazgo, ~n_registros_aprox, ~gravedad,
-  "Esquema/metadatos", "Campo 'verbatimScientificName' descrito en el paper pero ausente en la tabla", NA, "Alta",
-  "Caracteres inválidos", "Carácter '´' suelto dentro de un catalogNumber", 1, "Baja",
-  "Caracteres invisibles", "Espacios de no separación (NBSP) dentro de scientificName", 250, "Media",
-  "Identificadores", "catalogNumber duplicado entre colecciones (angio/gimno/pterido)", 22, "Alta",
-  "Fechas", "eventDate, year, month, day inconsistentes entre sí", 304, "Alta",
-  "Geografía", "Registros sin ninguna información de localidad", 4, "Alta",
-  "Geografía", "Registros sin 'continent' pese a tener 'country'", 1530, "Media",
-  "Geografía", "Misma coordenada asignada a distinta stateProvince", NA, "Alta",
-  "Valores imposibles", "maximumElevationInMeters > altura máxima terrestre (40000 m)", 3, "Alta",
-  "Taxonomía superior", "'order' con nombre de familia (p.ej. Pteridaceae en vez de Polypodiales)", 34, "Media",
-  "Taxonomía superior", "Mismo género asignado a familias distintas", NA, "Media",
-  "taxonRank", "taxonRank con un epíteto infraespecífico como valor ('spathulifolia')", 3, "Alta",
-  "taxonRank", "taxonRank = 'family' para especies", 37, "Alta",
-  "scientificName", "Subespecies/variedades/formas no separadas en infraspecificEpithet", 236, "Alta",
-  "scientificName", "Doble punto '..' en vez de uno", 36, "Media",
-  "scientificName", "Autoría (authorship) faltante", 105, "Media",
-  "Campos atómicos vs. concatenados", "Discrepancias entre scientificName y genus/specificEpithet", NA, "Alta"
-)
-
-kable(errores, caption = "Categorías de error identificadas en el dataset PUCV") %>%
-  kable_styling(bootstrap_options = c("striped", "hover", "condensed"), full_width = TRUE)
-```
-
-## Lectura transversal: ¿por qué ocurren estos errores?
-
-Casi todos los problemas comparten un origen común, que es más importante que cada error
-individual:
-
-- **Captura manual de un campo concatenado** (`scientificName` como texto libre) en vez de
-  construirlo programáticamente desde campos atómicos (`genus`, `specificEpithet`,
-  `infraspecificEpithet`, `scientificNameAuthorship`, `taxonRank`). Por eso hay 236 registros
-  donde el nombre "dice" variedad/subespecie/forma pero el campo `taxonRank` no lo refleja.
-- **Copiar/pegar desde Word o PDF**, que introduce caracteres invisibles (NBSP) y dobles puntos
-  cuando el punto final de una abreviatura se junta con el punto de cierre de frase.
-- **Ausencia de listas controladas (lookup tables)** para `stateProvince`, `order`, `family`,
-  lo que permite que la misma coordenada geográfica termine con distinta región administrativa
-  escrita a mano en registros distintos.
-- **Falta de validación de rango** en campos numéricos (nadie puso un límite superior sensato a
-  `maximumElevationInMeters`).
-- **Ningún paso de "differencing"** entre columnas redundantes: si `eventDate`, `year`, `month` y
-  `day` se llenan por separado, nada obliga a que coincidan a menos que se audite explícitamente.
-
-Esta lectura es la que conecta el caso con la Sección 5 (ideas de mejora): el objetivo no es
-"corregir 22 duplicados", sino **eliminar la posibilidad estructural** de que vuelvan a ocurrir.
-
----
-
-# Alcances y límites de este tipo de evaluación
-
-Es importante que el laboratorio entienda **qué garantiza y qué NO garantiza** una auditoría como
-esta, para no sobre-confiar en un dataset que "pasó" el chequeo técnico.
-
-## Qué SÍ cubre
-
-- Consistencia interna entre campos (¿coincide `year` con `eventDate`?).
-- Cumplimiento de la estructura del estándar Darwin Core (¿está el campo que dice el paper que
-  está?).
-- Detección de valores imposibles o fuera de rango físico (elevaciones absurdas).
-- Detección de duplicados de identificadores.
-- Detección de caracteres problemáticos para el procesamiento automático (NBSP, comillas
-  tipográficas sueltas).
-- Consistencia geográfica *relativa* (misma coordenada → misma región administrativa).
-
-## Qué NO cubre (limitación explícita del propio informe)
-
-- **Corrección científica del contenido**: el revisor indica textualmente que no verifica si el
-  autor de un nombre científico es el correcto, ni si la latitud/longitud realmente corresponde
-  al sitio de colecta.
-- **Identidad taxonómica de los especímenes** (si la determinación taxonómica en sí es correcta).
-- **Integridad del proceso de digitalización** aguas arriba (no audita cómo se transcribió desde
-  las etiquetas físicas de herbario).
-- **Cobertura/representatividad** del muestreo (no evalúa si el dataset es un buen reflejo de la
-  biodiversidad real del área).
-- El propio revisor señala que algunas revisiones fueron parciales ("*there may be others, I
-  didn't check thoroughly*" en el chequeo de autoría faltante, o "*I have not checked for
-  agreement between scientificName and scientificNameAuthorship*"), es decir, **el informe mismo
-  no es exhaustivo** — es una muestra de los problemas más visibles, no un certificado de calidad
-  total.
-- Es una **foto fija** en el tiempo (2022-07-13): no dice nada sobre si el pipeline que generó
-  esos errores se sigue usando y seguirá produciendo los mismos problemas en la próxima
-  actualización del dataset.
-
-**Conclusión práctica para el lab:** pasar una auditoría técnica como esta es una condición
-necesaria pero no suficiente para la calidad del dato. Complementa, no reemplaza, la revisión de
-contenido científico por un especialista taxónomo/curador.
-
----
-
-# Ideas para mejorar (propuestas concretas)
-
-1. **Nunca capturar `scientificName` como texto libre.** Construirlo siempre por concatenación
-   programática desde columnas atómicas. Esto elimina de raíz las categorías de error más
-   frecuentes del caso PUCV (dobles puntos, autoría faltante, taxonRank mal asignado,
-   subespecies/variedades no separadas).
-2. **Tablas de referencia (lookup tables) versionadas** para geografía administrativa
-   (`country`/`stateProvince`/`continent`) y para taxonomía superior (`order`/`family`), con un
-   `left_join` de validación antes de cada exportación, en vez de tipeo libre.
-3. **Un solo identificador único global**, no por colección. Si se necesita distinguir
-   colecciones, usar un prefijo estructurado (`angio:10040`, `pteri:10040`) desde el diseño de la
-   base, no reparar después.
-4. **Script de validación pre-envío** (ver Sección 6) que se corre automáticamente antes de
-   exportar cualquier dataset a GBIF o antes de enviar un data paper, no solo cuando un editor lo
-   pide.
-5. **Chequeo de rango físico** para todo campo numérico con significado físico (elevación,
-   coordenadas, profundidad, temperatura) con límites hard-coded razonables (p. ej. elevación
-   entre -430 y 8849 m).
-6. **Diferenciación automática entre columnas redundantes** (`eventDate` vs. `year/month/day`)
-   en cada actualización del dataset, no como auditoría puntual años después.
-7. **Detección rutinaria de caracteres no imprimibles** (NBSP, comillas curvas, guiones largos)
-   como parte del control de calidad estándar, no como hallazgo sorpresa de un revisor externo.
-8. **Registro de metadatos = registro de código.** Si el paper describe un campo
-   (`verbatimScientificName`), ese campo debe generarse por el mismo pipeline que genera la
-   tabla, para que nunca queden desincronizados.
-
----
-
-# Buenas prácticas de gestión de datos y análisis (protocolo del laboratorio)
-
-Esta sección sintetiza lo discutido en la reunión del laboratorio y lo conecta con el caso PUCV.
-
-## Problemas clásicos de tabulación (por qué Excel no es suficiente)
-
-- Espacios extra, comas y puntos decimales, saltos de línea invisibles ("pasos fantasma") y
-  formatos mixtos (texto/número/fecha en la misma columna) no siempre son visibles al abrir el
-  archivo en Excel, pero **sí** rompen los pipelines de análisis (exactamente el tipo de problema
-  que encontró Mesibov: NBSP invisibles, dobles puntos, inconsistencias fecha/año).
+- Espacios extra, comas y puntos decimales, saltos de línea invisibles y formatos mixtos
+  (texto/número/fecha en la misma columna) no siempre son visibles al abrir el archivo en Excel,
+  pero sí rompen los pipelines de análisis.
 - En configuración regional en español, Excel usa `,` como separador decimal y `.` como separador
-  de miles (o viceversa según configuración), lo que genera errores silenciosos al exportar a CSV
-  o al abrir el archivo en otro computador con configuración distinta.
+  de miles (o viceversa, según configuración), lo que genera errores silenciosos al exportar a CSV
+  o al abrir el archivo en otro computador con configuración distinta. Un cambio de punto por coma
+  (o viceversa) puede arruinar una planilla completa sin que se note a simple vista.
 - **Regla del laboratorio**: Excel se usa solo para **ver** datos, nunca como herramienta de
-  limpieza/depuración final.
+  limpieza o depuración final.
+- Para cargar datos en R, usar siempre `.txt` o `.csv`, nunca leer directamente la planilla de
+  Excel: las librerías que hacen esa lectura (`readxl` y similares) suelen importar los mismos
+  errores de formato que arrastra el archivo original.
 
 ## Herramientas de depuración recomendadas
 
-| Herramienta | Uso principal | Cuándo usarla |
-|---|---|---|
-| **Notepad++** | Ver y editar el archivo como texto plano; detectar caracteres invisibles, saltos de línea, codificación | Antes de importar cualquier CSV a R, especialmente si viene de Excel o de copiar/pegar desde Word/PDF |
-| **OpenRefine** | Limpieza masiva de datos: clustering de texto (agrupa variantes de escritura de un mismo valor, p.ej. "Shangri-La" / "Shangrila" / "Shangri-la"), transformación por facetas, historial de cambios reversible | Antes de cualquier análisis, especialmente en campos categóricos con tipeo libre (localidades, nombres de colector, taxonomía) |
+```{r tabla-herramientas, echo=FALSE}
+herramientas <- tribble(
+  ~Herramienta, ~`Uso principal`, ~`Cuándo usarla`,
+  "Notepad++", "Ver y editar el archivo como texto plano; detectar caracteres invisibles, saltos de línea, codificación", "Antes de importar cualquier CSV a R, especialmente si viene de Excel o de copiar/pegar desde Word/PDF",
+  "OpenRefine", "Limpieza masiva de datos: clustering de texto (agrupa variantes de escritura de un mismo valor, p. ej. 'Shangri-La' / 'Shangrila' / 'Shangri-la'), transformación por facetas, historial de cambios reversible", "Antes de cualquier análisis, especialmente en campos categóricos con tipeo libre (localidades, nombres de colector, taxonomía)"
+)
 
-> El problema de "Shangri-La / Shangrila / Shangri-la" con la misma coordenada, listado en el
-> Apéndice 1 del informe PUCV, es exactamente el tipo de inconsistencia que el *clustering* de
-> OpenRefine detecta en segundos.
+kable(herramientas, caption = "Herramientas de depuración de datos") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"), full_width = TRUE)
+```
+
+Pasar los datos por Notepad++ u OpenRefine antes de analizar es el paso que detecta, en segundos,
+inconsistencias que de otro modo solo aparecen como resultados raros a mitad del análisis.
 
 ## Regla de oro: la planilla original nunca se toca
 
@@ -238,16 +97,16 @@ Esta sección sintetiza lo discutido en la reunión del laboratorio y lo conecta
 - Toda limpieza se hace mediante **código versionado** que lee el archivo crudo y escribe un
   archivo procesado (`data/raw/` → `data/processed/`).
 - Esto preserva la trazabilidad: cualquier persona puede reconstruir el dataset procesado desde
-  cero y auditar exactamente qué transformación se aplicó (lo opuesto a editar el Excel a mano,
-  que no deja rastro).
+  cero y auditar exactamente qué transformación se aplicó, algo imposible si el Excel original se
+  edita a mano y no deja rastro.
 
 ## Respaldo de la información
 
 Un archivo crudo "read-only" no sirve de nada si vive en una sola copia sobre un disco que puede
 fallar. El respaldo es la otra mitad de la regla de oro:
 
-- **Regla 3-2-1** como mínimo razonable: al menos **3** copias de cualquier dataset importante,
-  en **2** medios distintos (por ejemplo, disco local y nube), con **1** copia fuera del equipo de
+- **Regla 3-2-1** como mínimo razonable: al menos **3** copias de cualquier dataset importante, en
+  **2** medios distintos (por ejemplo, disco local y nube), con **1** copia fuera del equipo de
   trabajo diario (Google Drive, GitHub, un disco externo que no viaja con el computador).
 - Los datos crudos de campo (planillas, fotos de cámaras trampa, archivos GPX) se respaldan **el
   mismo día** de la salida a terreno, antes de que el archivo original quede como única copia en
@@ -259,6 +118,10 @@ fallar. El respaldo es la otra mitad de la regla de oro:
   versión anterior sigue disponible en algún respaldo, no solo en el historial de "deshacer" del
   editor que se esté usando.
 
+---
+
+# Buenas prácticas de análisis y código
+
 ## Estructura de proyecto en R
 
 ```
@@ -267,7 +130,7 @@ nombre_proyecto/
 ├── data/
 │   ├── raw/                   # NUNCA se edita a mano; solo lectura
 │   └── processed/              # generado 100% por código
-├── R/                          # funciones propias (ver Sección 6)
+├── R/                          # funciones propias (ver Sección 5)
 ├── scripts/                    # scripts de análisis, numerados en orden de ejecución
 │   ├── 01_import.R
 │   ├── 02_clean.R
@@ -280,9 +143,11 @@ nombre_proyecto/
 └── .gitignore
 ```
 
-- **Usar Proyectos de R (`.Rproj`)** para que las rutas sean siempre relativas al proyecto: al
-  compartir la carpeta (o clonar el repo) nadie tiene que reescribir rutas absolutas.
-- **No usar `setwd()` con rutas absolutas** dentro de scripts que se van a compartir.
+- **Si el script comienza con `setwd()` con una ruta absoluta, algo está mal.** Usar Proyectos de
+  R (`.Rproj`) en su lugar, para que las rutas sean siempre relativas al proyecto: al compartir la
+  carpeta (o clonar el repo) nadie tiene que reescribir rutas que solo existen en un computador.
+- Crear sub-carpetas dentro del proyecto para ordenar los distintos archivos (`data`, `R`,
+  `scripts`, `output`, etc.), como en el esquema anterior.
 
 ## Nombres de archivos y objetos
 
@@ -297,44 +162,45 @@ correr el script. Dos extremos igual de problemáticos:
 
 Convenciones prácticas del laboratorio:
 
-- Nombres descriptivos y cortos, en minúsculas, con guion bajo como separador
-  (`snake_case`): `nahuelbuta_aves_2024.csv`, no `Datos Nahuelbuta AVES (2024) FINAL.csv`.
+- Nombres descriptivos y cortos, en minúsculas, con guion bajo como separador (`snake_case`):
+  `nahuelbuta_aves_2024.csv`, no `Datos Nahuelbuta AVES (2024) FINAL.csv`.
 - Sin espacios, tildes ni `ñ` en nombres de archivo (los espacios generan problemas al llamar
   rutas desde la terminal o desde otros sistemas operativos).
 - Scripts numerados según el orden en que se ejecutan (`01_import.R`, `02_clean.R`,
-  `03_analysis.R`), como ya se indicó en la estructura de proyecto.
-- Los nombres de objetos dentro del script siguen la misma lógica: `fit_glmm_fruitset` es más
-  útil que `modelo3` o
-  `modelo_glmm_binomial_negativo_con_efectos_aleatorios_por_sitio_final`.
-- El versionado va en Git (commits con mensaje descriptivo), no en el nombre del archivo
-  (`_v1`, `_v2_final`, `_final_final`). Si un archivo necesita un sufijo de versión para que se
-  entienda, es una señal de que falta control de versiones, no de que falte un sufijo mejor.
+  `03_analysis.R`), como en la estructura de proyecto anterior.
+- Los nombres de objetos dentro del script siguen la misma lógica: `fit_glmm_fruitset` es más útil
+  que `modelo3` o `modelo_glmm_binomial_negativo_con_efectos_aleatorios_por_sitio_final`.
+- El versionado va en Git (commits con mensaje descriptivo), no en el nombre del archivo (`_v1`,
+  `_v2_final`, `_final_final`). Si un archivo necesita un sufijo de versión para entenderse, es
+  señal de que falta control de versiones, no de que falte un sufijo mejor.
 
 ## Git / GitHub
 
 - **Historial de cambios real**: cada `commit` queda registrado con autor, fecha y diff exacto
-  (qué línea cambió, quién y cuándo) — algo que un archivo de Excel compartido por correo jamás
+  (qué línea cambió, quién y cuándo), algo que un archivo de Excel compartido por correo jamás
   ofrece.
 - **Flujo básico**: `git pull` (traer cambios) → editar → `git add` → `git commit -m "mensaje
   descriptivo"` → `git push` (subir cambios).
 - **Ramas (`branches`)**: permiten "experimentar" con el código o el análisis sin tocar la versión
   principal (`main`); si el experimento no funciona, se descarta sin dejar rastro en la rama
   principal.
-- **Fork**: permite partir de un repositorio de otra persona/laboratorio y desarrollarlo de forma
-  independiente, manteniendo la conexión con el original.
+- **Fork**: permite partir de un repositorio de otra persona o laboratorio y desarrollarlo de
+  forma independiente, manteniendo la conexión con el original.
 - **Sincronización con RStudio**: RStudio tiene integración nativa con Git (panel "Git": commit,
   push, pull, historial) sin salir del IDE.
 
-## Markdown y R Markdown
+## Scripts comentados y R Markdown
 
-- **Markdown (`.md`)**: archivos de texto plano, livianos, legibles en cualquier plataforma y
-  sistema operativo, sin depender de un programa propietario (a diferencia de `.docx`).
-  Particularmente importante: los modelos de lenguaje (IA) procesan Markdown de forma muy
-  eficiente en tokens, comparado con formatos binarios como `.docx` o `.pdf`.
-- **R Markdown (`.Rmd`)**, como este mismo documento: Markdown "con esteroides" — combina texto
-  narrativo con código ejecutable (R, y también Python, bash, etc.), de modo que el documento
-  final (HTML/PDF/Word) se genera automáticamente a partir de los datos reales, evitando copiar y
-  pegar resultados a mano (otra fuente clásica de errores de transcripción).
+- Usar scripts comentados que sean lo más claros posibles, explicando el *por qué* de cada paso,
+  no solo el *qué* hace la línea de código.
+- Mejor aún, usar archivos de R Markdown (`.Rmd`): combinan texto narrativo con código ejecutable
+  (R, y también Python, bash, etc.), de modo que el documento final (HTML/PDF/Word) se genera
+  automáticamente a partir de los datos reales, evitando copiar y pegar resultados a mano, que es
+  otra fuente clásica de errores de transcripción.
+- Markdown (`.md`) es texto plano, liviano y legible en cualquier plataforma, sin depender de un
+  programa propietario (a diferencia de `.docx`). Como referencia adicional: los modelos de
+  lenguaje procesan Markdown de forma mucho más eficiente que formatos binarios como `.docx` o
+  `.pdf`, lo que también importa si se piensa usar IA como apoyo en el análisis o la redacción.
 
 ## Codificación de caracteres en código R
 
@@ -343,8 +209,8 @@ Convenciones prácticas del laboratorio:
   (Windows/Mac/Linux) o al ejecutar el mismo script en un servidor con configuración de locale
   distinta.
 - Guardar siempre los scripts en codificación **UTF-8** explícita.
-- Los acentos y `ñ` sí pueden (y deben) usarse en el **texto narrativo** de un `.Rmd` (como en
-  este documento) — la restricción aplica al código, no a la prosa.
+- Los acentos y la `ñ` sí pueden (y deben) usarse en el **texto narrativo** de un `.Rmd` (como en
+  este documento); la restricción aplica al código, no a la prosa.
 
 ## Idioma de trabajo: partir en el idioma de destino
 
@@ -352,39 +218,74 @@ Si el resultado final va a una revista en inglés, el script, los comentarios, l
 objetos y las figuras se escriben en inglés **desde el primer día**, no al final como paso de
 "traducción". Razones concretas, no solo de estilo:
 
-- Traducir al final duplica el trabajo y es una fuente clásica de errores de transcripción: un
-  eje de figura traducido a mano, una etiqueta que quedó a medio traducir, un comentario en
-  español que ya no coincide con el nombre en inglés del objeto que describe.
-- Si el dataset o el código eventualmente se deposita en un repositorio (Sección "Referencias") o
-  se comparte como material suplementario, el idioma consistente es parte de la
-  **Interoperabilidad** FAIR: un script en español mezclado con nombres de columnas en inglés es
-  más difícil de reutilizar para cualquier otro grupo.
-- Esto no compite con la Sección anterior: el código (nombres de objetos, columnas, comentarios)
-  va en el idioma de destino de la publicación; la prosa narrativa de un `.Rmd` de uso interno del
+- Traducir al final duplica el trabajo y es fuente clásica de errores de transcripción: un eje de
+  figura traducido a mano, una etiqueta que quedó a medio traducir, un comentario en español que
+  ya no coincide con el nombre en inglés del objeto que describe.
+- Si el dataset o el código eventualmente se deposita en un repositorio o se comparte como
+  material suplementario, el idioma consistente es parte de la **Interoperabilidad** FAIR: un
+  script en español mezclado con nombres de columnas en inglés es más difícil de reutilizar para
+  cualquier otro grupo.
+- Esto no compite con el punto anterior: el código (nombres de objetos, columnas, comentarios) va
+  en el idioma de destino de la publicación; la prosa narrativa de un `.Rmd` de uso interno del
   laboratorio (como este documento) puede seguir en español.
 
 ## Pensar en el largo plazo
 
 Todas las prácticas anteriores —proyectos de R, nombres claros, respaldo, control de versiones,
-Rmarkdown documentado, idioma consistente— responden a una sola pregunta: **¿podría otra persona,
-o yo mismo en un año más, entender y reproducir esto sin tener que preguntarme?** Esa es, en el
-fondo, la definición práctica de la R de FAIR (*Reusable*): no basta con que el análisis haya
-funcionado una vez en un computador; tiene que poder volver a correr en otro computador, con otra
-persona al mando del teclado, y llegar al mismo resultado.
+R Markdown documentado, idioma consistente— responden a una sola pregunta: **¿podría otra
+persona, o yo mismo en un año más, entender y reproducir esto sin tener que preguntarme?** Esa es,
+en el fondo, la definición práctica de la R de FAIR (*Reusable*): no basta con que el análisis
+haya funcionado una vez en un computador; tiene que poder volver a correr en otro computador, con
+otra persona al mando del teclado, y llegar al mismo resultado.
 
 ---
 
-# Librería de funciones de chequeo (aplicable a datasets reales del laboratorio)
+# Errores frecuentes en datasets y cómo prevenirlos estructuralmente
 
-Estas funciones replican, en código reutilizable, los chequeos manuales que hizo Mesibov sobre el
-dataset PUCV. Se ilustran con un **dataset sintético mínimo** que reproduce ejemplos citados
-textualmente en el informe (misma estructura de columnas de Darwin Core), para que el laboratorio
-pueda copiar estas funciones y aplicarlas directamente sobre datos propios (reemplazando el
-dataset sintético por `readr::read_csv("data/raw/occurrence.txt")`).
+Estos son los patrones de error más comunes en datasets construidos a mano o migrados desde
+Excel, junto con la forma de eliminarlos de raíz en vez de corregirlos caso a caso:
 
-```{r datos-sinteticos}
-# Dataset sintético que reproduce ejemplos reales citados en el informe de Mesibov,
-# solo con fines ilustrativos de las funciones de chequeo.
+1. **Nunca capturar un campo compuesto como texto libre** (p. ej. un nombre científico completo,
+   una dirección, o cualquier campo que combine varias piezas de información). Construirlo
+   siempre por concatenación programática desde columnas atómicas (`genus`, `specificEpithet`,
+   `taxonRank`, etc., en el caso de datos de biodiversidad). Esto elimina de raíz los errores más
+   frecuentes: puntuación inconsistente, autoría faltante, categorías mal asignadas, subniveles no
+   separados.
+2. **Tablas de referencia (lookup tables) versionadas** para cualquier campo categórico repetido
+   (geografía administrativa, taxonomía superior, tipo de tratamiento experimental), con un
+   `left_join` de validación antes de cada exportación, en vez de tipeo libre.
+3. **Un solo identificador único global** por dataset, no uno distinto por sub-colección o
+   sub-tabla. Si se necesita distinguir grupos, usar un prefijo estructurado
+   (`angio:10040`, `pteri:10040`) desde el diseño de la base, no reparar después.
+4. **Script de validación pre-envío** (ver Sección 5) que se corre automáticamente antes de
+   exportar cualquier dataset o antes de enviar un manuscrito, no solo cuando un revisor externo
+   lo pide.
+5. **Chequeo de rango físico** para todo campo numérico con significado físico (elevación,
+   coordenadas, profundidad, temperatura, cualquier medida corporal) con límites razonables
+   definidos de antemano.
+6. **Diferenciación automática entre columnas redundantes** (por ejemplo, una fecha completa
+   frente a año/mes/día por separado) en cada actualización del dataset, no como auditoría
+   puntual años después.
+7. **Detección rutinaria de caracteres no imprimibles** (espacios de no separación, comillas
+   curvas, guiones largos) como parte del control de calidad estándar, no como hallazgo sorpresa
+   de un revisor externo.
+8. **Registro de metadatos = registro de código.** Si un manuscrito o un README describe un
+   campo, ese campo debe generarse por el mismo pipeline que genera la tabla, para que nunca
+   queden desincronizados.
+
+---
+
+# Funciones de chequeo automatizado
+
+Estas funciones de R sirven como plantilla de auditoría rápida para cualquier dataset del
+laboratorio con estructura tabular (identificador, fechas, geografía, campos numéricos con
+significado físico, un campo de nombre/categoría compuesto). Se ilustran aquí con un dataset
+sintético mínimo con estructura de ocurrencias de biodiversidad (estándar Darwin Core), pero la
+lógica aplica igual a datos experimentales, de terreno o de cualquier otro tipo: basta con ajustar
+los nombres de columna.
+
+```{r datos-sinteticos, echo=FALSE}
+# Dataset sintético mínimo, solo con fines ilustrativos de las funciones de chequeo.
 occ <- tribble(
   ~occurrenceID, ~catalogNumber, ~collectionCode, ~eventDate, ~year, ~month, ~day,
   ~country, ~continent, ~stateProvince, ~decimalLatitude, ~decimalLongitude,
@@ -413,12 +314,12 @@ occ <- tribble(
   NA_real_, "Adesmia\u00A0boronoides Hook.f. 1845", "Adesmia", "boronoides", "species"
 )
 
-kable(occ, caption = "Dataset sintético de ejemplo (reproduce casos citados en el informe PUCV)")
+kable(occ, caption = "Dataset sintético de ejemplo (estructura tipo Darwin Core)")
 ```
 
 ### 1. Duplicados de identificador único
 
-```{r check-duplicados}
+```{r check-duplicados, echo=FALSE}
 check_duplicados <- function(df, col_id) {
   df %>%
     count(.data[[col_id]], name = "n_registros") %>%
@@ -428,9 +329,9 @@ check_duplicados <- function(df, col_id) {
 check_duplicados(occ, "catalogNumber")
 ```
 
-### 2. Consistencia entre `eventDate` y `year`/`month`/`day`
+### 2. Consistencia entre fecha completa y año/mes/día
 
-```{r check-fechas}
+```{r check-fechas, echo=FALSE}
 check_fechas <- function(df) {
   df %>%
     mutate(
@@ -446,7 +347,7 @@ check_fechas(occ)
 
 ### 3. Registros sin ninguna información geográfica
 
-```{r check-sin-geo}
+```{r check-sin-geo, echo=FALSE}
 check_sin_geografia <- function(df) {
   df %>%
     filter(
@@ -459,9 +360,9 @@ check_sin_geografia <- function(df) {
 check_sin_geografia(occ)
 ```
 
-### 4. Elevaciones fuera de rango físico plausible
+### 4. Valores fuera de rango físico plausible
 
-```{r check-elevacion}
+```{r check-elevacion, echo=FALSE}
 check_elevacion <- function(df, min_m = -430, max_m = 8849) {
   df %>%
     filter(!is.na(maximumElevationInMeters)) %>%
@@ -472,9 +373,9 @@ check_elevacion <- function(df, min_m = -430, max_m = 8849) {
 check_elevacion(occ)
 ```
 
-### 5. Misma coordenada asociada a más de una `stateProvince`
+### 5. Misma coordenada asociada a más de una categoría administrativa
 
-```{r check-geo-disagreement}
+```{r check-geo-disagreement, echo=FALSE}
 check_geo_disagreement <- function(df) {
   df %>%
     filter(!is.na(decimalLatitude), !is.na(decimalLongitude)) %>%
@@ -490,9 +391,9 @@ check_geo_disagreement <- function(df) {
 check_geo_disagreement(occ)
 ```
 
-### 6. Caracteres invisibles (NBSP) y dobles puntos en `scientificName`
+### 6. Caracteres invisibles y puntuación duplicada en campos de texto
 
-```{r check-caracteres}
+```{r check-caracteres, echo=FALSE}
 check_nbsp <- function(df, col = "scientificName") {
   df %>%
     filter(str_detect(.data[[col]], "\u00A0")) %>%
@@ -510,9 +411,9 @@ check_nbsp(occ)
 check_doble_punto(occ)
 ```
 
-### 7. `scientificName` con rango infraespecífico no reflejado en `taxonRank`
+### 7. Categoría compuesta no reflejada en el campo de nivel/rango
 
-```{r check-taxonrank}
+```{r check-taxonrank, echo=FALSE}
 check_taxonrank_infra <- function(df) {
   patrones <- c("subsp\\.", " var\\.", " f\\.")
   df %>%
@@ -526,7 +427,7 @@ check_taxonrank_infra(occ)
 
 ### 8. Ejecutar todos los chequeos de una vez (función maestra)
 
-```{r check-master}
+```{r check-master, echo=FALSE}
 auditar_dataset <- function(df) {
   list(
     duplicados_catalogNumber = check_duplicados(df, "catalogNumber"),
@@ -545,32 +446,87 @@ resultado
 ```
 
 > **Para usar sobre datos reales del laboratorio:** guardar estas funciones en
-> `R/funciones_auditoria.R`, cargarlas con `source("R/funciones_auditoria.R")`, y correr
-> `auditar_dataset(mi_dataset)` como último paso de `scripts/02_clean.R`, antes de exportar
-> cualquier dataset a GBIF o antes de enviar un data paper a revisión.
+> `R/funciones_auditoria.R`, cargarlas con `source("R/funciones_auditoria.R")`, adaptar los
+> nombres de columna al dataset propio, y correr `auditar_dataset(mi_dataset)` como último paso
+> de `scripts/02_clean.R`, antes de exportar cualquier dataset o de enviar un manuscrito a
+> revisión.
 
 ---
 
-# Checklist de pre-envío para data papers / datasets del laboratorio
+# Checklist de pre-envío para datasets y manuscritos del laboratorio
 
 ```{r checklist, echo=FALSE}
 checklist <- tribble(
   ~paso, ~descripcion,
   1, "El archivo crudo original está guardado, intacto y con fecha, sin edición manual.",
-  2, "Todo el pipeline de limpieza está en código versionado (Git), no en ediciones manuales de Excel.",
-  3, "scientificName se genera por concatenación programática, no por tipeo libre.",
-  4, "Se corrió auditar_dataset() (o equivalente) y no quedan hallazgos sin resolver o documentados.",
-  5, "Los campos redundantes (eventDate/year/month/day) son 100% consistentes entre sí.",
-  6, "No hay identificadores (catalogNumber, occurrenceID) duplicados dentro del mismo scope.",
-  7, "Todos los campos numéricos con significado físico están dentro de rangos plausibles.",
-  8, "No quedan caracteres invisibles (NBSP) ni errores de puntuación (dobles puntos) en campos de texto.",
-  9, "Los metadatos descritos en el manuscrito (data paper) coinciden exactamente con las columnas exportadas.",
-  10, "El README del repositorio documenta el proceso de limpieza y las decisiones tomadas."
+  2, "Existe al menos un respaldo del archivo crudo fuera del equipo de trabajo diario.",
+  3, "Todo el pipeline de limpieza está en código versionado (Git), no en ediciones manuales de Excel.",
+  4, "Los campos compuestos (nombres, direcciones, categorías combinadas) se generan por concatenación programática, no por tipeo libre.",
+  5, "Se corrió auditar_dataset() (o equivalente) y no quedan hallazgos sin resolver o documentados.",
+  6, "Los campos redundantes (p. ej. fecha completa vs. año/mes/día) son 100% consistentes entre sí.",
+  7, "No hay identificadores duplicados dentro del mismo scope.",
+  8, "Todos los campos numéricos con significado físico están dentro de rangos plausibles.",
+  9, "No quedan caracteres invisibles ni errores de puntuación en campos de texto.",
+  10, "Los metadatos descritos en el manuscrito o README coinciden exactamente con las columnas exportadas.",
+  11, "El README del repositorio documenta el proceso de limpieza y las decisiones tomadas."
 )
 
 kable(checklist, col.names = c("#", "Verificación")) %>%
   kable_styling(bootstrap_options = c("striped", "hover"), full_width = TRUE)
 ```
+
+---
+
+# Caso ilustrativo: auditoría técnica de un dataset de biodiversidad
+
+Para no quedarnos en principios abstractos, vale la pena mirar un ejemplo real de lo que pasa
+cuando estas prácticas no se siguen desde el inicio: el informe técnico que Pensoft (editorial de
+*PhytoKeys*, *ZooKeys* y *Biodiversity Data Journal*) encargó al Dr. Robert Mesibov sobre el
+dataset del Herbario de la Pontificia Universidad Católica de Valparaíso (PUCV), descargado de
+GBIF el 2022-07-13. Pensoft encarga este tipo de evaluación técnica antes de enviar un "data
+paper" (un artículo cuyo objeto es describir un dataset, no presentar resultados de investigación)
+a revisión por pares. El propio revisor es explícito sobre el alcance del chequeo:
+
+> *"Pensoft does not check the details of the content of a dataset, for example whether the
+> correct author is given for a scientific name, or whether the correct latitude/longitude is
+> given for a locality."*
+
+Es decir: es un control de **consistencia estructural**, no de veracidad científica del
+contenido.
+
+```{r tabla-errores, echo=FALSE}
+errores <- tribble(
+  ~categoria, ~hallazgo, ~gravedad,
+  "Esquema/metadatos", "Campo descrito en el paper pero ausente en la tabla", "Alta",
+  "Caracteres invisibles", "Espacios de no separación (NBSP) dentro del nombre científico", "Media",
+  "Identificadores", "Identificador duplicado entre sub-colecciones", "Alta",
+  "Fechas", "Fecha completa, año, mes y día inconsistentes entre sí", "Alta",
+  "Geografía", "Registros sin ninguna información de localidad", "Alta",
+  "Geografía", "Misma coordenada asignada a distinta región administrativa", "Alta",
+  "Valores imposibles", "Elevación mayor a la altura máxima terrestre plausible", "Alta",
+  "Taxonomía superior", "Nombre de familia usado como si fuera un orden", "Media",
+  "Rango taxonómico", "Rango infraespecífico no reflejado en el campo correspondiente", "Alta",
+  "Nombre científico", "Doble punto en vez de uno; autoría faltante", "Media"
+)
+
+kable(errores, caption = "Muestra de las categorías de error identificadas en el dataset PUCV (versión condensada)") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"), full_width = TRUE)
+```
+
+Casi todos estos problemas comparten un origen común, más importante que cada error individual:
+captura manual de campos que debieron construirse por concatenación programática, copiar/pegar
+desde Word o PDF (que introduce caracteres invisibles y puntuación duplicada), ausencia de listas
+controladas para campos categóricos, y falta de validación de rango en campos numéricos. Ninguno
+de estos orígenes es exclusivo de datos de herbario: son exactamente los mismos patrones que
+motivan las Secciones 4 y 5 de este documento.
+
+Vale la pena aclarar también qué **no** cubre este tipo de auditoría, para no sobre-confiar en un
+dataset que la pasó: no verifica la corrección científica del contenido (autoría de un nombre,
+coordenadas reales del sitio de colecta), no evalúa la identidad taxonómica de los especímenes, no
+audita el proceso de digitalización previo, y es una foto fija en el tiempo, no una garantía de
+que el mismo pipeline no vuelva a producir los mismos errores en la próxima actualización. Pasar
+una auditoría técnica es una condición necesaria pero no suficiente para la calidad del dato:
+complementa, pero no reemplaza, la revisión de contenido por un especialista.
 
 ---
 
