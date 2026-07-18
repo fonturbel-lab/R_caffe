@@ -1294,83 +1294,6 @@ window.buildTabsets = function(tocID) {
 };
 
 </script>
-<script>
-window.initializeCodeFolding = function(show) {
-
-  // handlers for show-all and hide all
-  $("#rmd-show-all-code").click(function() {
-    $('div.r-code-collapse').each(function() {
-      $(this).collapse('show');
-    });
-  });
-  $("#rmd-hide-all-code").click(function() {
-    $('div.r-code-collapse').each(function() {
-      $(this).collapse('hide');
-    });
-  });
-
-  // index for unique code element ids
-  var currentIndex = 1;
-
-  // select all R code blocks
-  var rCodeBlocks = $('pre.r, pre.python, pre.bash, pre.sql, pre.cpp, pre.stan, pre.julia, pre.foldable');
-  rCodeBlocks.each(function() {
-    // skip if the block has fold-none class
-    if ($(this).hasClass('fold-none')) return;
-
-    // create a collapsable div to wrap the code in
-    var div = $('<div class="collapse r-code-collapse"></div>');
-    var showThis = (show || $(this).hasClass('fold-show')) && !$(this).hasClass('fold-hide');
-    var id = 'rcode-643E0F36' + currentIndex++;
-    div.attr('id', id);
-    $(this).before(div);
-    $(this).detach().appendTo(div);
-
-    // add a show code button right above
-    var showCodeText = $('<span>' + (showThis ? 'Hide' : 'Show') + '</span>');
-    var showCodeButton = $('<button type="button" class="btn btn-default btn-xs btn-secondary btn-sm code-folding-btn pull-right float-right"></button>');
-    showCodeButton.append(showCodeText);
-    showCodeButton
-        .attr('data-toggle', 'collapse')
-        .attr('data-bs-toggle', 'collapse') // BS5
-        .attr('data-target', '#' + id)
-        .attr('data-bs-target', '#' + id)   // BS5
-        .attr('aria-expanded', showThis)
-        .attr('aria-controls', id);
-
-    var buttonRow = $('<div class="row"></div>');
-    var buttonCol = $('<div class="col-md-12"></div>');
-
-    buttonCol.append(showCodeButton);
-    buttonRow.append(buttonCol);
-
-    div.before(buttonRow);
-
-    // show the div if necessary
-    if (showThis) div.collapse('show');
-
-    // update state of button on show/hide
-    //   * Change text
-    //   * add a class for intermediate states styling
-    div.on('hide.bs.collapse', function () {
-      showCodeText.text('Show');
-      showCodeButton.addClass('btn-collapsing');
-    });
-    div.on('hidden.bs.collapse', function () {
-      showCodeButton.removeClass('btn-collapsing');
-    });
-    div.on('show.bs.collapse', function () {
-      showCodeText.text('Hide');
-      showCodeButton.addClass('btn-expanding');
-    });
-    div.on('shown.bs.collapse', function () {
-      showCodeButton.removeClass('btn-expanding');
-    });
-
-  });
-
-}
-</script>
 <style type="text/css">.hljs-literal {
 color: #990073;
 }
@@ -1718,9 +1641,6 @@ display: none;
 </style>
 
 <!-- code folding -->
-<style type="text/css">
-.code-folding-btn { margin-bottom: 4px; }
-</style>
 
 
 
@@ -1798,14 +1718,6 @@ border-radius: 0px;
 
 <div id="header">
 
-<div class="btn-group pull-right float-right">
-<button type="button" class="btn btn-default btn-xs btn-secondary btn-sm dropdown-toggle" data-toggle="dropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span>Code</span> <span class="caret"></span></button>
-<ul class="dropdown-menu dropdown-menu-right" style="min-width: 50px;">
-<li><a id="rmd-show-all-code" href="#">Show All Code</a></li>
-<li><a id="rmd-hide-all-code" href="#">Hide All Code</a></li>
-</ul>
-</div>
-
 
 
 <h1 class="title toc-ignore">Buenas prácticas de gestión y análisis de
@@ -1819,565 +1731,124 @@ datos biológicos</h1>
 <div id="objetivo-de-este-documento" class="section level1" number="1">
 <h1><span class="header-section-number">1</span> Objetivo de este
 documento</h1>
-<p>Este documento tiene dos propósitos:</p>
-<ol style="list-style-type: decimal">
-<li><strong>Diseccionar un caso real</strong> de auditoría de datos: el
-informe técnico que Pensoft (editorial de
-<em>PhytoKeys/ZooKeys/BDJ</em>) encargó al Dr. Robert Mesibov sobre el
-dataset del Herbario de la Pontificia Universidad Católica de Valparaíso
-(PUCV), descargado de GBIF el 2022-07-13. Este informe es un ejemplo
-excepcionalmente completo de <strong>qué tipo de errores aparecen
-sistemáticamente</strong> en bases de datos de biodiversidad construidas
-a mano o migradas desde Excel.</li>
-<li><strong>Convertir esos hallazgos en un protocolo replicable</strong>
-(funciones de R + checklist + estructura de proyecto) que el laboratorio
-pueda aplicar <em>antes</em> de publicar o compartir cualquier dataset
-propio, en lugar de descubrir los problemas cuando un revisor externo
-los encuentra.</li>
-</ol>
-<blockquote>
-<p><strong>Nota sobre los datos usados aquí:</strong> no tenemos acceso
-al archivo <code>occurrence.txt</code> original (Pensoft y GBIF no lo
-adjuntan en el informe técnico, solo listan los problemas). Por lo
-tanto, los chunks de código de la Sección 6 usan <strong>datos
-sintéticos que replican la estructura exacta de los errores citados en
-el informe</strong>, para que las funciones se puedan probar y
-reutilizar directamente sobre datos reales del laboratorio.</p>
-</blockquote>
-<p>Ambos objetivos apuntan al mismo marco de referencia: los principios
-<strong>FAIR</strong> (<em>Findable, Accessible, Interoperable,
-Reusable</em>). Aquí no los tratamos como una casilla que marcar para
-cumplir con una política editorial, sino como la consecuencia directa de
-un puñado de hábitos de trabajo diario. El caso PUCV (Sección 2) expone
-sobre todo fallas de <strong>Interoperabilidad</strong> (un dataset que
-no cumple realmente el estándar Darwin Core, aunque diga que sí) y de
-<strong>Findability</strong> (identificadores duplicados, campos
-descritos en el paper pero ausentes en la tabla). Las prácticas de
-gestión y análisis que resume la Sección 5 cubren mayormente
-<strong>Accessibility</strong> (formatos abiertos, no atados a una
-licencia de software) y <strong>Reusability</strong> (código versionado,
-documentación, estructura de proyecto que cualquiera puede reconstruir).
-Un dataset o un análisis solo es FAIR si se sostiene en las cuatro patas
-a la vez; basta con que falle una para que el resto del esfuerzo pierda
-buena parte de su valor.</p>
+<p>Este documento reúne las buenas prácticas de gestión y análisis de
+datos que discutimos en la última reunión de laboratorio, organizadas
+como protocolo de referencia para el laboratorio y para quienes están
+haciendo tesis o postgrado con nosotros. La idea es simple: que un
+dataset o un script del laboratorio pueda ser encontrado, abierto,
+entendido y reutilizado por cualquier persona (incluido uno mismo, un
+año después), sin depender de que quien lo generó esté disponible para
+explicarlo.</p>
+<p>Ese objetivo tiene nombre: los principios <strong>FAIR</strong>
+(<em>Findable, Accessible, Interoperable, Reusable</em>), que usamos
+como hilo conductor de todo el documento en vez de tratarlos como una
+casilla que marcar para cumplir con una política editorial.</p>
+<ul>
+<li><strong>Findable (encontrable)</strong>: identificadores únicos y
+consistentes, metadatos completos, nombres de archivo y de objeto que se
+entienden sin abrir el archivo.</li>
+<li><strong>Accessible (accesible)</strong>: formatos abiertos (texto
+plano, CSV) en vez de formatos atados a una licencia de software; datos
+crudos respaldados y disponibles.</li>
+<li><strong>Interoperable (interoperable)</strong>: estándares
+reconocidos (p. ej. Darwin Core para datos de biodiversidad), listas
+controladas en vez de tipeo libre, idioma consistente entre código y
+publicación.</li>
+<li><strong>Reusable (reutilizable)</strong>: código versionado y
+comentado, estructura de proyecto reproducible, documentación suficiente
+para que otra persona repita el análisis sin adivinar.</li>
+</ul>
+<p>Como ilustración de lo que pasa cuando alguna de estas cuatro patas
+falla, la Sección 7 resume un caso real de auditoría de datos de
+biodiversidad; el resto del documento (Secciones 2 a 6) es el protocolo
+general que aplica a cualquier dataset o análisis del laboratorio, haya
+o no un caso como ese de por medio.</p>
 <hr />
 </div>
-<div id="el-caso-auditoría-técnica-del-herbario-pucv" class="section level1" number="2">
-<h1><span class="header-section-number">2</span> El caso: auditoría
-técnica del Herbario PUCV</h1>
-<div id="contexto-del-proceso" class="section level2" number="2.1">
-<h2><span class="header-section-number">2.1</span> Contexto del
-proceso</h2>
-<p>Pensoft publica “data papers” (p. ej. en <em>PhytoKeys</em>,
-<em>ZooKeys</em>, <em>Biodiversity Data Journal</em>), que son artículos
-científicos cuyo objeto es <em>describir un dataset</em> ya publicado en
-GBIF u otro repositorio, no presentar resultados de investigación. Antes
-de enviar el manuscrito a revisión por pares, Pensoft encarga una
-<strong>evaluación técnica automatizada + manual del dataset en
-sí</strong>. El revisor (aquí, Mesibov) es explícito sobre el alcance de
-este chequeo:</p>
-<blockquote>
-<p><em>“Pensoft does not check the details of the content of a dataset,
-for example whether the correct author is given for a scientific name,
-or whether the correct latitude/longitude is given for a
-locality.”</em></p>
-</blockquote>
-<p>Esto es clave y lo retomamos en la Sección 4: <strong>es un control
-de consistencia estructural, no un control de veracidad
-científica</strong>.</p>
+<div id="buenas-prácticas-de-gestión-de-datos" class="section level1" number="2">
+<h1><span class="header-section-number">2</span> Buenas prácticas de
+gestión de datos</h1>
+<div id="por-qué-excel-no-basta" class="section level2" number="2.1">
+<h2><span class="header-section-number">2.1</span> Por qué Excel no
+basta</h2>
+<ul>
+<li>Espacios extra, comas y puntos decimales, saltos de línea invisibles
+y formatos mixtos (texto/número/fecha en la misma columna) no siempre
+son visibles al abrir el archivo en Excel, pero sí rompen los pipelines
+de análisis.</li>
+<li>En configuración regional en español, Excel usa <code>,</code> como
+separador decimal y <code>.</code> como separador de miles (o viceversa,
+según configuración), lo que genera errores silenciosos al exportar a
+CSV o al abrir el archivo en otro computador con configuración distinta.
+Un cambio de punto por coma (o viceversa) puede arruinar una planilla
+completa sin que se note a simple vista.</li>
+<li><strong>Regla del laboratorio</strong>: Excel se usa solo para
+<strong>ver</strong> datos, nunca como herramienta de limpieza o
+depuración final.</li>
+<li>Para cargar datos en R, usar siempre <code>.txt</code> o
+<code>.csv</code>, nunca leer directamente la planilla de Excel: las
+librerías que hacen esa lectura (<code>readxl</code> y similares) suelen
+importar los mismos errores de formato que arrastra el archivo
+original.</li>
+</ul>
 </div>
-<div id="taxonomía-de-los-problemas-encontrados" class="section level2" number="2.2">
-<h2><span class="header-section-number">2.2</span> Taxonomía de los
-problemas encontrados</h2>
-<p>Agrupamos los 16 hallazgos del informe en seis categorías. Esta tabla
-es útil como plantilla de “tipos de error” a buscar en cualquier dataset
-nuevo del laboratorio.</p>
-<pre class="r"><code>errores &lt;- tribble(
-  ~categoria, ~hallazgo, ~n_registros_aprox, ~gravedad,
-  &quot;Esquema/metadatos&quot;, &quot;Campo &#39;verbatimScientificName&#39; descrito en el paper pero ausente en la tabla&quot;, NA, &quot;Alta&quot;,
-  &quot;Caracteres inválidos&quot;, &quot;Carácter &#39;´&#39; suelto dentro de un catalogNumber&quot;, 1, &quot;Baja&quot;,
-  &quot;Caracteres invisibles&quot;, &quot;Espacios de no separación (NBSP) dentro de scientificName&quot;, 250, &quot;Media&quot;,
-  &quot;Identificadores&quot;, &quot;catalogNumber duplicado entre colecciones (angio/gimno/pterido)&quot;, 22, &quot;Alta&quot;,
-  &quot;Fechas&quot;, &quot;eventDate, year, month, day inconsistentes entre sí&quot;, 304, &quot;Alta&quot;,
-  &quot;Geografía&quot;, &quot;Registros sin ninguna información de localidad&quot;, 4, &quot;Alta&quot;,
-  &quot;Geografía&quot;, &quot;Registros sin &#39;continent&#39; pese a tener &#39;country&#39;&quot;, 1530, &quot;Media&quot;,
-  &quot;Geografía&quot;, &quot;Misma coordenada asignada a distinta stateProvince&quot;, NA, &quot;Alta&quot;,
-  &quot;Valores imposibles&quot;, &quot;maximumElevationInMeters &gt; altura máxima terrestre (40000 m)&quot;, 3, &quot;Alta&quot;,
-  &quot;Taxonomía superior&quot;, &quot;&#39;order&#39; con nombre de familia (p.ej. Pteridaceae en vez de Polypodiales)&quot;, 34, &quot;Media&quot;,
-  &quot;Taxonomía superior&quot;, &quot;Mismo género asignado a familias distintas&quot;, NA, &quot;Media&quot;,
-  &quot;taxonRank&quot;, &quot;taxonRank con un epíteto infraespecífico como valor (&#39;spathulifolia&#39;)&quot;, 3, &quot;Alta&quot;,
-  &quot;taxonRank&quot;, &quot;taxonRank = &#39;family&#39; para especies&quot;, 37, &quot;Alta&quot;,
-  &quot;scientificName&quot;, &quot;Subespecies/variedades/formas no separadas en infraspecificEpithet&quot;, 236, &quot;Alta&quot;,
-  &quot;scientificName&quot;, &quot;Doble punto &#39;..&#39; en vez de uno&quot;, 36, &quot;Media&quot;,
-  &quot;scientificName&quot;, &quot;Autoría (authorship) faltante&quot;, 105, &quot;Media&quot;,
-  &quot;Campos atómicos vs. concatenados&quot;, &quot;Discrepancias entre scientificName y genus/specificEpithet&quot;, NA, &quot;Alta&quot;
-)
-
-kable(errores, caption = &quot;Categorías de error identificadas en el dataset PUCV&quot;) %&gt;%
-  kable_styling(bootstrap_options = c(&quot;striped&quot;, &quot;hover&quot;, &quot;condensed&quot;), full_width = TRUE)</code></pre>
+<div id="herramientas-de-depuración-recomendadas" class="section level2" number="2.2">
+<h2><span class="header-section-number">2.2</span> Herramientas de
+depuración recomendadas</h2>
 <table class="table table-striped table-hover table-condensed" style="color: black; margin-left: auto; margin-right: auto;">
 <caption>
-Categorías de error identificadas en el dataset PUCV
+Herramientas de depuración de datos
 </caption>
 <thead>
 <tr>
 <th style="text-align:left;">
-categoria
+Herramienta
 </th>
 <th style="text-align:left;">
-hallazgo
-</th>
-<th style="text-align:right;">
-n_registros_aprox
+Uso principal
 </th>
 <th style="text-align:left;">
-gravedad
+Cuándo usarla
 </th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td style="text-align:left;">
-Esquema/metadatos
+Notepad++
 </td>
 <td style="text-align:left;">
-Campo ‘verbatimScientificName’ descrito en el paper pero ausente en la
-tabla
-</td>
-<td style="text-align:right;">
-NA
+Ver y editar el archivo como texto plano; detectar caracteres
+invisibles, saltos de línea, codificación
 </td>
 <td style="text-align:left;">
-Alta
+Antes de importar cualquier CSV a R, especialmente si viene de Excel o
+de copiar/pegar desde Word/PDF
 </td>
 </tr>
 <tr>
 <td style="text-align:left;">
-Caracteres inválidos
+OpenRefine
 </td>
 <td style="text-align:left;">
-Carácter ‘´’ suelto dentro de un catalogNumber
-</td>
-<td style="text-align:right;">
-1
-</td>
-<td style="text-align:left;">
-Baja
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-Caracteres invisibles
+Limpieza masiva de datos: clustering de texto (agrupa variantes de
+escritura de un mismo valor, p. ej. ‘Shangri-La’ / ‘Shangrila’ /
+‘Shangri-la’), transformación por facetas, historial de cambios
+reversible
 </td>
 <td style="text-align:left;">
-Espacios de no separación (NBSP) dentro de scientificName
-</td>
-<td style="text-align:right;">
-250
-</td>
-<td style="text-align:left;">
-Media
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-Identificadores
-</td>
-<td style="text-align:left;">
-catalogNumber duplicado entre colecciones (angio/gimno/pterido)
-</td>
-<td style="text-align:right;">
-22
-</td>
-<td style="text-align:left;">
-Alta
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-Fechas
-</td>
-<td style="text-align:left;">
-eventDate, year, month, day inconsistentes entre sí
-</td>
-<td style="text-align:right;">
-304
-</td>
-<td style="text-align:left;">
-Alta
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-Geografía
-</td>
-<td style="text-align:left;">
-Registros sin ninguna información de localidad
-</td>
-<td style="text-align:right;">
-4
-</td>
-<td style="text-align:left;">
-Alta
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-Geografía
-</td>
-<td style="text-align:left;">
-Registros sin ‘continent’ pese a tener ‘country’
-</td>
-<td style="text-align:right;">
-1530
-</td>
-<td style="text-align:left;">
-Media
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-Geografía
-</td>
-<td style="text-align:left;">
-Misma coordenada asignada a distinta stateProvince
-</td>
-<td style="text-align:right;">
-NA
-</td>
-<td style="text-align:left;">
-Alta
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-Valores imposibles
-</td>
-<td style="text-align:left;">
-maximumElevationInMeters &gt; altura máxima terrestre (40000 m)
-</td>
-<td style="text-align:right;">
-3
-</td>
-<td style="text-align:left;">
-Alta
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-Taxonomía superior
-</td>
-<td style="text-align:left;">
-‘order’ con nombre de familia (p.ej. Pteridaceae en vez de Polypodiales)
-</td>
-<td style="text-align:right;">
-34
-</td>
-<td style="text-align:left;">
-Media
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-Taxonomía superior
-</td>
-<td style="text-align:left;">
-Mismo género asignado a familias distintas
-</td>
-<td style="text-align:right;">
-NA
-</td>
-<td style="text-align:left;">
-Media
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-taxonRank
-</td>
-<td style="text-align:left;">
-taxonRank con un epíteto infraespecífico como valor (‘spathulifolia’)
-</td>
-<td style="text-align:right;">
-3
-</td>
-<td style="text-align:left;">
-Alta
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-taxonRank
-</td>
-<td style="text-align:left;">
-taxonRank = ‘family’ para especies
-</td>
-<td style="text-align:right;">
-37
-</td>
-<td style="text-align:left;">
-Alta
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-scientificName
-</td>
-<td style="text-align:left;">
-Subespecies/variedades/formas no separadas en infraspecificEpithet
-</td>
-<td style="text-align:right;">
-236
-</td>
-<td style="text-align:left;">
-Alta
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-scientificName
-</td>
-<td style="text-align:left;">
-Doble punto ‘..’ en vez de uno
-</td>
-<td style="text-align:right;">
-36
-</td>
-<td style="text-align:left;">
-Media
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-scientificName
-</td>
-<td style="text-align:left;">
-Autoría (authorship) faltante
-</td>
-<td style="text-align:right;">
-105
-</td>
-<td style="text-align:left;">
-Media
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-Campos atómicos vs. concatenados
-</td>
-<td style="text-align:left;">
-Discrepancias entre scientificName y genus/specificEpithet
-</td>
-<td style="text-align:right;">
-NA
-</td>
-<td style="text-align:left;">
-Alta
+Antes de cualquier análisis, especialmente en campos categóricos con
+tipeo libre (localidades, nombres de colector, taxonomía)
 </td>
 </tr>
 </tbody>
 </table>
+<p>Pasar los datos por Notepad++ u OpenRefine antes de analizar es el
+paso que detecta, en segundos, inconsistencias que de otro modo solo
+aparecen como resultados raros a mitad del análisis.</p>
 </div>
-<div id="lectura-transversal-por-qué-ocurren-estos-errores" class="section level2" number="2.3">
-<h2><span class="header-section-number">2.3</span> Lectura transversal:
-¿por qué ocurren estos errores?</h2>
-<p>Casi todos los problemas comparten un origen común, que es más
-importante que cada error individual:</p>
-<ul>
-<li><strong>Captura manual de un campo concatenado</strong>
-(<code>scientificName</code> como texto libre) en vez de construirlo
-programáticamente desde campos atómicos (<code>genus</code>,
-<code>specificEpithet</code>, <code>infraspecificEpithet</code>,
-<code>scientificNameAuthorship</code>, <code>taxonRank</code>). Por eso
-hay 236 registros donde el nombre “dice” variedad/subespecie/forma pero
-el campo <code>taxonRank</code> no lo refleja.</li>
-<li><strong>Copiar/pegar desde Word o PDF</strong>, que introduce
-caracteres invisibles (NBSP) y dobles puntos cuando el punto final de
-una abreviatura se junta con el punto de cierre de frase.</li>
-<li><strong>Ausencia de listas controladas (lookup tables)</strong> para
-<code>stateProvince</code>, <code>order</code>, <code>family</code>, lo
-que permite que la misma coordenada geográfica termine con distinta
-región administrativa escrita a mano en registros distintos.</li>
-<li><strong>Falta de validación de rango</strong> en campos numéricos
-(nadie puso un límite superior sensato a
-<code>maximumElevationInMeters</code>).</li>
-<li><strong>Ningún paso de “differencing”</strong> entre columnas
-redundantes: si <code>eventDate</code>, <code>year</code>,
-<code>month</code> y <code>day</code> se llenan por separado, nada
-obliga a que coincidan a menos que se audite explícitamente.</li>
-</ul>
-<p>Esta lectura es la que conecta el caso con la Sección 5 (ideas de
-mejora): el objetivo no es “corregir 22 duplicados”, sino
-<strong>eliminar la posibilidad estructural</strong> de que vuelvan a
-ocurrir.</p>
-<hr />
-</div>
-</div>
-<div id="alcances-y-límites-de-este-tipo-de-evaluación" class="section level1" number="3">
-<h1><span class="header-section-number">3</span> Alcances y límites de
-este tipo de evaluación</h1>
-<p>Es importante que el laboratorio entienda <strong>qué garantiza y qué
-NO garantiza</strong> una auditoría como esta, para no sobre-confiar en
-un dataset que “pasó” el chequeo técnico.</p>
-<div id="qué-sí-cubre" class="section level2" number="3.1">
-<h2><span class="header-section-number">3.1</span> Qué SÍ cubre</h2>
-<ul>
-<li>Consistencia interna entre campos (¿coincide <code>year</code> con
-<code>eventDate</code>?).</li>
-<li>Cumplimiento de la estructura del estándar Darwin Core (¿está el
-campo que dice el paper que está?).</li>
-<li>Detección de valores imposibles o fuera de rango físico (elevaciones
-absurdas).</li>
-<li>Detección de duplicados de identificadores.</li>
-<li>Detección de caracteres problemáticos para el procesamiento
-automático (NBSP, comillas tipográficas sueltas).</li>
-<li>Consistencia geográfica <em>relativa</em> (misma coordenada → misma
-región administrativa).</li>
-</ul>
-</div>
-<div id="qué-no-cubre-limitación-explícita-del-propio-informe" class="section level2" number="3.2">
-<h2><span class="header-section-number">3.2</span> Qué NO cubre
-(limitación explícita del propio informe)</h2>
-<ul>
-<li><strong>Corrección científica del contenido</strong>: el revisor
-indica textualmente que no verifica si el autor de un nombre científico
-es el correcto, ni si la latitud/longitud realmente corresponde al sitio
-de colecta.</li>
-<li><strong>Identidad taxonómica de los especímenes</strong> (si la
-determinación taxonómica en sí es correcta).</li>
-<li><strong>Integridad del proceso de digitalización</strong> aguas
-arriba (no audita cómo se transcribió desde las etiquetas físicas de
-herbario).</li>
-<li><strong>Cobertura/representatividad</strong> del muestreo (no evalúa
-si el dataset es un buen reflejo de la biodiversidad real del
-área).</li>
-<li>El propio revisor señala que algunas revisiones fueron parciales
-(“<em>there may be others, I didn’t check thoroughly</em>” en el chequeo
-de autoría faltante, o “<em>I have not checked for agreement between
-scientificName and scientificNameAuthorship</em>”), es decir, <strong>el
-informe mismo no es exhaustivo</strong> — es una muestra de los
-problemas más visibles, no un certificado de calidad total.</li>
-<li>Es una <strong>foto fija</strong> en el tiempo (2022-07-13): no dice
-nada sobre si el pipeline que generó esos errores se sigue usando y
-seguirá produciendo los mismos problemas en la próxima actualización del
-dataset.</li>
-</ul>
-<p><strong>Conclusión práctica para el lab:</strong> pasar una auditoría
-técnica como esta es una condición necesaria pero no suficiente para la
-calidad del dato. Complementa, no reemplaza, la revisión de contenido
-científico por un especialista taxónomo/curador.</p>
-<hr />
-</div>
-</div>
-<div id="ideas-para-mejorar-propuestas-concretas" class="section level1" number="4">
-<h1><span class="header-section-number">4</span> Ideas para mejorar
-(propuestas concretas)</h1>
-<ol style="list-style-type: decimal">
-<li><strong>Nunca capturar <code>scientificName</code> como texto
-libre.</strong> Construirlo siempre por concatenación programática desde
-columnas atómicas. Esto elimina de raíz las categorías de error más
-frecuentes del caso PUCV (dobles puntos, autoría faltante, taxonRank mal
-asignado, subespecies/variedades no separadas).</li>
-<li><strong>Tablas de referencia (lookup tables) versionadas</strong>
-para geografía administrativa
-(<code>country</code>/<code>stateProvince</code>/<code>continent</code>)
-y para taxonomía superior (<code>order</code>/<code>family</code>), con
-un <code>left_join</code> de validación antes de cada exportación, en
-vez de tipeo libre.</li>
-<li><strong>Un solo identificador único global</strong>, no por
-colección. Si se necesita distinguir colecciones, usar un prefijo
-estructurado (<code>angio:10040</code>, <code>pteri:10040</code>) desde
-el diseño de la base, no reparar después.</li>
-<li><strong>Script de validación pre-envío</strong> (ver Sección 6) que
-se corre automáticamente antes de exportar cualquier dataset a GBIF o
-antes de enviar un data paper, no solo cuando un editor lo pide.</li>
-<li><strong>Chequeo de rango físico</strong> para todo campo numérico
-con significado físico (elevación, coordenadas, profundidad,
-temperatura) con límites hard-coded razonables (p. ej. elevación entre
--430 y 8849 m).</li>
-<li><strong>Diferenciación automática entre columnas
-redundantes</strong> (<code>eventDate</code>
-vs. <code>year/month/day</code>) en cada actualización del dataset, no
-como auditoría puntual años después.</li>
-<li><strong>Detección rutinaria de caracteres no imprimibles</strong>
-(NBSP, comillas curvas, guiones largos) como parte del control de
-calidad estándar, no como hallazgo sorpresa de un revisor externo.</li>
-<li><strong>Registro de metadatos = registro de código.</strong> Si el
-paper describe un campo (<code>verbatimScientificName</code>), ese campo
-debe generarse por el mismo pipeline que genera la tabla, para que nunca
-queden desincronizados.</li>
-</ol>
-<hr />
-</div>
-<div id="buenas-prácticas-de-gestión-de-datos-y-análisis-protocolo-del-laboratorio" class="section level1" number="5">
-<h1><span class="header-section-number">5</span> Buenas prácticas de
-gestión de datos y análisis (protocolo del laboratorio)</h1>
-<p>Esta sección sintetiza lo discutido en la reunión del laboratorio y
-lo conecta con el caso PUCV.</p>
-<div id="problemas-clásicos-de-tabulación-por-qué-excel-no-es-suficiente" class="section level2" number="5.1">
-<h2><span class="header-section-number">5.1</span> Problemas clásicos de
-tabulación (por qué Excel no es suficiente)</h2>
-<ul>
-<li>Espacios extra, comas y puntos decimales, saltos de línea invisibles
-(“pasos fantasma”) y formatos mixtos (texto/número/fecha en la misma
-columna) no siempre son visibles al abrir el archivo en Excel, pero
-<strong>sí</strong> rompen los pipelines de análisis (exactamente el
-tipo de problema que encontró Mesibov: NBSP invisibles, dobles puntos,
-inconsistencias fecha/año).</li>
-<li>En configuración regional en español, Excel usa <code>,</code> como
-separador decimal y <code>.</code> como separador de miles (o viceversa
-según configuración), lo que genera errores silenciosos al exportar a
-CSV o al abrir el archivo en otro computador con configuración
-distinta.</li>
-<li><strong>Regla del laboratorio</strong>: Excel se usa solo para
-<strong>ver</strong> datos, nunca como herramienta de
-limpieza/depuración final.</li>
-</ul>
-</div>
-<div id="herramientas-de-depuración-recomendadas" class="section level2" number="5.2">
-<h2><span class="header-section-number">5.2</span> Herramientas de
-depuración recomendadas</h2>
-<table>
-<colgroup>
-<col width="33%" />
-<col width="33%" />
-<col width="33%" />
-</colgroup>
-<thead>
-<tr class="header">
-<th>Herramienta</th>
-<th>Uso principal</th>
-<th>Cuándo usarla</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td><strong>Notepad++</strong></td>
-<td>Ver y editar el archivo como texto plano; detectar caracteres
-invisibles, saltos de línea, codificación</td>
-<td>Antes de importar cualquier CSV a R, especialmente si viene de Excel
-o de copiar/pegar desde Word/PDF</td>
-</tr>
-<tr class="even">
-<td><strong>OpenRefine</strong></td>
-<td>Limpieza masiva de datos: clustering de texto (agrupa variantes de
-escritura de un mismo valor, p.ej. “Shangri-La” / “Shangrila” /
-“Shangri-la”), transformación por facetas, historial de cambios
-reversible</td>
-<td>Antes de cualquier análisis, especialmente en campos categóricos con
-tipeo libre (localidades, nombres de colector, taxonomía)</td>
-</tr>
-</tbody>
-</table>
-<blockquote>
-<p>El problema de “Shangri-La / Shangrila / Shangri-la” con la misma
-coordenada, listado en el Apéndice 1 del informe PUCV, es exactamente el
-tipo de inconsistencia que el <em>clustering</em> de OpenRefine detecta
-en segundos.</p>
-</blockquote>
-</div>
-<div id="regla-de-oro-la-planilla-original-nunca-se-toca" class="section level2" number="5.3">
-<h2><span class="header-section-number">5.3</span> Regla de oro: la
+<div id="regla-de-oro-la-planilla-original-nunca-se-toca" class="section level2" number="2.3">
+<h2><span class="header-section-number">2.3</span> Regla de oro: la
 planilla original nunca se toca</h2>
 <ul>
 <li>El archivo crudo (raw data) se guarda <strong>read-only</strong>,
@@ -2387,12 +1858,12 @@ que lee el archivo crudo y escribe un archivo procesado
 (<code>data/raw/</code> → <code>data/processed/</code>).</li>
 <li>Esto preserva la trazabilidad: cualquier persona puede reconstruir
 el dataset procesado desde cero y auditar exactamente qué transformación
-se aplicó (lo opuesto a editar el Excel a mano, que no deja
-rastro).</li>
+se aplicó, algo imposible si el Excel original se edita a mano y no deja
+rastro.</li>
 </ul>
 </div>
-<div id="respaldo-de-la-información" class="section level2" number="5.4">
-<h2><span class="header-section-number">5.4</span> Respaldo de la
+<div id="respaldo-de-la-información" class="section level2" number="2.4">
+<h2><span class="header-section-number">2.4</span> Respaldo de la
 información</h2>
 <p>Un archivo crudo “read-only” no sirve de nada si vive en una sola
 copia sobre un disco que puede fallar. El respaldo es la otra mitad de
@@ -2416,16 +1887,21 @@ conviene confirmar que la versión anterior sigue disponible en algún
 respaldo, no solo en el historial de “deshacer” del editor que se esté
 usando.</li>
 </ul>
+<hr />
 </div>
-<div id="estructura-de-proyecto-en-r" class="section level2" number="5.5">
-<h2><span class="header-section-number">5.5</span> Estructura de
+</div>
+<div id="buenas-prácticas-de-análisis-y-código" class="section level1" number="3">
+<h1><span class="header-section-number">3</span> Buenas prácticas de
+análisis y código</h1>
+<div id="estructura-de-proyecto-en-r" class="section level2" number="3.1">
+<h2><span class="header-section-number">3.1</span> Estructura de
 proyecto en R</h2>
 <pre><code>nombre_proyecto/
 ├── nombre_proyecto.Rproj      # usar Proyectos de R: rutas relativas, portabilidad total
 ├── data/
 │   ├── raw/                   # NUNCA se edita a mano; solo lectura
 │   └── processed/              # generado 100% por código
-├── R/                          # funciones propias (ver Sección 6)
+├── R/                          # funciones propias (ver Sección 5)
 ├── scripts/                    # scripts de análisis, numerados en orden de ejecución
 │   ├── 01_import.R
 │   ├── 02_clean.R
@@ -2437,15 +1913,18 @@ proyecto en R</h2>
 ├── README.md
 └── .gitignore</code></pre>
 <ul>
-<li><strong>Usar Proyectos de R (<code>.Rproj</code>)</strong> para que
-las rutas sean siempre relativas al proyecto: al compartir la carpeta (o
-clonar el repo) nadie tiene que reescribir rutas absolutas.</li>
-<li><strong>No usar <code>setwd()</code> con rutas absolutas</strong>
-dentro de scripts que se van a compartir.</li>
+<li><strong>Si el script comienza con <code>setwd()</code> con una ruta
+absoluta, algo está mal.</strong> Usar Proyectos de R
+(<code>.Rproj</code>) en su lugar, para que las rutas sean siempre
+relativas al proyecto: al compartir la carpeta (o clonar el repo) nadie
+tiene que reescribir rutas que solo existen en un computador.</li>
+<li>Crear sub-carpetas dentro del proyecto para ordenar los distintos
+archivos (<code>data</code>, <code>R</code>, <code>scripts</code>,
+<code>output</code>, etc.), como en el esquema anterior.</li>
 </ul>
 </div>
-<div id="nombres-de-archivos-y-objetos" class="section level2" number="5.6">
-<h2><span class="header-section-number">5.6</span> Nombres de archivos y
+<div id="nombres-de-archivos-y-objetos" class="section level2" number="3.2">
+<h2><span class="header-section-number">3.2</span> Nombres de archivos y
 objetos</h2>
 <p>Un nombre de archivo o de objeto en R tiene que poder leerse y
 entenderse sin abrir el archivo ni correr el script. Dos extremos igual
@@ -2471,24 +1950,24 @@ espacios generan problemas al llamar rutas desde la terminal o desde
 otros sistemas operativos).</li>
 <li>Scripts numerados según el orden en que se ejecutan
 (<code>01_import.R</code>, <code>02_clean.R</code>,
-<code>03_analysis.R</code>), como ya se indicó en la estructura de
-proyecto.</li>
+<code>03_analysis.R</code>), como en la estructura de proyecto
+anterior.</li>
 <li>Los nombres de objetos dentro del script siguen la misma lógica:
 <code>fit_glmm_fruitset</code> es más útil que <code>modelo3</code> o
 <code>modelo_glmm_binomial_negativo_con_efectos_aleatorios_por_sitio_final</code>.</li>
 <li>El versionado va en Git (commits con mensaje descriptivo), no en el
 nombre del archivo (<code>_v1</code>, <code>_v2_final</code>,
 <code>_final_final</code>). Si un archivo necesita un sufijo de versión
-para que se entienda, es una señal de que falta control de versiones, no
-de que falte un sufijo mejor.</li>
+para entenderse, es señal de que falta control de versiones, no de que
+falte un sufijo mejor.</li>
 </ul>
 </div>
-<div id="git-github" class="section level2" number="5.7">
-<h2><span class="header-section-number">5.7</span> Git / GitHub</h2>
+<div id="git-github" class="section level2" number="3.3">
+<h2><span class="header-section-number">3.3</span> Git / GitHub</h2>
 <ul>
 <li><strong>Historial de cambios real</strong>: cada <code>commit</code>
 queda registrado con autor, fecha y diff exacto (qué línea cambió, quién
-y cuándo) — algo que un archivo de Excel compartido por correo jamás
+y cuándo), algo que un archivo de Excel compartido por correo jamás
 ofrece.</li>
 <li><strong>Flujo básico</strong>: <code>git pull</code> (traer cambios)
 → editar → <code>git add</code> →
@@ -2499,33 +1978,36 @@ ofrece.</li>
 principal (<code>main</code>); si el experimento no funciona, se
 descarta sin dejar rastro en la rama principal.</li>
 <li><strong>Fork</strong>: permite partir de un repositorio de otra
-persona/laboratorio y desarrollarlo de forma independiente, manteniendo
-la conexión con el original.</li>
+persona o laboratorio y desarrollarlo de forma independiente,
+manteniendo la conexión con el original.</li>
 <li><strong>Sincronización con RStudio</strong>: RStudio tiene
 integración nativa con Git (panel “Git”: commit, push, pull, historial)
 sin salir del IDE.</li>
 </ul>
 </div>
-<div id="markdown-y-r-markdown" class="section level2" number="5.8">
-<h2><span class="header-section-number">5.8</span> Markdown y R
-Markdown</h2>
+<div id="scripts-comentados-y-r-markdown" class="section level2" number="3.4">
+<h2><span class="header-section-number">3.4</span> Scripts comentados y
+R Markdown</h2>
 <ul>
-<li><strong>Markdown (<code>.md</code>)</strong>: archivos de texto
-plano, livianos, legibles en cualquier plataforma y sistema operativo,
-sin depender de un programa propietario (a diferencia de
-<code>.docx</code>). Particularmente importante: los modelos de lenguaje
-(IA) procesan Markdown de forma muy eficiente en tokens, comparado con
-formatos binarios como <code>.docx</code> o <code>.pdf</code>.</li>
-<li><strong>R Markdown (<code>.Rmd</code>)</strong>, como este mismo
-documento: Markdown “con esteroides” — combina texto narrativo con
-código ejecutable (R, y también Python, bash, etc.), de modo que el
-documento final (HTML/PDF/Word) se genera automáticamente a partir de
-los datos reales, evitando copiar y pegar resultados a mano (otra fuente
-clásica de errores de transcripción).</li>
+<li>Usar scripts comentados que sean lo más claros posibles, explicando
+el <em>por qué</em> de cada paso, no solo el <em>qué</em> hace la línea
+de código.</li>
+<li>Mejor aún, usar archivos de R Markdown (<code>.Rmd</code>): combinan
+texto narrativo con código ejecutable (R, y también Python, bash, etc.),
+de modo que el documento final (HTML/PDF/Word) se genera automáticamente
+a partir de los datos reales, evitando copiar y pegar resultados a mano,
+que es otra fuente clásica de errores de transcripción.</li>
+<li>Markdown (<code>.md</code>) es texto plano, liviano y legible en
+cualquier plataforma, sin depender de un programa propietario (a
+diferencia de <code>.docx</code>). Como referencia adicional: los
+modelos de lenguaje procesan Markdown de forma mucho más eficiente que
+formatos binarios como <code>.docx</code> o <code>.pdf</code>, lo que
+también importa si se piensa usar IA como apoyo en el análisis o la
+redacción.</li>
 </ul>
 </div>
-<div id="codificación-de-caracteres-en-código-r" class="section level2" number="5.9">
-<h2><span class="header-section-number">5.9</span> Codificación de
+<div id="codificación-de-caracteres-en-código-r" class="section level2" number="3.5">
+<h2><span class="header-section-number">3.5</span> Codificación de
 caracteres en código R</h2>
 <ul>
 <li><strong>No usar <code>ñ</code> ni tildes en nombres de objetos,
@@ -2535,40 +2017,39 @@ de codificación al compartir código entre sistemas operativos distintos
 configuración de locale distinta.</li>
 <li>Guardar siempre los scripts en codificación <strong>UTF-8</strong>
 explícita.</li>
-<li>Los acentos y <code>ñ</code> sí pueden (y deben) usarse en el
+<li>Los acentos y la <code>ñ</code> sí pueden (y deben) usarse en el
 <strong>texto narrativo</strong> de un <code>.Rmd</code> (como en este
-documento) — la restricción aplica al código, no a la prosa.</li>
+documento); la restricción aplica al código, no a la prosa.</li>
 </ul>
 </div>
-<div id="idioma-de-trabajo-partir-en-el-idioma-de-destino" class="section level2" number="5.10">
-<h2><span class="header-section-number">5.10</span> Idioma de trabajo:
+<div id="idioma-de-trabajo-partir-en-el-idioma-de-destino" class="section level2" number="3.6">
+<h2><span class="header-section-number">3.6</span> Idioma de trabajo:
 partir en el idioma de destino</h2>
 <p>Si el resultado final va a una revista en inglés, el script, los
 comentarios, los nombres de objetos y las figuras se escriben en inglés
 <strong>desde el primer día</strong>, no al final como paso de
 “traducción”. Razones concretas, no solo de estilo:</p>
 <ul>
-<li>Traducir al final duplica el trabajo y es una fuente clásica de
-errores de transcripción: un eje de figura traducido a mano, una
-etiqueta que quedó a medio traducir, un comentario en español que ya no
-coincide con el nombre en inglés del objeto que describe.</li>
+<li>Traducir al final duplica el trabajo y es fuente clásica de errores
+de transcripción: un eje de figura traducido a mano, una etiqueta que
+quedó a medio traducir, un comentario en español que ya no coincide con
+el nombre en inglés del objeto que describe.</li>
 <li>Si el dataset o el código eventualmente se deposita en un
-repositorio (Sección “Referencias”) o se comparte como material
-suplementario, el idioma consistente es parte de la
-<strong>Interoperabilidad</strong> FAIR: un script en español mezclado
-con nombres de columnas en inglés es más difícil de reutilizar para
-cualquier otro grupo.</li>
-<li>Esto no compite con la Sección anterior: el código (nombres de
+repositorio o se comparte como material suplementario, el idioma
+consistente es parte de la <strong>Interoperabilidad</strong> FAIR: un
+script en español mezclado con nombres de columnas en inglés es más
+difícil de reutilizar para cualquier otro grupo.</li>
+<li>Esto no compite con el punto anterior: el código (nombres de
 objetos, columnas, comentarios) va en el idioma de destino de la
 publicación; la prosa narrativa de un <code>.Rmd</code> de uso interno
 del laboratorio (como este documento) puede seguir en español.</li>
 </ul>
 </div>
-<div id="pensar-en-el-largo-plazo" class="section level2" number="5.11">
-<h2><span class="header-section-number">5.11</span> Pensar en el largo
+<div id="pensar-en-el-largo-plazo" class="section level2" number="3.7">
+<h2><span class="header-section-number">3.7</span> Pensar en el largo
 plazo</h2>
 <p>Todas las prácticas anteriores —proyectos de R, nombres claros,
-respaldo, control de versiones, Rmarkdown documentado, idioma
+respaldo, control de versiones, R Markdown documentado, idioma
 consistente— responden a una sola pregunta: <strong>¿podría otra
 persona, o yo mismo en un año más, entender y reproducir esto sin tener
 que preguntarme?</strong> Esa es, en el fondo, la definición práctica de
@@ -2579,50 +2060,66 @@ mismo resultado.</p>
 <hr />
 </div>
 </div>
-<div id="librería-de-funciones-de-chequeo-aplicable-a-datasets-reales-del-laboratorio" class="section level1" number="6">
-<h1><span class="header-section-number">6</span> Librería de funciones
-de chequeo (aplicable a datasets reales del laboratorio)</h1>
-<p>Estas funciones replican, en código reutilizable, los chequeos
-manuales que hizo Mesibov sobre el dataset PUCV. Se ilustran con un
-<strong>dataset sintético mínimo</strong> que reproduce ejemplos citados
-textualmente en el informe (misma estructura de columnas de Darwin
-Core), para que el laboratorio pueda copiar estas funciones y aplicarlas
-directamente sobre datos propios (reemplazando el dataset sintético por
-<code>readr::read_csv(&quot;data/raw/occurrence.txt&quot;)</code>).</p>
-<pre class="r"><code># Dataset sintético que reproduce ejemplos reales citados en el informe de Mesibov,
-# solo con fines ilustrativos de las funciones de chequeo.
-occ &lt;- tribble(
-  ~occurrenceID, ~catalogNumber, ~collectionCode, ~eventDate, ~year, ~month, ~day,
-  ~country, ~continent, ~stateProvince, ~decimalLatitude, ~decimalLongitude,
-  ~maximumElevationInMeters, ~scientificName, ~genus, ~specificEpithet, ~taxonRank,
-
-  &quot;PUCV:herb:pteri:10110&quot;, &quot;10110&quot;, &quot;pteri&quot;, &quot;1969-01-01&quot;, 1969, 1, 1,
-  &quot;Chile&quot;, NA_character_, &quot;Los Lagos&quot;, -41.833, -73,
-  NA_real_, &quot;Hymenophyllum plicatum Kaulf.&quot;, &quot;Hymenophyllum&quot;, &quot;plicatum&quot;, &quot;species&quot;,
-
-  &quot;PUCV:herb:angio:5215&quot;, &quot;5215&quot;, &quot;angio&quot;, NA, 1974, NA, NA,
-  &quot;Chile&quot;, NA_character_, &quot;Valparaíso&quot;, -33.4, -71.133,
-  40000, &quot;Adiantum thalictroides var. hirsutum (Hook. &amp; Grev.) de la Sota&quot;,
-  &quot;Adiantum&quot;, &quot;chilense&quot;, &quot;species&quot;,
-
-  &quot;PUCV:herb:angio:6032&quot;, NA, &quot;angio&quot;, NA, NA, NA, NA,
-  NA, NA_character_, NA, NA_real_, NA_real_,
-  NA_real_, &quot;Chuquiraga spinosa subsp. rotundifolia (Wedd.) C.Ezcurra&quot;,
-  &quot;Chuquiraga&quot;, &quot;spinosa&quot;, &quot;species&quot;,
-
-  &quot;PUCV:herb:angio:1806&quot;, &quot;1806&quot;, &quot;angio&quot;, &quot;1958&quot;, 1974, NA, NA,
-  &quot;Chile&quot;, NA_character_, &quot;Valparaíso&quot;, -33.617, -70.3,
-  NA_real_, &quot;Adesmia boronoides Hook.f.. 1845&quot;, &quot;Adesmia&quot;, &quot;boronoides&quot;, &quot;species&quot;,
-
-  &quot;PUCV:herb:angio:9999&quot;, &quot;1806&quot;, &quot;angio&quot;, &quot;1958&quot;, 1974, NA, NA,
-  &quot;Chile&quot;, NA_character_, &quot;Metropolitana&quot;, -33.617, -70.3,
-  NA_real_, &quot;Adesmia\u00A0boronoides Hook.f. 1845&quot;, &quot;Adesmia&quot;, &quot;boronoides&quot;, &quot;species&quot;
-)
-
-kable(occ, caption = &quot;Dataset sintético de ejemplo (reproduce casos citados en el informe PUCV)&quot;)</code></pre>
+<div id="errores-frecuentes-en-datasets-y-cómo-prevenirlos-estructuralmente" class="section level1" number="4">
+<h1><span class="header-section-number">4</span> Errores frecuentes en
+datasets y cómo prevenirlos estructuralmente</h1>
+<p>Estos son los patrones de error más comunes en datasets construidos a
+mano o migrados desde Excel, junto con la forma de eliminarlos de raíz
+en vez de corregirlos caso a caso:</p>
+<ol style="list-style-type: decimal">
+<li><strong>Nunca capturar un campo compuesto como texto libre</strong>
+(p. ej. un nombre científico completo, una dirección, o cualquier campo
+que combine varias piezas de información). Construirlo siempre por
+concatenación programática desde columnas atómicas (<code>genus</code>,
+<code>specificEpithet</code>, <code>taxonRank</code>, etc., en el caso
+de datos de biodiversidad). Esto elimina de raíz los errores más
+frecuentes: puntuación inconsistente, autoría faltante, categorías mal
+asignadas, subniveles no separados.</li>
+<li><strong>Tablas de referencia (lookup tables) versionadas</strong>
+para cualquier campo categórico repetido (geografía administrativa,
+taxonomía superior, tipo de tratamiento experimental), con un
+<code>left_join</code> de validación antes de cada exportación, en vez
+de tipeo libre.</li>
+<li><strong>Un solo identificador único global</strong> por dataset, no
+uno distinto por sub-colección o sub-tabla. Si se necesita distinguir
+grupos, usar un prefijo estructurado (<code>angio:10040</code>,
+<code>pteri:10040</code>) desde el diseño de la base, no reparar
+después.</li>
+<li><strong>Script de validación pre-envío</strong> (ver Sección 5) que
+se corre automáticamente antes de exportar cualquier dataset o antes de
+enviar un manuscrito, no solo cuando un revisor externo lo pide.</li>
+<li><strong>Chequeo de rango físico</strong> para todo campo numérico
+con significado físico (elevación, coordenadas, profundidad,
+temperatura, cualquier medida corporal) con límites razonables definidos
+de antemano.</li>
+<li><strong>Diferenciación automática entre columnas
+redundantes</strong> (por ejemplo, una fecha completa frente a
+año/mes/día por separado) en cada actualización del dataset, no como
+auditoría puntual años después.</li>
+<li><strong>Detección rutinaria de caracteres no imprimibles</strong>
+(espacios de no separación, comillas curvas, guiones largos) como parte
+del control de calidad estándar, no como hallazgo sorpresa de un revisor
+externo.</li>
+<li><strong>Registro de metadatos = registro de código.</strong> Si un
+manuscrito o un README describe un campo, ese campo debe generarse por
+el mismo pipeline que genera la tabla, para que nunca queden
+desincronizados.</li>
+</ol>
+<hr />
+</div>
+<div id="funciones-de-chequeo-automatizado" class="section level1" number="5">
+<h1><span class="header-section-number">5</span> Funciones de chequeo
+automatizado</h1>
+<p>Estas funciones de R sirven como plantilla de auditoría rápida para
+cualquier dataset del laboratorio con estructura tabular (identificador,
+fechas, geografía, campos numéricos con significado físico, un campo de
+nombre/categoría compuesto). Se ilustran aquí con un dataset sintético
+mínimo con estructura de ocurrencias de biodiversidad (estándar Darwin
+Core), pero la lógica aplica igual a datos experimentales, de terreno o
+de cualquier otro tipo: basta con ajustar los nombres de columna.</p>
 <table>
-<caption>Dataset sintético de ejemplo (reproduce casos citados en el
-informe PUCV)</caption>
+<caption>Dataset sintético de ejemplo (estructura tipo Darwin
+Core)</caption>
 <colgroup>
 <col width="8%" />
 <col width="5%" />
@@ -2763,36 +2260,17 @@ C.Ezcurra</td>
 </tr>
 </tbody>
 </table>
-<div id="duplicados-de-identificador-único" class="section level3" number="6.0.1">
-<h3><span class="header-section-number">6.0.1</span> 1. Duplicados de
+<div id="duplicados-de-identificador-único" class="section level3" number="5.0.1">
+<h3><span class="header-section-number">5.0.1</span> 1. Duplicados de
 identificador único</h3>
-<pre class="r"><code>check_duplicados &lt;- function(df, col_id) {
-  df %&gt;%
-    count(.data[[col_id]], name = &quot;n_registros&quot;) %&gt;%
-    filter(n_registros &gt; 1)
-}
-
-check_duplicados(occ, &quot;catalogNumber&quot;)</code></pre>
 <pre><code>## # A tibble: 1 × 2
 ##   catalogNumber n_registros
 ##   &lt;chr&gt;               &lt;int&gt;
 ## 1 1806                    2</code></pre>
 </div>
-<div id="consistencia-entre-eventdate-y-yearmonthday" class="section level3" number="6.0.2">
-<h3><span class="header-section-number">6.0.2</span> 2. Consistencia
-entre <code>eventDate</code> y
-<code>year</code>/<code>month</code>/<code>day</code></h3>
-<pre class="r"><code>check_fechas &lt;- function(df) {
-  df %&gt;%
-    mutate(
-      year_desde_eventDate = suppressWarnings(as.integer(str_extract(eventDate, &quot;^\\d{4}&quot;))),
-      coincide = is.na(eventDate) | (year_desde_eventDate == year)
-    ) %&gt;%
-    filter(!coincide | (is.na(eventDate) &amp; !is.na(year))) %&gt;%
-    select(occurrenceID, eventDate, year, month, day)
-}
-
-check_fechas(occ)</code></pre>
+<div id="consistencia-entre-fecha-completa-y-añomesdía" class="section level3" number="5.0.2">
+<h3><span class="header-section-number">5.0.2</span> 2. Consistencia
+entre fecha completa y año/mes/día</h3>
 <pre><code>## # A tibble: 3 × 5
 ##   occurrenceID         eventDate  year month   day
 ##   &lt;chr&gt;                &lt;chr&gt;     &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;
@@ -2800,125 +2278,54 @@ check_fechas(occ)</code></pre>
 ## 2 PUCV:herb:angio:1806 1958       1974    NA    NA
 ## 3 PUCV:herb:angio:9999 1958       1974    NA    NA</code></pre>
 </div>
-<div id="registros-sin-ninguna-información-geográfica" class="section level3" number="6.0.3">
-<h3><span class="header-section-number">6.0.3</span> 3. Registros sin
+<div id="registros-sin-ninguna-información-geográfica" class="section level3" number="5.0.3">
+<h3><span class="header-section-number">5.0.3</span> 3. Registros sin
 ninguna información geográfica</h3>
-<pre class="r"><code>check_sin_geografia &lt;- function(df) {
-  df %&gt;%
-    filter(
-      is.na(country) &amp; is.na(stateProvince) &amp;
-      is.na(decimalLatitude) &amp; is.na(decimalLongitude)
-    ) %&gt;%
-    select(occurrenceID)
-}
-
-check_sin_geografia(occ)</code></pre>
 <pre><code>## # A tibble: 1 × 1
 ##   occurrenceID        
 ##   &lt;chr&gt;               
 ## 1 PUCV:herb:angio:6032</code></pre>
 </div>
-<div id="elevaciones-fuera-de-rango-físico-plausible" class="section level3" number="6.0.4">
-<h3><span class="header-section-number">6.0.4</span> 4. Elevaciones
-fuera de rango físico plausible</h3>
-<pre class="r"><code>check_elevacion &lt;- function(df, min_m = -430, max_m = 8849) {
-  df %&gt;%
-    filter(!is.na(maximumElevationInMeters)) %&gt;%
-    filter(maximumElevationInMeters &lt; min_m | maximumElevationInMeters &gt; max_m) %&gt;%
-    select(occurrenceID, maximumElevationInMeters)
-}
-
-check_elevacion(occ)</code></pre>
+<div id="valores-fuera-de-rango-físico-plausible" class="section level3" number="5.0.4">
+<h3><span class="header-section-number">5.0.4</span> 4. Valores fuera de
+rango físico plausible</h3>
 <pre><code>## # A tibble: 1 × 2
 ##   occurrenceID         maximumElevationInMeters
 ##   &lt;chr&gt;                                   &lt;dbl&gt;
 ## 1 PUCV:herb:angio:5215                    40000</code></pre>
 </div>
-<div id="misma-coordenada-asociada-a-más-de-una-stateprovince" class="section level3" number="6.0.5">
-<h3><span class="header-section-number">6.0.5</span> 5. Misma coordenada
-asociada a más de una <code>stateProvince</code></h3>
-<pre class="r"><code>check_geo_disagreement &lt;- function(df) {
-  df %&gt;%
-    filter(!is.na(decimalLatitude), !is.na(decimalLongitude)) %&gt;%
-    group_by(decimalLatitude, decimalLongitude) %&gt;%
-    summarise(
-      n_provincias_distintas = n_distinct(stateProvince, na.rm = TRUE),
-      provincias = paste(unique(stateProvince), collapse = &quot; | &quot;),
-      .groups = &quot;drop&quot;
-    ) %&gt;%
-    filter(n_provincias_distintas &gt; 1)
-}
-
-check_geo_disagreement(occ)</code></pre>
+<div id="misma-coordenada-asociada-a-más-de-una-categoría-administrativa" class="section level3" number="5.0.5">
+<h3><span class="header-section-number">5.0.5</span> 5. Misma coordenada
+asociada a más de una categoría administrativa</h3>
 <pre><code>## # A tibble: 1 × 4
 ##   decimalLatitude decimalLongitude n_provincias_distintas provincias            
 ##             &lt;dbl&gt;            &lt;dbl&gt;                  &lt;int&gt; &lt;chr&gt;                 
 ## 1           -33.6            -70.3                      2 Valparaíso | Metropol…</code></pre>
 </div>
-<div id="caracteres-invisibles-nbsp-y-dobles-puntos-en-scientificname" class="section level3" number="6.0.6">
-<h3><span class="header-section-number">6.0.6</span> 6. Caracteres
-invisibles (NBSP) y dobles puntos en <code>scientificName</code></h3>
-<pre class="r"><code>check_nbsp &lt;- function(df, col = &quot;scientificName&quot;) {
-  df %&gt;%
-    filter(str_detect(.data[[col]], &quot;\u00A0&quot;)) %&gt;%
-    mutate(marcado = str_replace_all(.data[[col]], &quot;\u00A0&quot;, &quot;{NBSP}&quot;)) %&gt;%
-    select(occurrenceID, marcado)
-}
-
-check_doble_punto &lt;- function(df, col = &quot;scientificName&quot;) {
-  df %&gt;%
-    filter(str_detect(.data[[col]], &quot;\\.\\.&quot;)) %&gt;%
-    select(occurrenceID, all_of(col))
-}
-
-check_nbsp(occ)</code></pre>
+<div id="caracteres-invisibles-y-puntuación-duplicada-en-campos-de-texto" class="section level3" number="5.0.6">
+<h3><span class="header-section-number">5.0.6</span> 6. Caracteres
+invisibles y puntuación duplicada en campos de texto</h3>
 <pre><code>## # A tibble: 1 × 2
 ##   occurrenceID         marcado                             
 ##   &lt;chr&gt;                &lt;chr&gt;                               
 ## 1 PUCV:herb:angio:9999 Adesmia{NBSP}boronoides Hook.f. 1845</code></pre>
-<pre class="r"><code>check_doble_punto(occ)</code></pre>
 <pre><code>## # A tibble: 1 × 2
 ##   occurrenceID         scientificName                  
 ##   &lt;chr&gt;                &lt;chr&gt;                           
 ## 1 PUCV:herb:angio:1806 Adesmia boronoides Hook.f.. 1845</code></pre>
 </div>
-<div id="scientificname-con-rango-infraespecífico-no-reflejado-en-taxonrank" class="section level3" number="6.0.7">
-<h3><span class="header-section-number">6.0.7</span> 7.
-<code>scientificName</code> con rango infraespecífico no reflejado en
-<code>taxonRank</code></h3>
-<pre class="r"><code>check_taxonrank_infra &lt;- function(df) {
-  patrones &lt;- c(&quot;subsp\\.&quot;, &quot; var\\.&quot;, &quot; f\\.&quot;)
-  df %&gt;%
-    filter(str_detect(scientificName, paste(patrones, collapse = &quot;|&quot;))) %&gt;%
-    filter(!taxonRank %in% c(&quot;subspecies&quot;, &quot;variety&quot;, &quot;form&quot;)) %&gt;%
-    select(occurrenceID, scientificName, taxonRank)
-}
-
-check_taxonrank_infra(occ)</code></pre>
+<div id="categoría-compuesta-no-reflejada-en-el-campo-de-nivelrango" class="section level3" number="5.0.7">
+<h3><span class="header-section-number">5.0.7</span> 7. Categoría
+compuesta no reflejada en el campo de nivel/rango</h3>
 <pre><code>## # A tibble: 2 × 3
 ##   occurrenceID         scientificName                                  taxonRank
 ##   &lt;chr&gt;                &lt;chr&gt;                                           &lt;chr&gt;    
 ## 1 PUCV:herb:angio:5215 Adiantum thalictroides var. hirsutum (Hook. &amp; … species  
 ## 2 PUCV:herb:angio:6032 Chuquiraga spinosa subsp. rotundifolia (Wedd.)… species</code></pre>
 </div>
-<div id="ejecutar-todos-los-chequeos-de-una-vez-función-maestra" class="section level3" number="6.0.8">
-<h3><span class="header-section-number">6.0.8</span> 8. Ejecutar todos
+<div id="ejecutar-todos-los-chequeos-de-una-vez-función-maestra" class="section level3" number="5.0.8">
+<h3><span class="header-section-number">5.0.8</span> 8. Ejecutar todos
 los chequeos de una vez (función maestra)</h3>
-<pre class="r"><code>auditar_dataset &lt;- function(df) {
-  list(
-    duplicados_catalogNumber = check_duplicados(df, &quot;catalogNumber&quot;),
-    inconsistencias_fecha    = check_fechas(df),
-    sin_geografia            = check_sin_geografia(df),
-    elevacion_fuera_rango    = check_elevacion(df),
-    geo_disagreement         = check_geo_disagreement(df),
-    nbsp_en_nombre           = check_nbsp(df),
-    doble_punto_en_nombre    = check_doble_punto(df),
-    taxonrank_infra_mal      = check_taxonrank_infra(df)
-  )
-}
-
-resultado &lt;- auditar_dataset(occ)
-resultado</code></pre>
 <pre><code>## $duplicados_catalogNumber
 ## # A tibble: 1 × 2
 ##   catalogNumber n_registros
@@ -2972,17 +2379,18 @@ resultado</code></pre>
 <blockquote>
 <p><strong>Para usar sobre datos reales del laboratorio:</strong>
 guardar estas funciones en <code>R/funciones_auditoria.R</code>,
-cargarlas con <code>source(&quot;R/funciones_auditoria.R&quot;)</code>, y correr
+cargarlas con <code>source(&quot;R/funciones_auditoria.R&quot;)</code>, adaptar
+los nombres de columna al dataset propio, y correr
 <code>auditar_dataset(mi_dataset)</code> como último paso de
-<code>scripts/02_clean.R</code>, antes de exportar cualquier dataset a
-GBIF o antes de enviar un data paper a revisión.</p>
+<code>scripts/02_clean.R</code>, antes de exportar cualquier dataset o
+de enviar un manuscrito a revisión.</p>
 </blockquote>
 <hr />
 </div>
 </div>
-<div id="checklist-de-pre-envío-para-data-papers-datasets-del-laboratorio" class="section level1" number="7">
-<h1><span class="header-section-number">7</span> Checklist de pre-envío
-para data papers / datasets del laboratorio</h1>
+<div id="checklist-de-pre-envío-para-datasets-y-manuscritos-del-laboratorio" class="section level1" number="6">
+<h1><span class="header-section-number">6</span> Checklist de pre-envío
+para datasets y manuscritos del laboratorio</h1>
 <table class="table table-striped table-hover" style="color: black; margin-left: auto; margin-right: auto;">
 <thead>
 <tr>
@@ -3009,8 +2417,8 @@ edición manual.
 2
 </td>
 <td style="text-align:left;">
-Todo el pipeline de limpieza está en código versionado (Git), no en
-ediciones manuales de Excel.
+Existe al menos un respaldo del archivo crudo fuera del equipo de
+trabajo diario.
 </td>
 </tr>
 <tr>
@@ -3018,13 +2426,22 @@ ediciones manuales de Excel.
 3
 </td>
 <td style="text-align:left;">
-scientificName se genera por concatenación programática, no por tipeo
-libre.
+Todo el pipeline de limpieza está en código versionado (Git), no en
+ediciones manuales de Excel.
 </td>
 </tr>
 <tr>
 <td style="text-align:right;">
 4
+</td>
+<td style="text-align:left;">
+Los campos compuestos (nombres, direcciones, categorías combinadas) se
+generan por concatenación programática, no por tipeo libre.
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+5
 </td>
 <td style="text-align:left;">
 Se corrió auditar_dataset() (o equivalente) y no quedan hallazgos sin
@@ -3033,25 +2450,24 @@ resolver o documentados.
 </tr>
 <tr>
 <td style="text-align:right;">
-5
-</td>
-<td style="text-align:left;">
-Los campos redundantes (eventDate/year/month/day) son 100% consistentes
-entre sí.
-</td>
-</tr>
-<tr>
-<td style="text-align:right;">
 6
 </td>
 <td style="text-align:left;">
-No hay identificadores (catalogNumber, occurrenceID) duplicados dentro
-del mismo scope.
+Los campos redundantes (p. ej. fecha completa vs. año/mes/día) son 100%
+consistentes entre sí.
 </td>
 </tr>
 <tr>
 <td style="text-align:right;">
 7
+</td>
+<td style="text-align:left;">
+No hay identificadores duplicados dentro del mismo scope.
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+8
 </td>
 <td style="text-align:left;">
 Todos los campos numéricos con significado físico están dentro de rangos
@@ -3060,25 +2476,25 @@ plausibles.
 </tr>
 <tr>
 <td style="text-align:right;">
-8
-</td>
-<td style="text-align:left;">
-No quedan caracteres invisibles (NBSP) ni errores de puntuación (dobles
-puntos) en campos de texto.
-</td>
-</tr>
-<tr>
-<td style="text-align:right;">
 9
 </td>
 <td style="text-align:left;">
-Los metadatos descritos en el manuscrito (data paper) coinciden
-exactamente con las columnas exportadas.
+No quedan caracteres invisibles ni errores de puntuación en campos de
+texto.
 </td>
 </tr>
 <tr>
 <td style="text-align:right;">
 10
+</td>
+<td style="text-align:left;">
+Los metadatos descritos en el manuscrito o README coinciden exactamente
+con las columnas exportadas.
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+11
 </td>
 <td style="text-align:left;">
 El README del repositorio documenta el proceso de limpieza y las
@@ -3087,6 +2503,178 @@ decisiones tomadas.
 </tr>
 </tbody>
 </table>
+<hr />
+</div>
+<div id="caso-ilustrativo-auditoría-técnica-de-un-dataset-de-biodiversidad" class="section level1" number="7">
+<h1><span class="header-section-number">7</span> Caso ilustrativo:
+auditoría técnica de un dataset de biodiversidad</h1>
+<p>Para no quedarnos en principios abstractos, vale la pena mirar un
+ejemplo real de lo que pasa cuando estas prácticas no se siguen desde el
+inicio: el informe técnico que Pensoft (editorial de <em>PhytoKeys</em>,
+<em>ZooKeys</em> y <em>Biodiversity Data Journal</em>) encargó al
+Dr. Robert Mesibov sobre el dataset del Herbario de la Pontificia
+Universidad Católica de Valparaíso (PUCV), descargado de GBIF el
+2022-07-13. Pensoft encarga este tipo de evaluación técnica antes de
+enviar un “data paper” (un artículo cuyo objeto es describir un dataset,
+no presentar resultados de investigación) a revisión por pares. El
+propio revisor es explícito sobre el alcance del chequeo:</p>
+<blockquote>
+<p><em>“Pensoft does not check the details of the content of a dataset,
+for example whether the correct author is given for a scientific name,
+or whether the correct latitude/longitude is given for a
+locality.”</em></p>
+</blockquote>
+<p>Es decir: es un control de <strong>consistencia estructural</strong>,
+no de veracidad científica del contenido.</p>
+<table class="table table-striped table-hover table-condensed" style="color: black; margin-left: auto; margin-right: auto;">
+<caption>
+Muestra de las categorías de error identificadas en el dataset PUCV
+(versión condensada)
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+categoria
+</th>
+<th style="text-align:left;">
+hallazgo
+</th>
+<th style="text-align:left;">
+gravedad
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+Esquema/metadatos
+</td>
+<td style="text-align:left;">
+Campo descrito en el paper pero ausente en la tabla
+</td>
+<td style="text-align:left;">
+Alta
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Caracteres invisibles
+</td>
+<td style="text-align:left;">
+Espacios de no separación (NBSP) dentro del nombre científico
+</td>
+<td style="text-align:left;">
+Media
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Identificadores
+</td>
+<td style="text-align:left;">
+Identificador duplicado entre sub-colecciones
+</td>
+<td style="text-align:left;">
+Alta
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Fechas
+</td>
+<td style="text-align:left;">
+Fecha completa, año, mes y día inconsistentes entre sí
+</td>
+<td style="text-align:left;">
+Alta
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Geografía
+</td>
+<td style="text-align:left;">
+Registros sin ninguna información de localidad
+</td>
+<td style="text-align:left;">
+Alta
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Geografía
+</td>
+<td style="text-align:left;">
+Misma coordenada asignada a distinta región administrativa
+</td>
+<td style="text-align:left;">
+Alta
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Valores imposibles
+</td>
+<td style="text-align:left;">
+Elevación mayor a la altura máxima terrestre plausible
+</td>
+<td style="text-align:left;">
+Alta
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Taxonomía superior
+</td>
+<td style="text-align:left;">
+Nombre de familia usado como si fuera un orden
+</td>
+<td style="text-align:left;">
+Media
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Rango taxonómico
+</td>
+<td style="text-align:left;">
+Rango infraespecífico no reflejado en el campo correspondiente
+</td>
+<td style="text-align:left;">
+Alta
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Nombre científico
+</td>
+<td style="text-align:left;">
+Doble punto en vez de uno; autoría faltante
+</td>
+<td style="text-align:left;">
+Media
+</td>
+</tr>
+</tbody>
+</table>
+<p>Casi todos estos problemas comparten un origen común, más importante
+que cada error individual: captura manual de campos que debieron
+construirse por concatenación programática, copiar/pegar desde Word o
+PDF (que introduce caracteres invisibles y puntuación duplicada),
+ausencia de listas controladas para campos categóricos, y falta de
+validación de rango en campos numéricos. Ninguno de estos orígenes es
+exclusivo de datos de herbario: son exactamente los mismos patrones que
+motivan las Secciones 4 y 5 de este documento.</p>
+<p>Vale la pena aclarar también qué <strong>no</strong> cubre este tipo
+de auditoría, para no sobre-confiar en un dataset que la pasó: no
+verifica la corrección científica del contenido (autoría de un nombre,
+coordenadas reales del sitio de colecta), no evalúa la identidad
+taxonómica de los especímenes, no audita el proceso de digitalización
+previo, y es una foto fija en el tiempo, no una garantía de que el mismo
+pipeline no vuelva a producir los mismos errores en la próxima
+actualización. Pasar una auditoría técnica es una condición necesaria
+pero no suficiente para la calidad del dato: complementa, pero no
+reemplaza, la revisión de contenido por un especialista.</p>
 <hr />
 </div>
 <div id="referencias" class="section level1" number="8">
@@ -3139,11 +2727,6 @@ $(document).ready(function () {
 </script>
 
 <!-- code folding -->
-<script>
-$(document).ready(function () {
-  window.initializeCodeFolding("show" === "show");
-});
-</script>
 
 <script>
 $(document).ready(function ()  {
