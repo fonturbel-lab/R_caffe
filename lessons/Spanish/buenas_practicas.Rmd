@@ -29,9 +29,9 @@ library(kableExtra)
 
 # Objetivo de este documento
 
-Este documento reúne las buenas prácticas de gestión y análisis de datos que discutimos en la
-última reunión de laboratorio, organizadas como protocolo de referencia para el laboratorio y para
-quienes están haciendo tesis o postgrado con nosotros. La idea es simple: que un dataset o un
+Este documento reúne una serie de buenas prácticas de gestión y análisis de datos, 
+organizadas como protocolo de referencia para el trabajo en laboratorio y para
+quienes están haciendo la tesis o cursando un postgrado. La idea es simple: que un dataset o un
 script del laboratorio pueda ser encontrado, abierto, entendido y reutilizado por cualquier
 persona (incluido uno mismo, un año después), sin depender de que quien lo generó esté disponible
 para explicarlo.
