@@ -112,7 +112,7 @@ fallar. El respaldo es la otra mitad de la regla de oro:
   mismo día** de la salida a terreno, antes de que el archivo original quede como única copia en
   una tarjeta SD o en un celular.
 - Un repositorio de Git respalda el código y su historial, pero **no reemplaza** el respaldo de
-  los datos crudos pesados (fotos, rásters, archivos de más de un par de MB): para eso, Drive u
+  los datos crudos pesados (fotos, rásters, archivos de más de un par de MB): para eso, Drive, Dropbox u
   otro almacenamiento en la nube.
 - Antes de cualquier limpieza o reestructuración fuerte de un dataset, conviene confirmar que la
   versión anterior sigue disponible en algún respaldo, no solo en el historial de "deshacer" del
