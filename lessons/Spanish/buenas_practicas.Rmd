@@ -164,7 +164,7 @@ correr el script. Dos extremos igual de problemáticos:
 Convenciones prácticas del laboratorio:
 
 - Nombres descriptivos y cortos, en minúsculas, con guion bajo como separador (`snake_case`):
-  `nahuelbuta_aves_2024.csv`, no `Datos Nahuelbuta AVES (2024) FINAL.csv`.
+  por ej. `nahuelbuta_aves_2024.csv` en lugar de `Datos Nahuelbuta AVES (2024) FINAL.csv`.
 - Sin espacios, tildes ni `ñ` en nombres de archivo (los espacios generan problemas al llamar
   rutas desde la terminal o desde otros sistemas operativos).
 - Scripts numerados según el orden en que se ejecutan (`01_import.R`, `02_clean.R`,
