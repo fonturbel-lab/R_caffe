@@ -195,12 +195,12 @@ Convenciones prácticas del laboratorio:
 
 - Usar scripts comentados que sean lo más claros posibles, explicando el *por qué* de cada paso,
   no solo el *qué* hace la línea de código.
-- Mejor aún, usar archivos de R Markdown (`.Rmd`): combinan texto narrativo con código ejecutable
+- Mejor aún es usar archivos de R Markdown (`.Rmd`), que combinan texto narrativo con código ejecutable
   (R, y también Python, bash, etc.), de modo que el documento final (HTML/PDF/Word) se genera
   automáticamente a partir de los datos reales, evitando copiar y pegar resultados a mano, que es
   otra fuente clásica de errores de transcripción.
 - Markdown (`.md`) es texto plano, liviano y legible en cualquier plataforma, sin depender de un
-  programa propietario (a diferencia de `.docx`). Como referencia adicional: los modelos de
+  programa propietario (a diferencia del `.docx` de Word). Como referencia adicional: los modelos de
   lenguaje procesan Markdown de forma mucho más eficiente que formatos binarios como `.docx` o
   `.pdf`, lo que también importa si se piensa usar IA como apoyo en el análisis o la redacción.
 
