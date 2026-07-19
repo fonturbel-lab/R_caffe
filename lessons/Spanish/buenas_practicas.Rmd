@@ -188,7 +188,8 @@ Convenciones prácticas del laboratorio:
 - **Fork**: permite partir de un repositorio de otra persona o laboratorio y desarrollarlo de
   forma independiente, manteniendo la conexión con el original.
 - **Sincronización con RStudio**: RStudio tiene integración nativa con Git (panel "Git": commit,
-  push, pull, historial) sin salir del IDE.
+  push, pull, historial) sin salir del IDE. El proceso de autenticación en RStudio se hace una 
+  sola vez y de ahí queda conectado. Es útil instalar la App `GitHub desktop` también.
 
 ## Scripts comentados y R Markdown
 
