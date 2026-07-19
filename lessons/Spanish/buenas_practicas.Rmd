@@ -40,7 +40,7 @@ Esta lección se relaciona directamente con los principios **FAIR** (*Findable, 
 Reusable*), que usamos como hilo conductor de todo el documento en vez de sólo tratarlos como una
 casilla que marcar para cumplir con una política editorial.
 
-- **Findable (encontrable)**: identificadores únicos y consistentes, metadatos completos, nombres
+- **Findable (encontrable)**: identificadores únicos y consistentes (= DOI), metadatos completos, nombres
   de archivo y de objeto que se entienden sin abrir el archivo.
 - **Accessible (accesible)**: formatos abiertos (texto plano, CSV) en vez de formatos atados a una
   licencia de software; datos crudos respaldados y disponibles.
