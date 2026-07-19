@@ -158,7 +158,8 @@ correr el script. Dos extremos igual de problemáticos:
   qué modelo representaba.
 - **Demasiado largo** (`datos_finales_definitivos_v3_corregido_usar_este_22marzo.csv`): además de
   incómodo para escribir, suele ser señal de que falta un sistema de versionado real (para eso
-  está Git, no el nombre del archivo).
+  está Git, no el nombre del archivo). **OJO:** En discos duros grandes con muchos archivos, estos nombres 
+  largos aumentan la probabilidad de causar corrupción (y pérdida) de datos.
 
 Convenciones prácticas del laboratorio:
 
