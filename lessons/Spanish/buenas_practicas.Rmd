@@ -532,12 +532,8 @@ complementa, pero no reemplaza, la revisión de contenido por un especialista.
 
 ---
 
-# Referencias
+# Algunos enlaces de utilidad
 
-- Mesibov, R. (2022). *Data audit for technical evaluation of Herbarium collection of the
-  Pontificia Universidad Católica de Valparaíso (PUCV), Chile.* Informe técnico preparado para
-  Pensoft. Disponible en:
-  <https://zookeys.pensoft.net/about#DataQualityChecklistandRecommendations>
 - Darwin Core Standard: <https://dwc.tdwg.org/>
 - OpenRefine: <https://openrefine.org/>
 - Notepad++: <https://notepad-plus-plus.org/>
