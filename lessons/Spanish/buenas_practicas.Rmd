@@ -92,8 +92,8 @@ inconsistencias que de otro modo solo aparecen como resultados raros a mitad del
 
 ## Regla de oro: la planilla original nunca se toca
 
-- El archivo crudo (raw data) se guarda **read-only**, con nombre y fecha, y no se edita jamás a
-  mano.
+- El archivo crudo (raw data) se guarda **read-only**, con nombre y fecha, y no se edita jamás de
+  forma manual.
 - Toda limpieza se hace mediante **código versionado** que lee el archivo crudo y escribe un
   archivo procesado (`data/raw/` → `data/processed/`).
 - Esto preserva la trazabilidad: cualquier persona puede reconstruir el dataset procesado desde
