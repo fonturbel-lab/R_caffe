@@ -122,7 +122,13 @@ fallar. El respaldo es la otra mitad de la regla de oro:
 
 # Buenas prácticas de análisis y código
 
-## Estructura de proyecto en R
+- **Si el script comienza con `setwd()` con una ruta absoluta, algo está mal.** Usar Proyectos de
+  R (`.Rproj`) en su lugar, para que las rutas sean siempre relativas al proyecto: al compartir la
+  carpeta (o clonar el repo) nadie tiene que reescribir rutas que solo existen en un computador.
+- Crear sub-carpetas dentro del proyecto para ordenar los distintos archivos (`data`, `R`,
+  `scripts`, `output`, etc.), como en el esquema anterior.
+
+## Estructura sugerida de proyecto en R
 
 ```
 nombre_proyecto/
@@ -142,12 +148,6 @@ nombre_proyecto/
 ├── README.md
 └── .gitignore
 ```
-
-- **Si el script comienza con `setwd()` con una ruta absoluta, algo está mal.** Usar Proyectos de
-  R (`.Rproj`) en su lugar, para que las rutas sean siempre relativas al proyecto: al compartir la
-  carpeta (o clonar el repo) nadie tiene que reescribir rutas que solo existen en un computador.
-- Crear sub-carpetas dentro del proyecto para ordenar los distintos archivos (`data`, `R`,
-  `scripts`, `output`, etc.), como en el esquema anterior.
 
 ## Nombres de archivos y objetos
 
