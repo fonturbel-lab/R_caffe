@@ -1,6 +1,5 @@
 # =============================================================================
 # data_audit_functions.R
-# Laboratorio de Ecologia Integrativa - PUCV
 #
 # Generic data quality checks for tabular datasets: duplicate IDs, consistency
 # between redundant fields, missing key fields, out-of-range numeric values,
