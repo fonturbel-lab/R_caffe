@@ -87,7 +87,7 @@ kable(herramientas, caption = "Herramientas de depuración de datos") %>%
   kable_styling(bootstrap_options = c("striped", "hover", "condensed"), full_width = TRUE)
 ```
 
-Pasar los datos por Notepad++ u OpenRefine antes de analizar es el paso que detecta, en segundos,
+Pasar los datos por Notepad++ u OpenRefine antes de analizar es el paso que detecta -en segundos-
 inconsistencias que de otro modo solo aparecen como resultados raros a mitad del análisis.
 
 ## Regla de oro: la planilla original nunca se toca
