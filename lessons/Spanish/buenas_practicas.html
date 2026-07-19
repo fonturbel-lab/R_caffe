@@ -1723,7 +1723,7 @@ border-radius: 0px;
 <h1 class="title toc-ignore">Buenas prácticas de gestión y análisis de
 datos biológicos</h1>
 <h4 class="author">Francisco E. Fontúrbel</h4>
-<h4 class="date">18 de July de 2026</h4>
+<h4 class="date">19 de July de 2026</h4>
 
 </div>
 
@@ -1731,22 +1731,22 @@ datos biológicos</h1>
 <div id="objetivo-de-este-documento" class="section level1" number="1">
 <h1><span class="header-section-number">1</span> Objetivo de este
 documento</h1>
-<p>Este documento reúne las buenas prácticas de gestión y análisis de
-datos que discutimos en la última reunión de laboratorio, organizadas
-como protocolo de referencia para el laboratorio y para quienes están
-haciendo tesis o postgrado con nosotros. La idea es simple: que un
-dataset o un script del laboratorio pueda ser encontrado, abierto,
-entendido y reutilizado por cualquier persona (incluido uno mismo, un
-año después), sin depender de que quien lo generó esté disponible para
-explicarlo.</p>
-<p>Ese objetivo tiene nombre: los principios <strong>FAIR</strong>
-(<em>Findable, Accessible, Interoperable, Reusable</em>), que usamos
-como hilo conductor de todo el documento en vez de tratarlos como una
-casilla que marcar para cumplir con una política editorial.</p>
+<p>Este documento reúne una serie de buenas prácticas de gestión y
+análisis de datos, organizadas como protocolo de referencia para el
+trabajo en laboratorio y para quienes están haciendo la tesis o cursando
+un postgrado. La idea es simple: que un dataset o un script pueda ser
+encontrado, abierto, entendido y reutilizado por cualquier persona
+(incluido uno mismo, un año después), sin depender de que quien lo
+generó esté disponible para explicarlo.</p>
+<p>Esta lección se relaciona directamente con los principios
+<strong>FAIR</strong> (<em>Findable, Accessible, Interoperable,
+Reusable</em>), que usamos como hilo conductor de todo el documento en
+vez de sólo tratarlos como una casilla que marcar para cumplir con una
+política editorial.</p>
 <ul>
 <li><strong>Findable (encontrable)</strong>: identificadores únicos y
-consistentes, metadatos completos, nombres de archivo y de objeto que se
-entienden sin abrir el archivo.</li>
+consistentes (= DOI), metadatos completos, nombres de archivo y de
+objeto que se entienden sin abrir el archivo.</li>
 <li><strong>Accessible (accesible)</strong>: formatos abiertos (texto
 plano, CSV) en vez de formatos atados a una licencia de software; datos
 crudos respaldados y disponibles.</li>
@@ -1844,7 +1844,7 @@ tipeo libre (localidades, nombres de colector, taxonomía)
 </tbody>
 </table>
 <p>Pasar los datos por Notepad++ u OpenRefine antes de analizar es el
-paso que detecta, en segundos, inconsistencias que de otro modo solo
+paso que detecta -en segundos- inconsistencias que de otro modo solo
 aparecen como resultados raros a mitad del análisis.</p>
 </div>
 <div id="regla-de-oro-la-planilla-original-nunca-se-toca" class="section level2" number="2.3">
@@ -1852,7 +1852,7 @@ aparecen como resultados raros a mitad del análisis.</p>
 planilla original nunca se toca</h2>
 <ul>
 <li>El archivo crudo (raw data) se guarda <strong>read-only</strong>,
-con nombre y fecha, y no se edita jamás a mano.</li>
+con nombre y fecha, y no se edita jamás de forma manual.</li>
 <li>Toda limpieza se hace mediante <strong>código versionado</strong>
 que lee el archivo crudo y escribe un archivo procesado
 (<code>data/raw/</code> → <code>data/processed/</code>).</li>
@@ -1880,8 +1880,8 @@ terreno, antes de que el archivo original quede como única copia en una
 tarjeta SD o en un celular.</li>
 <li>Un repositorio de Git respalda el código y su historial, pero
 <strong>no reemplaza</strong> el respaldo de los datos crudos pesados
-(fotos, rásters, archivos de más de un par de MB): para eso, Drive u
-otro almacenamiento en la nube.</li>
+(fotos, rásters, archivos de más de un par de MB): para eso, Drive,
+Dropbox u otro almacenamiento en la nube.</li>
 <li>Antes de cualquier limpieza o reestructuración fuerte de un dataset,
 conviene confirmar que la versión anterior sigue disponible en algún
 respaldo, no solo en el historial de “deshacer” del editor que se esté
@@ -1893,9 +1893,20 @@ usando.</li>
 <div id="buenas-prácticas-de-análisis-y-código" class="section level1" number="3">
 <h1><span class="header-section-number">3</span> Buenas prácticas de
 análisis y código</h1>
-<div id="estructura-de-proyecto-en-r" class="section level2" number="3.1">
-<h2><span class="header-section-number">3.1</span> Estructura de
-proyecto en R</h2>
+<ul>
+<li><strong>Si el script comienza con <code>setwd()</code> con una ruta
+absoluta, algo está mal.</strong> Usar Proyectos de R
+(<code>.Rproj</code>) en su lugar, para que las rutas sean siempre
+relativas al proyecto: al compartir la carpeta (o clonar el repo) nadie
+tiene que reescribir rutas que solo existen en un computador.</li>
+<li>Crear sub-carpetas dentro del proyecto para ordenar los distintos
+archivos (<code>data</code>, <code>R</code>, <code>scripts</code>,
+<code>output</code>, etc.), como en el esquema que se muestra a
+continuación</li>
+</ul>
+<div id="estructura-sugerida-de-proyecto-en-r" class="section level2" number="3.1">
+<h2><span class="header-section-number">3.1</span> Estructura sugerida
+de proyecto en R</h2>
 <pre><code>nombre_proyecto/
 ├── nombre_proyecto.Rproj      # usar Proyectos de R: rutas relativas, portabilidad total
 ├── data/
@@ -1912,16 +1923,6 @@ proyecto en R</h2>
 ├── docs/                        # informes .Rmd renderizados
 ├── README.md
 └── .gitignore</code></pre>
-<ul>
-<li><strong>Si el script comienza con <code>setwd()</code> con una ruta
-absoluta, algo está mal.</strong> Usar Proyectos de R
-(<code>.Rproj</code>) en su lugar, para que las rutas sean siempre
-relativas al proyecto: al compartir la carpeta (o clonar el repo) nadie
-tiene que reescribir rutas que solo existen en un computador.</li>
-<li>Crear sub-carpetas dentro del proyecto para ordenar los distintos
-archivos (<code>data</code>, <code>R</code>, <code>scripts</code>,
-<code>output</code>, etc.), como en el esquema anterior.</li>
-</ul>
 </div>
 <div id="nombres-de-archivos-y-objetos" class="section level2" number="3.2">
 <h2><span class="header-section-number">3.2</span> Nombres de archivos y
@@ -1937,13 +1938,15 @@ qué contenía o qué modelo representaba.</li>
 (<code>datos_finales_definitivos_v3_corregido_usar_este_22marzo.csv</code>):
 además de incómodo para escribir, suele ser señal de que falta un
 sistema de versionado real (para eso está Git, no el nombre del
-archivo).</li>
+archivo). <strong>OJO:</strong> En discos duros grandes con muchos
+archivos, estos nombres largos aumentan la probabilidad de causar
+corrupción (y pérdida) de datos.</li>
 </ul>
 <p>Convenciones prácticas del laboratorio:</p>
 <ul>
 <li>Nombres descriptivos y cortos, en minúsculas, con guion bajo como
-separador (<code>snake_case</code>):
-<code>nahuelbuta_aves_2024.csv</code>, no
+separador (<code>snake_case</code>): por ej.
+<code>nahuelbuta_aves_2024.csv</code> en lugar de
 <code>Datos Nahuelbuta AVES (2024) FINAL.csv</code>.</li>
 <li>Sin espacios, tildes ni <code>ñ</code> en nombres de archivo (los
 espacios generan problemas al llamar rutas desde la terminal o desde
@@ -1982,7 +1985,9 @@ persona o laboratorio y desarrollarlo de forma independiente,
 manteniendo la conexión con el original.</li>
 <li><strong>Sincronización con RStudio</strong>: RStudio tiene
 integración nativa con Git (panel “Git”: commit, push, pull, historial)
-sin salir del IDE.</li>
+sin salir del IDE. El proceso de autenticación en RStudio se hace una
+sola vez y de ahí queda conectado. Es útil instalar la App
+<code>GitHub desktop</code> también.</li>
 </ul>
 </div>
 <div id="scripts-comentados-y-r-markdown" class="section level2" number="3.4">
@@ -1992,17 +1997,18 @@ R Markdown</h2>
 <li>Usar scripts comentados que sean lo más claros posibles, explicando
 el <em>por qué</em> de cada paso, no solo el <em>qué</em> hace la línea
 de código.</li>
-<li>Mejor aún, usar archivos de R Markdown (<code>.Rmd</code>): combinan
-texto narrativo con código ejecutable (R, y también Python, bash, etc.),
-de modo que el documento final (HTML/PDF/Word) se genera automáticamente
-a partir de los datos reales, evitando copiar y pegar resultados a mano,
-que es otra fuente clásica de errores de transcripción.</li>
+<li>Mejor aún es usar archivos de R Markdown (<code>.Rmd</code>), que
+combinan texto narrativo con código ejecutable (R, y también Python,
+bash, etc.), de modo que el documento final (HTML/PDF/Word) se genera
+automáticamente a partir de los datos reales, evitando copiar y pegar
+resultados a mano, que es otra fuente clásica de errores de
+transcripción.</li>
 <li>Markdown (<code>.md</code>) es texto plano, liviano y legible en
 cualquier plataforma, sin depender de un programa propietario (a
-diferencia de <code>.docx</code>). Como referencia adicional: los
-modelos de lenguaje procesan Markdown de forma mucho más eficiente que
-formatos binarios como <code>.docx</code> o <code>.pdf</code>, lo que
-también importa si se piensa usar IA como apoyo en el análisis o la
+diferencia del <code>.docx</code> de Word). Como referencia adicional:
+los modelos de lenguaje procesan Markdown de forma mucho más eficiente
+que formatos binarios como <code>.docx</code> o <code>.pdf</code>, lo
+que también importa si se piensa usar IA como apoyo en el análisis o la
 redacción.</li>
 </ul>
 </div>
@@ -2677,13 +2683,10 @@ pero no suficiente para la calidad del dato: complementa, pero no
 reemplaza, la revisión de contenido por un especialista.</p>
 <hr />
 </div>
-<div id="referencias" class="section level1" number="8">
-<h1><span class="header-section-number">8</span> Referencias</h1>
+<div id="algunos-enlaces-de-utilidad" class="section level1" number="8">
+<h1><span class="header-section-number">8</span> Algunos enlaces de
+utilidad</h1>
 <ul>
-<li>Mesibov, R. (2022). <em>Data audit for technical evaluation of
-Herbarium collection of the Pontificia Universidad Católica de
-Valparaíso (PUCV), Chile.</em> Informe técnico preparado para Pensoft.
-Disponible en: <a href="https://zookeys.pensoft.net/about#DataQualityChecklistandRecommendations" class="uri">https://zookeys.pensoft.net/about#DataQualityChecklistandRecommendations</a></li>
 <li>Darwin Core Standard: <a href="https://dwc.tdwg.org/" class="uri">https://dwc.tdwg.org/</a></li>
 <li>OpenRefine: <a href="https://openrefine.org/" class="uri">https://openrefine.org/</a></li>
 <li>Notepad++: <a href="https://notepad-plus-plus.org/" class="uri">https://notepad-plus-plus.org/</a></li>
