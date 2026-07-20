@@ -1723,7 +1723,7 @@ border-radius: 0px;
 <h1 class="title toc-ignore">Buenas prácticas de gestión y análisis de
 datos biológicos</h1>
 <h4 class="author">Francisco E. Fontúrbel</h4>
-<h4 class="date">19 de July de 2026</h4>
+<h4 class="date">20 de July de 2026</h4>
 
 </div>
 
@@ -2020,12 +2020,13 @@ caracteres en código R</h2>
 funciones, columnas o rutas de archivo en R.</strong> Esto evita errores
 de codificación al compartir código entre sistemas operativos distintos
 (Windows/Mac/Linux) o al ejecutar el mismo script en un servidor con
-configuración de locale distinta.</li>
+configuración de <em>locale</em> distinta.</li>
 <li>Guardar siempre los scripts en codificación <strong>UTF-8</strong>
 explícita.</li>
-<li>Los acentos y la <code>ñ</code> sí pueden (y deben) usarse en el
-<strong>texto narrativo</strong> de un <code>.Rmd</code> (como en este
-documento); la restricción aplica al código, no a la prosa.</li>
+<li>Los acentos y la <code>ñ</code> sí pueden usarse en el <strong>texto
+narrativo</strong> de un <code>.Rmd</code> (como en este documento); la
+restricción aplica a los bloques de código, pero no al texto libre (que
+se rige por otro sistema de codificación).</li>
 </ul>
 </div>
 <div id="idioma-de-trabajo-partir-en-el-idioma-de-destino" class="section level2" number="3.6">
