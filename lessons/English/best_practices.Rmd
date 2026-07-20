@@ -1,0 +1,533 @@
+---
+title: "Best Practices for Managing and Analyzing Biological Data"
+author: "Francisco E. Fontúrbel"
+date: "`r format(Sys.Date(), '%B %d, %Y')`"
+output:
+  html_document:
+    toc: true
+    toc_depth: 3
+    toc_float: true
+    number_sections: true
+    theme: flatly
+editor_options:
+  markdown:
+    wrap: 100
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+
+# Packages used in this document
+# install.packages(c("dplyr", "stringr", "knitr", "janitor", "lubridate", "kableExtra"))
+library(dplyr)
+library(stringr)
+library(knitr)
+library(janitor)
+library(lubridate)
+library(kableExtra)
+```
+
+# Purpose of this document
+
+This document brings together a set of best practices for data management and analysis,
+organized as a reference protocol for lab work and for anyone doing a thesis or graduate
+coursework. The idea is simple: a dataset or a script should be findable, openable, understandable,
+and reusable by anyone (including yourself, a year later), without depending on the person who
+created it being available to explain it.
+
+This lesson is directly tied to the **FAIR** principles (*Findable, Accessible, Interoperable,
+Reusable*), which we use as the connecting thread of the whole document rather than treating them
+as a box to check for an editorial policy.
+
+- **Findable**: unique, consistent identifiers (e.g., DOIs), complete metadata, file and object
+  names that can be understood without opening the file.
+- **Accessible**: open formats (plain text, CSV) rather than formats tied to a specific software
+  license; raw data backed up and available.
+- **Interoperable**: recognized standards (e.g., Darwin Core for biodiversity data), controlled
+  vocabularies instead of free-text typing, consistent language between code and publication.
+- **Reusable**: version-controlled and commented code, a reproducible project structure, and
+  enough documentation for someone else to repeat the analysis without having to guess.
+
+As an illustration of what happens when one of these four pillars fails, Section 7 summarizes a
+real case of a biodiversity data audit; the rest of the document (Sections 2 through 6) is the
+general protocol that applies to any lab dataset or analysis, whether or not a case like that one
+is involved.
+
+---
+
+# Data management best practices
+
+## Why Excel is not enough
+
+- Extra spaces, commas and decimal points, invisible line breaks, and mixed formats
+  (text/number/date in the same column) are not always visible when opening the file in Excel,
+  but they do break analysis pipelines.
+- Under a Spanish-language regional setting, Excel uses `,` as the decimal separator and `.` as
+  the thousands separator (or vice versa, depending on the configuration), which produces silent
+  errors when exporting to CSV or when opening the file on another computer with a different
+  configuration. Swapping a period for a comma (or vice versa) can ruin an entire spreadsheet
+  without it being noticeable at a glance.
+- **Lab rule**: Excel is used only to **view** data, never as a cleaning or final data-wrangling
+  tool.
+- To load data into R, always use `.txt` or `.csv`, never read the Excel file directly: the
+  libraries that do that (`readxl` and similar) tend to import the same formatting errors carried
+  over from the original file.
+
+## Recommended data-cleaning tools
+
+```{r tools-table, echo=FALSE}
+tools_table <- tribble(
+  ~Tool, ~`Main use`, ~`When to use it`,
+  "Notepad++", "View and edit the file as plain text; detect invisible characters, line breaks, encoding", "Before importing any CSV into R, especially if it comes from Excel or from copy/pasting from Word/PDF",
+  "OpenRefine", "Bulk data cleaning: text clustering (groups spelling variants of the same value, e.g. 'Shangri-La' / 'Shangrila' / 'Shangri-la'), faceted transformation, reversible change history", "Before any analysis, especially in categorical fields with free-text entry (localities, collector names, taxonomy)"
+)
+
+kable(tools_table, caption = "Data-cleaning tools") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"), full_width = TRUE)
+```
+
+Running the data through Notepad++ or OpenRefine before analyzing it is the step that catches -in
+seconds- inconsistencies that would otherwise only show up as strange results halfway through the
+analysis.
+
+## Golden rule: the original spreadsheet is never touched
+
+- The raw data file is saved **read-only**, with a name and date, and is never edited manually.
+- All cleaning is done through **version-controlled code** that reads the raw file and writes a
+  processed file (`data/raw/` → `data/processed/`).
+- This preserves traceability: anyone can rebuild the processed dataset from scratch and audit
+  exactly which transformation was applied — something impossible if the original Excel file is
+  edited by hand and leaves no trace.
+
+## Backing up your data
+
+A "read-only" raw file is useless if it lives as a single copy on a disk that can fail. Backup is
+the other half of the golden rule:
+
+- **The 3-2-1 rule** as a reasonable minimum: at least **3** copies of any important dataset, on
+  **2** different media (e.g., local disk and cloud), with **1** copy off the everyday working
+  machine (Google Drive, GitHub, an external disk that doesn't travel with the computer).
+- Raw field data (spreadsheets, camera-trap photos, GPX files) is backed up **the same day** as
+  the field trip, before the original file ends up as the only copy on an SD card or a phone.
+- A Git repository backs up code and its history, but it **does not replace** backup of heavy raw
+  data (photos, rasters, files larger than a couple of MB): for that, use Drive, Dropbox, or
+  another cloud storage service.
+- Before any major cleaning or restructuring of a dataset, it is worth confirming that the
+  previous version is still available in some backup, not only in the "undo" history of whatever
+  editor is being used.
+
+---
+
+# Analysis and coding best practices
+
+- **If the script starts with `setwd()` and an absolute path, something is wrong.** Use R Projects
+  (`.Rproj`) instead, so that paths are always relative to the project: when sharing the folder
+  (or cloning the repo), nobody has to rewrite paths that only exist on one computer.
+- Create sub-folders within the project to organize the different files (`data`, `R`, `scripts`,
+  `output`, etc.), as in the layout shown below.
+
+## Suggested R project structure
+
+```
+project_name/
+├── project_name.Rproj         # use R Projects: relative paths, full portability
+├── data/
+│   ├── raw/                   # NEVER edited by hand; read-only
+│   └── processed/              # generated 100% by code
+├── R/                          # custom functions (see Section 5)
+├── scripts/                    # analysis scripts, numbered in execution order
+│   ├── 01_import.R
+│   ├── 02_clean.R
+│   └── 03_analysis.R
+├── output/
+│   ├── figures/
+│   └── tables/
+├── docs/                        # rendered .Rmd reports
+├── README.md
+└── .gitignore
+```
+
+## File and object names
+
+A file or R object name has to be readable and understandable without opening the file or running
+the script. Two equally problematic extremes:
+
+- **Too short** (`d1.csv`, `df2`, `m3`): six months later, nobody remembers what it contained or
+  which model it represented.
+- **Too long** (`final_definitive_data_v3_corrected_use_this_march22.csv`): besides being
+  cumbersome to type, it is usually a sign that there is no real version-control system in place
+  (that's what Git is for, not the file name). **NOTE:** on large hard drives with many files,
+  these long names increase the likelihood of causing data corruption (and loss).
+
+Practical lab conventions:
+
+- Short, descriptive names, in lowercase, with underscores as separators (`snake_case`): e.g.,
+  `nahuelbuta_birds_2024.csv` instead of `Nahuelbuta BIRDS Data (2024) FINAL.csv`.
+- No spaces, accents, or special characters in file names (spaces cause problems when calling
+  paths from the terminal or from other operating systems).
+- Scripts numbered according to the order in which they run (`01_import.R`, `02_clean.R`,
+  `03_analysis.R`), as in the project structure above.
+- Object names within the script follow the same logic: `fit_glmm_fruitset` is more useful than
+  `model3` or `glmm_negative_binomial_model_with_random_effects_by_site_final`.
+- Versioning lives in Git (commits with descriptive messages), not in the file name (`_v1`,
+  `_v2_final`, `_final_final`). If a file needs a version suffix to be understood, that's a sign
+  that version control is missing, not that a better suffix is needed.
+
+## Git / GitHub
+
+- **A real change history**: each `commit` is logged with author, date, and the exact diff (which
+  line changed, by whom, and when) — something a spreadsheet shared by email never offers.
+- **Basic workflow**: `git pull` (fetch changes) → edit → `git add` → `git commit -m "descriptive
+  message"` → `git push` (upload changes).
+- **Branches**: allow you to "experiment" with code or analysis without touching the main version
+  (`main`); if the experiment doesn't work out, it can be discarded without leaving any trace on
+  the main branch.
+- **Fork**: lets you start from another person's or lab's repository and develop it
+  independently, while keeping the connection to the original.
+- **RStudio integration**: RStudio has native Git integration (the "Git" panel: commit, push,
+  pull, history) without leaving the IDE. Authentication in RStudio is set up once and stays
+  connected from then on. It's also useful to install the `GitHub Desktop` app.
+
+## Commented scripts and R Markdown
+
+- Use clearly commented scripts that explain the *why* of each step, not just the *what* the line
+  of code does.
+- Even better is to use R Markdown files (`.Rmd`), which combine narrative text with executable
+  code (R, and also Python, bash, etc.), so that the final document (HTML/PDF/Word) is generated
+  automatically from the actual data, avoiding manual copy-pasting of results — another classic
+  source of transcription errors.
+- Markdown (`.md`) is plain text, lightweight, and readable on any platform, without depending on
+  proprietary software (unlike Word's `.docx`). As an additional reference: language models
+  process Markdown far more efficiently than binary formats such as `.docx` or `.pdf`, which also
+  matters if you plan to use AI as support for analysis or writing.
+
+## Character encoding in R code
+
+- **Do not use special characters or accented letters in object, function, column, or file-path
+  names in R.** This avoids encoding errors when sharing code between different operating systems
+  (Windows/Mac/Linux) or when running the same script on a server with a different *locale*
+  setting.
+- Always save scripts with explicit **UTF-8** encoding.
+- Accented characters can be used in the **narrative text** of an `.Rmd` file (as in this
+  document); the restriction applies to code chunks, not to free text (which follows a different
+  encoding logic).
+
+## Working language: start in the target language
+
+If the final output is going to a journal in English, the script, comments, object names, and
+figures should be written in English **from day one**, not translated at the end as an afterthought.
+Concrete reasons, not just style:
+
+- Translating at the end duplicates the work and is a classic source of transcription errors: a
+  figure axis translated by hand, a label left half-translated, a comment in the original language
+  that no longer matches the (now-translated) name of the object it describes.
+- If the dataset or code is eventually deposited in a repository or shared as supplementary
+  material, consistent language is part of FAIR **Interoperability**: a script mixing two
+  languages is harder for any other group to reuse.
+- This doesn't conflict with the previous point: the code (object names, columns, comments) is
+  written in the target language of the publication; the narrative prose of an `.Rmd` for internal
+  lab use can remain in whatever language the lab normally works in.
+
+## Thinking long-term
+
+All of the practices above — R projects, clear names, backups, version control, documented R
+Markdown, consistent language — answer a single question: **could someone else, or myself a year
+from now, understand and reproduce this without having to ask?** That is, at bottom, the practical
+definition of the R in FAIR (*Reusable*): it's not enough for the analysis to have worked once on
+one computer; it has to be able to run again on another computer, with someone else at the
+keyboard, and reach the same result.
+
+---
+
+# Common dataset errors and how to prevent them structurally
+
+These are the most common error patterns in datasets built by hand or migrated from Excel, along
+with how to eliminate them at the root instead of fixing them case by case:
+
+1. **Never capture a compound field as free text** (e.g., a full scientific name, an address, or
+   any field that combines several pieces of information). Always build it by programmatic
+   concatenation from atomic columns (`genus`, `specificEpithet`, `taxonRank`, etc., in the case
+   of biodiversity data). This eliminates the most frequent errors at the root: inconsistent
+   punctuation, missing authorship, misassigned categories, unseparated sub-ranks.
+2. **Versioned lookup tables** for any repeated categorical field (administrative geography,
+   higher-level taxonomy, experimental treatment type), with a validation `left_join` before every
+   export, instead of free-text entry.
+3. **A single, global unique identifier** per dataset, not a different one per sub-collection or
+   sub-table. If groups need to be distinguished, use a structured prefix (`angio:10040`,
+   `pteri:10040`) from the design stage of the database, not patched in afterward.
+4. **A pre-submission validation script** (see Section 5) that runs automatically before exporting
+   any dataset or before submitting a manuscript, not only when an external reviewer asks for it.
+5. **Physical range checks** for every numeric field with physical meaning (elevation,
+   coordinates, depth, temperature, any body measurement), with reasonable limits defined in
+   advance.
+6. **Automatic cross-checking of redundant columns** (for example, a full date versus separate
+   year/month/day) at every dataset update, not as a one-off audit years later.
+7. **Routine detection of non-printing characters** (non-breaking spaces, curly quotes, em dashes)
+   as part of standard quality control, not as a surprise finding from an external reviewer.
+8. **Metadata record = code record.** If a manuscript or a README describes a field, that field
+   must be generated by the same pipeline that generates the table, so the two never fall out of
+   sync.
+
+---
+
+# Automated checking functions
+
+These R functions serve as a quick-audit template for any lab dataset with a tabular structure
+(identifier, dates, geography, numeric fields with physical meaning, a compound name/category
+field). They are illustrated here with a minimal synthetic dataset structured as biodiversity
+occurrence data (Darwin Core standard), but the same logic applies equally to experimental,
+field, or any other kind of data: it's just a matter of adjusting the column names.
+
+```{r synthetic-data, echo=FALSE}
+# Minimal synthetic dataset, for illustrative purposes only for the checking functions.
+occ <- tribble(
+  ~occurrenceID, ~catalogNumber, ~collectionCode, ~eventDate, ~year, ~month, ~day,
+  ~country, ~continent, ~stateProvince, ~decimalLatitude, ~decimalLongitude,
+  ~maximumElevationInMeters, ~scientificName, ~genus, ~specificEpithet, ~taxonRank,
+
+  "PUCV:herb:pteri:10110", "10110", "pteri", "1969-01-01", 1969, 1, 1,
+  "Chile", NA_character_, "Los Lagos", -41.833, -73,
+  NA_real_, "Hymenophyllum plicatum Kaulf.", "Hymenophyllum", "plicatum", "species",
+
+  "PUCV:herb:angio:5215", "5215", "angio", NA, 1974, NA, NA,
+  "Chile", NA_character_, "Valparaíso", -33.4, -71.133,
+  40000, "Adiantum thalictroides var. hirsutum (Hook. & Grev.) de la Sota",
+  "Adiantum", "chilense", "species",
+
+  "PUCV:herb:angio:6032", NA, "angio", NA, NA, NA, NA,
+  NA, NA_character_, NA, NA_real_, NA_real_,
+  NA_real_, "Chuquiraga spinosa subsp. rotundifolia (Wedd.) C.Ezcurra",
+  "Chuquiraga", "spinosa", "species",
+
+  "PUCV:herb:angio:1806", "1806", "angio", "1958", 1974, NA, NA,
+  "Chile", NA_character_, "Valparaíso", -33.617, -70.3,
+  NA_real_, "Adesmia boronoides Hook.f.. 1845", "Adesmia", "boronoides", "species",
+
+  "PUCV:herb:angio:9999", "1806", "angio", "1958", 1974, NA, NA,
+  "Chile", NA_character_, "Metropolitana", -33.617, -70.3,
+  NA_real_, "Adesmia\u00A0boronoides Hook.f. 1845", "Adesmia", "boronoides", "species"
+)
+
+kable(occ, caption = "Example synthetic dataset (Darwin Core-type structure)")
+```
+
+### 1. Duplicate unique identifiers
+
+```{r check-duplicates, echo=FALSE}
+check_duplicates <- function(df, id_col) {
+  df %>%
+    count(.data[[id_col]], name = "n_records") %>%
+    filter(n_records > 1)
+}
+
+check_duplicates(occ, "catalogNumber")
+```
+
+### 2. Consistency between the full date and year/month/day
+
+```{r check-dates, echo=FALSE}
+check_dates <- function(df) {
+  df %>%
+    mutate(
+      year_from_eventDate = suppressWarnings(as.integer(str_extract(eventDate, "^\\d{4}"))),
+      matches = is.na(eventDate) | (year_from_eventDate == year)
+    ) %>%
+    filter(!matches | (is.na(eventDate) & !is.na(year))) %>%
+    select(occurrenceID, eventDate, year, month, day)
+}
+
+check_dates(occ)
+```
+
+### 3. Records with no geographic information at all
+
+```{r check-no-geo, echo=FALSE}
+check_no_geography <- function(df) {
+  df %>%
+    filter(
+      is.na(country) & is.na(stateProvince) &
+      is.na(decimalLatitude) & is.na(decimalLongitude)
+    ) %>%
+    select(occurrenceID)
+}
+
+check_no_geography(occ)
+```
+
+### 4. Values outside a plausible physical range
+
+```{r check-elevation, echo=FALSE}
+check_elevation <- function(df, min_m = -430, max_m = 8849) {
+  df %>%
+    filter(!is.na(maximumElevationInMeters)) %>%
+    filter(maximumElevationInMeters < min_m | maximumElevationInMeters > max_m) %>%
+    select(occurrenceID, maximumElevationInMeters)
+}
+
+check_elevation(occ)
+```
+
+### 5. Same coordinate associated with more than one administrative category
+
+```{r check-geo-disagreement, echo=FALSE}
+check_geo_disagreement <- function(df) {
+  df %>%
+    filter(!is.na(decimalLatitude), !is.na(decimalLongitude)) %>%
+    group_by(decimalLatitude, decimalLongitude) %>%
+    summarise(
+      n_distinct_provinces = n_distinct(stateProvince, na.rm = TRUE),
+      provinces = paste(unique(stateProvince), collapse = " | "),
+      .groups = "drop"
+    ) %>%
+    filter(n_distinct_provinces > 1)
+}
+
+check_geo_disagreement(occ)
+```
+
+### 6. Invisible characters and duplicated punctuation in text fields
+
+```{r check-characters, echo=FALSE}
+check_nbsp <- function(df, col = "scientificName") {
+  df %>%
+    filter(str_detect(.data[[col]], "\u00A0")) %>%
+    mutate(flagged = str_replace_all(.data[[col]], "\u00A0", "{NBSP}")) %>%
+    select(occurrenceID, flagged)
+}
+
+check_double_period <- function(df, col = "scientificName") {
+  df %>%
+    filter(str_detect(.data[[col]], "\\.\\.")) %>%
+    select(occurrenceID, all_of(col))
+}
+
+check_nbsp(occ)
+check_double_period(occ)
+```
+
+### 7. Compound category not reflected in the rank/level field
+
+```{r check-taxonrank, echo=FALSE}
+check_taxonrank_infra <- function(df) {
+  patterns <- c("subsp\\.", " var\\.", " f\\.")
+  df %>%
+    filter(str_detect(scientificName, paste(patterns, collapse = "|"))) %>%
+    filter(!taxonRank %in% c("subspecies", "variety", "form")) %>%
+    select(occurrenceID, scientificName, taxonRank)
+}
+
+check_taxonrank_infra(occ)
+```
+
+### 8. Run all checks at once (master function)
+
+```{r check-master, echo=FALSE}
+audit_dataset <- function(df) {
+  list(
+    duplicate_catalogNumber   = check_duplicates(df, "catalogNumber"),
+    date_inconsistencies      = check_dates(df),
+    no_geography              = check_no_geography(df),
+    elevation_out_of_range    = check_elevation(df),
+    geo_disagreement          = check_geo_disagreement(df),
+    nbsp_in_name              = check_nbsp(df),
+    double_period_in_name     = check_double_period(df),
+    bad_taxonrank_infra       = check_taxonrank_infra(df)
+  )
+}
+
+result <- audit_dataset(occ)
+result
+```
+
+> **To use on real lab data:** save these functions in `R/audit_functions.R`, load them with
+> `source("R/audit_functions.R")`, adapt the column names to your own dataset, and run
+> `audit_dataset(my_dataset)` as the last step of `scripts/02_clean.R`, before exporting any
+> dataset or submitting a manuscript for review.
+
+---
+
+# Pre-submission checklist for lab datasets and manuscripts
+
+```{r checklist, echo=FALSE}
+checklist <- tribble(
+  ~step, ~description,
+  1, "The original raw file is saved, intact, and dated, with no manual editing.",
+  2, "At least one backup of the raw file exists off the everyday working machine.",
+  3, "The entire cleaning pipeline is in version-controlled code (Git), not manual Excel edits.",
+  4, "Compound fields (names, addresses, combined categories) are generated by programmatic concatenation, not free typing.",
+  5, "audit_dataset() (or equivalent) was run, and no findings remain unresolved or undocumented.",
+  6, "Redundant fields (e.g., full date vs. year/month/day) are 100% consistent with each other.",
+  7, "There are no duplicate identifiers within the same scope.",
+  8, "All numeric fields with physical meaning fall within plausible ranges.",
+  9, "No invisible characters or punctuation errors remain in text fields.",
+  10, "The metadata described in the manuscript or README exactly match the exported columns.",
+  11, "The repository README documents the cleaning process and the decisions made."
+)
+
+kable(checklist, col.names = c("#", "Check")) %>%
+  kable_styling(bootstrap_options = c("striped", "hover"), full_width = TRUE)
+```
+
+---
+
+# Illustrative case: technical audit of a biodiversity dataset
+
+To avoid staying at the level of abstract principles, it's worth looking at a real example of what
+happens when these practices are not followed from the start: the technical report that Pensoft
+(the publisher of *PhytoKeys*, *ZooKeys*, and *Biodiversity Data Journal*) commissioned from Dr.
+Robert Mesibov on the Herbarium dataset of the Pontificia Universidad Católica de Valparaíso
+(PUCV), downloaded from GBIF on 2022-07-13. Pensoft commissions this kind of technical evaluation
+before sending a "data paper" (an article whose purpose is to describe a dataset, not to present
+research results) out for peer review. The reviewer himself is explicit about the scope of the
+check:
+
+> *"Pensoft does not check the details of the content of a dataset, for example whether the
+> correct author is given for a scientific name, or whether the correct latitude/longitude is
+> given for a locality."*
+
+In other words: it's a check of **structural consistency**, not of the scientific accuracy of the
+content.
+
+```{r errors-table, echo=FALSE}
+errors_table <- tribble(
+  ~category, ~finding, ~severity,
+  "Schema/metadata", "Field described in the paper but absent from the table", "High",
+  "Invisible characters", "Non-breaking spaces (NBSP) within the scientific name", "Medium",
+  "Identifiers", "Duplicate identifier across sub-collections", "High",
+  "Dates", "Full date, year, month, and day inconsistent with each other", "High",
+  "Geography", "Records with no locality information at all", "High",
+  "Geography", "Same coordinate assigned to a different administrative region", "High",
+  "Impossible values", "Elevation greater than the maximum plausible terrestrial height", "High",
+  "Higher taxonomy", "Family name used as if it were an order", "Medium",
+  "Taxonomic rank", "Infraspecific rank not reflected in the corresponding field", "High",
+  "Scientific name", "Double period instead of one; missing authorship", "Medium"
+)
+
+kable(errors_table, caption = "Sample of the error categories identified in the PUCV dataset (condensed version)") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"), full_width = TRUE)
+```
+
+Nearly all of these problems share a common origin, more important than any single error:
+manual capture of fields that should have been built by programmatic concatenation, copy-pasting
+from Word or PDF (which introduces invisible characters and duplicated punctuation), the absence
+of controlled vocabularies for categorical fields, and a lack of range validation for numeric
+fields. None of these origins is exclusive to herbarium data: they are exactly the same patterns
+that motivate Sections 4 and 5 of this document.
+
+It's also worth clarifying what this type of audit does **not** cover, so as not to over-trust a
+dataset that passed it: it does not verify the scientific correctness of the content (authorship
+of a name, the actual coordinates of the collection site), it does not evaluate the taxonomic
+identity of the specimens, it does not audit the prior digitization process, and it is a snapshot
+in time, not a guarantee that the same pipeline won't reproduce the same errors at the next update.
+Passing a technical audit is a necessary but not sufficient condition for data quality: it
+complements, but does not replace, content review by a specialist.
+
+---
+
+# Some useful links
+
+- Darwin Core Standard: <https://dwc.tdwg.org/>
+- OpenRefine: <https://openrefine.org/>
+- Notepad++: <https://notepad-plus-plus.org/>
+- R Projects documentation: <https://r4ds.hadley.nz/workflow-scripts>
+- GBIF Data Quality Requirements: <https://www.gbif.org/data-quality-requirements-occurrences>
