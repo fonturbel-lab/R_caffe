@@ -208,7 +208,7 @@ Convenciones prácticas del laboratorio:
 
 - **No usar `ñ` ni tildes en nombres de objetos, funciones, columnas o rutas de archivo en R.**
   Esto evita errores de codificación al compartir código entre sistemas operativos distintos
-  (Windows/Mac/Linux) o al ejecutar el mismo script en un servidor con configuración de locale
+  (Windows/Mac/Linux) o al ejecutar el mismo script en un servidor con configuración de _locale_
   distinta.
 - Guardar siempre los scripts en codificación **UTF-8** explícita.
 - Los acentos y la `ñ` sí pueden usarse en el **texto narrativo** de un `.Rmd` (como en
