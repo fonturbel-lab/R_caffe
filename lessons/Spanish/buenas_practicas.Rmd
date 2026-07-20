@@ -211,8 +211,8 @@ Convenciones prácticas del laboratorio:
   (Windows/Mac/Linux) o al ejecutar el mismo script en un servidor con configuración de locale
   distinta.
 - Guardar siempre los scripts en codificación **UTF-8** explícita.
-- Los acentos y la `ñ` sí pueden (y deben) usarse en el **texto narrativo** de un `.Rmd` (como en
-  este documento); la restricción aplica al código, no a la prosa.
+- Los acentos y la `ñ` sí pueden usarse en el **texto narrativo** de un `.Rmd` (como en
+  este documento); la restricción aplica a los bloques de código, pero no al texto libre (que se rige por otro sistema de codificación).
 
 ## Idioma de trabajo: partir en el idioma de destino
 
