@@ -1,0 +1,227 @@
+{
+  "code/data_audit_functions.R": {
+    "mtime": 1784477785.4409146,
+    "ast_hash": "36bc66290b5747088e07a05da0c30892",
+    "semantic_hash": "36bc66290b5747088e07a05da0c30892"
+  },
+  "multiplot.R": {
+    "mtime": 1718287045.5280194,
+    "ast_hash": "2a5929205acd0f7a432136b033842409",
+    "semantic_hash": "2a5929205acd0f7a432136b033842409"
+  },
+  "01-objects.html": {
+    "mtime": 1766420299.1836398,
+    "ast_hash": "85617c41f6bef37cb410e0328b393b6f",
+    "semantic_hash": "85617c41f6bef37cb410e0328b393b6f"
+  },
+  "02-plots.html": {
+    "mtime": 1718287045.4635723,
+    "ast_hash": "18fad402091d736bfaf867730d392595",
+    "semantic_hash": "18fad402091d736bfaf867730d392595"
+  },
+  "03-simple_hyp_test.html": {
+    "mtime": 1774999582.720676,
+    "ast_hash": "7d28d9ce1098ebcfb6de3756f2a29d63",
+    "semantic_hash": "7d28d9ce1098ebcfb6de3756f2a29d63"
+  },
+  "04-ANOVA_des_p1.html": {
+    "mtime": 1759347606.2738018,
+    "ast_hash": "bea00638d17e15408a35533f44a7c081",
+    "semantic_hash": "bea00638d17e15408a35533f44a7c081"
+  },
+  "05-ANOVA_des_p2.html": {
+    "mtime": 1759519756.6768613,
+    "ast_hash": "e23b14d86e5fb8569ac18b4c57ab83f6",
+    "semantic_hash": "e23b14d86e5fb8569ac18b4c57ab83f6"
+  },
+  "06-ANOVA_des_p3.html": {
+    "mtime": 1778115469.5322444,
+    "ast_hash": "9d9c142b462e3c7c6fa55eb68a188c01",
+    "semantic_hash": "9d9c142b462e3c7c6fa55eb68a188c01"
+  },
+  "07-MANOVA.html": {
+    "mtime": 1761353331.9710283,
+    "ast_hash": "5a0d94500b7895e9c39d3c3a93ef7f30",
+    "semantic_hash": "5a0d94500b7895e9c39d3c3a93ef7f30"
+  },
+  "08-reg_correl.html": {
+    "mtime": 1718287045.4762504,
+    "ast_hash": "23a1791836949357323561852525a8cf",
+    "semantic_hash": "23a1791836949357323561852525a8cf"
+  },
+  "09-multi_regression.html": {
+    "mtime": 1762545852.0007563,
+    "ast_hash": "b6dcc4570f11c443a190091b611cee16",
+    "semantic_hash": "b6dcc4570f11c443a190091b611cee16"
+  },
+  "10-model_averaging.html": {
+    "mtime": 1763302564.8430645,
+    "ast_hash": "b7944899d0cd3de5088a97d130b1ae56",
+    "semantic_hash": "b7944899d0cd3de5088a97d130b1ae56"
+  },
+  "11-glm.html": {
+    "mtime": 1718287045.4824626,
+    "ast_hash": "8860ad1cfc5d9820e33ca731c9e72fe1",
+    "semantic_hash": "8860ad1cfc5d9820e33ca731c9e72fe1"
+  },
+  "12-zi_gee.html": {
+    "mtime": 1764347690.6026855,
+    "ast_hash": "77e159e72f6b2cb064960a7f20046efa",
+    "semantic_hash": "77e159e72f6b2cb064960a7f20046efa"
+  },
+  "13-gam.html": {
+    "mtime": 1718287045.486356,
+    "ast_hash": "0244c3b6a04da6d72a07faa4f0850b25",
+    "semantic_hash": "0244c3b6a04da6d72a07faa4f0850b25"
+  },
+  "14-glmm.html": {
+    "mtime": 1718287045.4871314,
+    "ast_hash": "3c053eabc84368382299ba63dae72a10",
+    "semantic_hash": "3c053eabc84368382299ba63dae72a10"
+  },
+  "15-spatexpglm.html": {
+    "mtime": 1718755911.0511744,
+    "ast_hash": "09e226ed172de2d65bccc96e6e09553e",
+    "semantic_hash": "09e226ed172de2d65bccc96e6e09553e"
+  },
+  "16-anosim_simper_mvabund.html": {
+    "mtime": 1761767318.565825,
+    "ast_hash": "38cdf92357e8270b66f94cdc89ac7599",
+    "semantic_hash": "38cdf92357e8270b66f94cdc89ac7599"
+  },
+  "17-pca_nmds.html": {
+    "mtime": 1718287045.5114243,
+    "ast_hash": "55da697d59e1c999e06e3925c87008be",
+    "semantic_hash": "55da697d59e1c999e06e3925c87008be"
+  },
+  "18-biodiversity.html": {
+    "mtime": 1718287045.5145757,
+    "ast_hash": "704c0a82416554ae52bdd5f4e1d96e1d",
+    "semantic_hash": "704c0a82416554ae52bdd5f4e1d96e1d"
+  },
+  "19-time_series.html": {
+    "mtime": 1762178667.1231458,
+    "ast_hash": "6eda5d3dd1eb7693141c71038214ed11",
+    "semantic_hash": "6eda5d3dd1eb7693141c71038214ed11"
+  },
+  "20-circular_stats.html": {
+    "mtime": 1762013838.6783123,
+    "ast_hash": "76273191e151031162fcdd0c4b6b8ebc",
+    "semantic_hash": "76273191e151031162fcdd0c4b6b8ebc"
+  },
+  "21-meta_analysis.html": {
+    "mtime": 1781731130.7733557,
+    "ast_hash": "4920cc15c5ddb52cdcd6fb862bc3a3a2",
+    "semantic_hash": "4920cc15c5ddb52cdcd6fb862bc3a3a2"
+  },
+  "README.md": {
+    "mtime": 1782250161.6644607,
+    "ast_hash": "b7f43441a6c3128f37f798ee71d4a77b",
+    "semantic_hash": "b7f43441a6c3128f37f798ee71d4a77b"
+  },
+  "data/02_palms.txt": {
+    "mtime": 1718287045.5230186,
+    "ast_hash": "5c3fb96639ef5da08abaa61327e8c6a8",
+    "semantic_hash": "5c3fb96639ef5da08abaa61327e8c6a8"
+  },
+  "data/04-cactus.txt": {
+    "mtime": 1718287045.523193,
+    "ast_hash": "0f835278f1f6d94290692dbdd3e955b3",
+    "semantic_hash": "0f835278f1f6d94290692dbdd3e955b3"
+  },
+  "data/05-infest.txt": {
+    "mtime": 1718287045.5232477,
+    "ast_hash": "329a7495b496dd4f54774d22c2bbb2b1",
+    "semantic_hash": "329a7495b496dd4f54774d22c2bbb2b1"
+  },
+  "data/06-ancova.txt": {
+    "mtime": 1718287045.5233638,
+    "ast_hash": "139429fc224153e22e6fcd11f3bbdec4",
+    "semantic_hash": "139429fc224153e22e6fcd11f3bbdec4"
+  },
+  "data/06-repeated.txt": {
+    "mtime": 1718287045.523418,
+    "ast_hash": "2b795baf440a39722bb3a155e3b8834c",
+    "semantic_hash": "2b795baf440a39722bb3a155e3b8834c"
+  },
+  "data/07_manova.txt": {
+    "mtime": 1718287045.5235102,
+    "ast_hash": "812525b763222d4abc4096db5de4e976",
+    "semantic_hash": "812525b763222d4abc4096db5de4e976"
+  },
+  "data/10_data_threat.txt": {
+    "mtime": 1718287045.523748,
+    "ast_hash": "8f70096bdde56fa0e1846d01b5de69f7",
+    "semantic_hash": "8f70096bdde56fa0e1846d01b5de69f7"
+  },
+  "data/16_bird_data.txt": {
+    "mtime": 1718287045.5239642,
+    "ast_hash": "986e63d3cf396eadc945059b7dbb93a2",
+    "semantic_hash": "986e63d3cf396eadc945059b7dbb93a2"
+  },
+  "data/19_bird_data.txt": {
+    "mtime": 1718287045.5242786,
+    "ast_hash": "e623b7cef980c69976bf39a7af01b9f0",
+    "semantic_hash": "e623b7cef980c69976bf39a7af01b9f0"
+  },
+  "data/20_act_x.txt": {
+    "mtime": 1762012566.5007658,
+    "ast_hash": "e6313efd00e232bc48d2b89b57d53e19",
+    "semantic_hash": "e6313efd00e232bc48d2b89b57d53e19"
+  },
+  "data/20_act_y.txt": {
+    "mtime": 1762012566.5008593,
+    "ast_hash": "2b0719faa3b41a62eeb291da4ab2a64e",
+    "semantic_hash": "2b0719faa3b41a62eeb291da4ab2a64e"
+  },
+  "data/20_activity.txt": {
+    "mtime": 1718287045.5243664,
+    "ast_hash": "e6313efd00e232bc48d2b89b57d53e19",
+    "semantic_hash": "e6313efd00e232bc48d2b89b57d53e19"
+  },
+  "data/20_records_hour.txt": {
+    "mtime": 1718287045.5244331,
+    "ast_hash": "54f0b64cdc5f67ab8a0ee44f5226d9c3",
+    "semantic_hash": "54f0b64cdc5f67ab8a0ee44f5226d9c3"
+  },
+  "data/21_data_meta_damage.txt": {
+    "mtime": 1780951911.9491613,
+    "ast_hash": "66224566f1e14d905c2c0d7a79f2c831",
+    "semantic_hash": "66224566f1e14d905c2c0d7a79f2c831"
+  },
+  "footer.html": {
+    "mtime": 1772117602.0427861,
+    "ast_hash": "b5413ec8fadedccb248087fcacff1de6",
+    "semantic_hash": "b5413ec8fadedccb248087fcacff1de6"
+  },
+  "lessons/English/probability_lesson.html": {
+    "mtime": 1776095269.2748303,
+    "ast_hash": "487a26b027f6a3bc47b178be108c54e4",
+    "semantic_hash": "487a26b027f6a3bc47b178be108c54e4"
+  },
+  "lessons/Spanish/buenas_practicas.html": {
+    "mtime": 1784477423.1230633,
+    "ast_hash": "af82e0be80ae1b6850ee9f71243fbcfd",
+    "semantic_hash": "af82e0be80ae1b6850ee9f71243fbcfd"
+  },
+  "lessons/Spanish/clase_probabilidad.html": {
+    "mtime": 1776095269.2901115,
+    "ast_hash": "4934b17042f4459d66f35bc6227551d6",
+    "semantic_hash": "4934b17042f4459d66f35bc6227551d6"
+  },
+  "images/caffe.png": {
+    "mtime": 1718287045.527856,
+    "ast_hash": "5bbbb80d211a3c4a8c2cba0e1a879cf6",
+    "semantic_hash": "5bbbb80d211a3c4a8c2cba0e1a879cf6"
+  },
+  "images/caffe2025.png": {
+    "mtime": 1759347606.2752771,
+    "ast_hash": "1827b5ea9925ccc4a3411965322c274a",
+    "semantic_hash": "1827b5ea9925ccc4a3411965322c274a"
+  },
+  "images/license.png": {
+    "mtime": 1718287045.527954,
+    "ast_hash": "bcf93ae8c77ded318620d38bb454c0da",
+    "semantic_hash": "bcf93ae8c77ded318620d38bb454c0da"
+  }
+}
