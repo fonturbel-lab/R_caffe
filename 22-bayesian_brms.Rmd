@@ -1,0 +1,587 @@
+---
+title: "22 - Bayesian statistics with brms"
+author: "Francisco E. Fonturbel"
+date: "26/September/2026"
+output:
+  html_document:
+    includes:
+        after_body: footer.html
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	echo = TRUE,
+	message = FALSE,
+	warning = FALSE
+)
+```
+
+# A different way of thinking about uncertainty
+
+During this course we have fitted many models (ANOVAs, GLMs, GLMMs, GAMs, meta-analyses) and all of them had something in common: we obtained a _p_-value and decided whether an effect was "significant" or not. That is the **frequentist** approach, and it answers a rather strange question: _how likely are these data (or more extreme ones) if the null hypothesis were true?_
+
+Most of the time, what we really want to know is the opposite: _given these data, how likely is it that the effect is positive? how big is it? how sure am I?_ That is exactly what **Bayesian statistics** answers. Instead of a single point estimate and a _p_-value, we obtain a full probability distribution (the **posterior**) for every parameter in our model.
+
+## Bayes' theorem in one line
+
+Everything in Bayesian statistics comes from this simple rule:
+
+$$P(\theta \mid \text{data}) \propto P(\text{data} \mid \theta) \times P(\theta)$$
+
+- $P(\theta)$ is the **prior**: what we know (or assume) about the parameter _before_ looking at the data.
+- $P(\text{data} \mid \theta)$ is the **likelihood**: the same thing we have been maximizing in all our GLMs.
+- $P(\theta \mid \text{data})$ is the **posterior**: our updated knowledge after seeing the data.
+
+So, the posterior is a compromise between the prior and the data. When we have a lot of data, the likelihood dominates and results are very similar to frequentist ones. When we have little data (very common in field ecology!), the prior helps to stabilize the estimates.
+
+## A warm-up without any fancy software
+
+Let's go back to the mistletoe data of [Fontúrbel et al. (2015)](https://besjournals.onlinelibrary.wiley.com/doi/abs/10.1111/1365-2745.12443) that we used in lesson 11. We monitored 70 mistletoe plants with camera traps. A simple question: **what is the probability that a given plant gets visited by the marsupial _Dromiciops gliroides_?**
+
+```{r data}
+data<-read.csv("data/11_mistletoe_data.csv",
+                     header=TRUE,
+                     sep=";",
+                     dec=".",
+                     na.strings="NA")
+data$s250clasif<-as.factor(data$s250clasif)
+
+n_plants<-nrow(data)
+n_visited<-sum(data$dg_visits > 0)
+n_plants
+n_visited
+```
+
+We can compute the posterior for the visitation probability ($\theta$) by brute force, evaluating Bayes' theorem over a grid of possible values between 0 and 1 (this is called **grid approximation**). We will compare two priors: a flat one (we know nothing) and an informative one (e.g., a previous study told us that _Dromiciops_ visits about 20% of the plants).
+
+```{r grid, fig.width=10, fig.height=4}
+theta<-seq(0, 1, length.out = 1000)
+
+# Likelihood: binomial, the same used in a logistic GLM
+likelihood<-dbinom(n_visited, size = n_plants, prob = theta)
+
+# Two different priors
+prior_flat<-dbeta(theta, 1, 1)     # uniform, everything is equally likely
+prior_info<-dbeta(theta, 4, 16)    # centered around 0.2
+
+# Posterior = likelihood x prior (then normalized to sum 1)
+post_flat<-likelihood * prior_flat / sum(likelihood * prior_flat)
+post_info<-likelihood * prior_info / sum(likelihood * prior_info)
+
+par(mfrow=c(1,2))
+plot(theta, post_flat, type = "l", lwd = 3, col = "dodgerblue2",
+     main = "Flat prior", xlab = expression(theta), ylab = "Density (scaled)")
+lines(theta, prior_flat / sum(prior_flat), lwd = 2, lty = 2, col = "grey40")
+legend("topright", c("Prior", "Posterior"), lty = c(2,1), lwd = 2,
+       col = c("grey40", "dodgerblue2"), bty = "n")
+
+plot(theta, post_info, type = "l", lwd = 3, col = "chocolate2",
+     main = "Informative prior", xlab = expression(theta), ylab = "Density (scaled)")
+lines(theta, prior_info / sum(prior_info), lwd = 2, lty = 2, col = "grey40")
+legend("topright", c("Prior", "Posterior"), lty = c(2,1), lwd = 2,
+       col = c("grey40", "chocolate2"), bty = "n")
+par(mfrow=c(1,1))
+```
+
+With a flat prior, the posterior peaks at the observed proportion (`r round(n_visited/n_plants, 2)`), just as a frequentist estimate would. With the informative prior, the posterior is pulled a bit towards 0.2, but 70 plants are enough data to largely override it. That is the key idea: **priors matter less as data accumulate**.
+
+Now, the beauty of having a posterior distribution is that we can ask any question directly from it:
+
+```{r grid_questions}
+# Sample 10,000 values from the (flat prior) posterior
+set.seed(22)
+samples<-sample(theta, size = 10000, replace = TRUE, prob = post_flat)
+
+# Posterior median and 95% credible interval
+median(samples)
+quantile(samples, c(0.025, 0.975))
+
+# Probability that more than half of the plants get visited
+mean(samples > 0.5)
+```
+
+Please notice the interpretation: the 95% **credible interval** means that, given our data and prior, there is a 95% probability that $\theta$ lies within that range. That is what most people _think_ a frequentist confidence interval means (but it does not!).
+
+Grid approximation works great with one parameter, but it becomes impossible with the 5, 10, or 50 parameters of a real model. For that we need **Markov Chain Monte Carlo (MCMC)** sampling, and this is where `brms` comes in.
+
+
+# Meet brms
+
+`brms` (by Paul-Christian Bürkner) is an R package that lets us write Bayesian models using the same formula syntax we already know from `lm()`, `glm()`, and `lme4`. Behind the scenes, `brms` translates our formula into [Stan](https://mc-stan.org) code, compiles it into a C++ program, and samples the posterior using Hamiltonian Monte Carlo (a very efficient MCMC algorithm). We do not need to write any Stan code at all (although we can look at it using `stancode()`).
+
+Some important things before we start:
+
+- The first time a model is fitted, it needs to be **compiled**, which takes 30-60 seconds. Be patient, it is normal!
+- Stan needs a C++ compiler. On Windows install [Rtools](https://cran.r-project.org/bin/windows/Rtools/), on macOS install Xcode command line tools (`xcode-select --install`).
+- Here we use the default `rstan` backend. If you install the `cmdstanr` package (not on CRAN, see [here](https://mc-stan.org/cmdstanr/)) you can add `backend = "cmdstanr"` to any `brm()` call to make things faster.
+
+```{r packages}
+library(brms)        # Bayesian regression models using Stan
+library(bayesplot)   # Plots for MCMC diagnostics and posteriors
+library(posterior)   # Handling posterior draws
+library(loo)         # Model comparison with leave-one-out cross-validation
+library(MASS)        # glm.nb for comparison
+library(ggplot2)
+
+# Use all the cores available to run chains in parallel
+options(mc.cores = parallel::detectCores())
+
+##Some ggplot2 grooming
+My_Theme = theme(
+  axis.title.x = element_text(size = 16,face="bold"),
+  axis.text.x = element_text(size = 12),
+  axis.text.y = element_text(size = 12),
+  axis.title.y = element_text(size = 16,face="bold"),
+  legend.text = element_text(size = 12),
+  legend.title = element_text(size = 12,face="bold"),
+  panel.grid.major = element_blank(),
+  panel.grid.minor = element_blank(),
+  panel.background = element_rect(fill = "white"))
+```
+
+## The Bayesian workflow
+
+Fitting a Bayesian model is not just pressing a button. A good workflow has these steps:
+
+1. **Choose the likelihood** (data distribution), exactly as we learned in lesson 11.
+2. **Choose the priors**, and check what they imply using a **prior predictive check**.
+3. **Fit the model** (MCMC sampling).
+4. **Check convergence**: R-hat, effective sample size (ESS), and divergent transitions.
+5. **Check the model fit** using **posterior predictive checks**.
+6. **Interpret** the posterior: effect sizes, credible intervals, and probabilities of direction.
+7. **Compare models**, if needed, using cross-validation (LOO).
+
+Let's go through each step with real data.
+
+
+# Example 1: Counting marsupial visits (again!)
+
+In lesson 11 we modeled the number of _Dromiciops gliroides_ visits to mistletoe plants as a function of temperature, humidity, luminosity (all standardized), and habitat (native forest vs. novel _Eucalyptus_ plantation). We found overdispersion and moved from a Poisson to a negative binomial GLM. Let's recall that result:
+
+```{r freq_nb}
+model_freq<-glm.nb(dg_visits ~ temp_std + hum_std + lum_std + s250clasif, data=data)
+summary(model_freq)
+```
+
+Now let's do the same using the Bayesian way.
+
+## Step 1 and 2: likelihood and priors
+
+We will use a negative binomial likelihood. For the priors, let's see what `brms` would use by default:
+
+```{r default_priors}
+get_prior(dg_visits ~ temp_std + hum_std + lum_std + s250clasif,
+          family = negbinomial(), data = data)
+```
+
+By default, the slopes (`class = b`) have flat priors (i.e., any value from $-\infty$ to $+\infty$ is equally likely). That is not very sensible: a slope of 50 on the log scale would mean that a one-SD increase in temperature multiplies visits by $e^{50}$! We know that is nonsense. So, we will use **weakly informative priors**: they do not push the results in any direction, but they rule out absurd values.
+
+```{r priors}
+priors_nb<-c(prior(normal(0, 1), class = "b"),           # slopes (log scale)
+             prior(normal(0, 1.5), class = "Intercept"), # baseline visits
+             prior(exponential(1), class = "shape"))     # overdispersion
+```
+
+A `normal(0, 1)` prior on a log-scale slope means that we expect effects to be mostly between $e^{-2} \approx 0.14$ and $e^{2} \approx 7.4$ times change in visits per SD of the predictor. Is that reasonable? We can check it by simulating data from the priors alone (a **prior predictive check**), using `sample_prior = "only"`:
+
+```{r prior_check}
+prior_nb<-brm(dg_visits ~ temp_std + hum_std + lum_std + s250clasif,
+              family = negbinomial(),
+              prior = priors_nb,
+              data = data,
+              sample_prior = "only",
+              seed = 22, refresh = 0)
+
+pp_check(prior_nb, ndraws = 100) +
+  scale_x_continuous(limits = c(0, 50)) +
+  labs(title = "Prior predictive check: what our priors expect before seeing data")
+```
+
+The dark line is our observed data, and the light lines are datasets simulated using only the priors. They cover a wide but plausible range of counts (from zero to a few dozens of visits), so our priors are sensible.
+
+## Step 3: fitting the model
+
+Now we fit the model with the data. We will run 4 **chains** (independent MCMC runs) with 2000 iterations each, of which the first 1000 are **warmup** (the sampler learning where the posterior is, which is discarded).
+
+```{r fit_nb}
+fit_nb<-brm(dg_visits ~ temp_std + hum_std + lum_std + s250clasif,
+            family = negbinomial(),
+            prior = priors_nb,
+            data = data,
+            chains = 4, iter = 2000, warmup = 1000,
+            seed = 22, refresh = 0)
+```
+
+## Step 4: checking convergence
+
+```{r summary_nb}
+summary(fit_nb)
+```
+
+The output looks like a GLM, but with some new columns:
+
+- **Estimate** and **Est.Error**: posterior mean and standard deviation.
+- **l-95% CI** and **u-95% CI**: the 95% credible interval.
+- **Rhat**: compares the chains among them. It should be < 1.01. Larger values mean the chains did not agree (i.e., they did not converge), and results cannot be trusted.
+- **Bulk_ESS** and **Tail_ESS**: effective sample size. They should be > 400 (at least 100 per chain).
+
+Also, if the sampler found problems, `brms` will warn us about **divergent transitions**. Never ignore those warnings! Let's look at the chains as well (trace plots). They should look like "hairy caterpillars", well mixed and without trends:
+
+```{r trace, fig.width=10, fig.height=6}
+plot(fit_nb, ask = FALSE)
+```
+
+Perfect! All chains overlap nicely.
+
+## Step 5: posterior predictive checks
+
+Now, does the model reproduce our data? We simulate new datasets from the posterior and compare them with the observed data. For count data, a **rootogram** is very informative: the bars hang from the expected frequencies and, if the model is good, they should touch the zero line.
+
+```{r ppcheck_nb, fig.width=10, fig.height=4}
+pp_check(fit_nb, type = "bars", ndraws = 200) + My_Theme
+pp_check(fit_nb, type = "rootogram") + My_Theme
+```
+
+## Step 6: interpreting the results
+
+Let's compare the Bayesian estimates with the frequentist ones:
+
+```{r compare_freq}
+round(cbind(Frequentist = coef(model_freq),
+            Bayesian = fixef(fit_nb)[, "Estimate"]), 3)
+```
+
+Pretty similar, as expected when the priors are weakly informative. But now we have much more information. Let's visualize the full posteriors of the slopes:
+
+```{r post_areas, fig.width=8, fig.height=4}
+mcmc_areas(fit_nb, pars = c("b_temp_std", "b_hum_std", "b_lum_std", "b_s250clasifNovel"),
+           prob = 0.95) +
+  geom_vline(xintercept = 0, linetype = 2) + My_Theme
+```
+
+The shaded areas are the 95% credible intervals. And now we can ask direct questions, like "what is the probability that visits are lower in the novel habitat?", using the `hypothesis()` function:
+
+```{r hypothesis_nb}
+hypothesis(fit_nb, "s250clasifNovel < 0")
+hypothesis(fit_nb, "temp_std > 0")
+```
+
+The column **Post.Prob** is the posterior probability of our hypothesis, and **Evid.Ratio** tells us how many times more likely the hypothesis is than its opposite. This is much more intuitive than a _p_-value!
+
+We can also work directly with the **posterior draws**, and compute any quantity we want (with its uncertainty!). For example, the change in visits on the natural scale:
+
+```{r draws}
+draws<-as_draws_df(fit_nb)
+head(draws[, 1:6])
+
+# Multiplicative change in visits in Novel vs Native habitat (rate ratio)
+rr_novel<-exp(draws$b_s250clasifNovel)
+median(rr_novel)
+quantile(rr_novel, c(0.025, 0.975))
+```
+
+Finally, a plot of the predicted visits (conditional effects):
+
+```{r cond_eff, fig.width=10, fig.height=4}
+ce<-conditional_effects(fit_nb, effects = c("temp_std", "s250clasif"))
+plot(ce, ask = FALSE, points = TRUE, theme = My_Theme)
+```
+
+## Step 7: comparing models
+
+We have a lot of zeros in our response variable (`r sum(data$dg_visits == 0)` out of `r nrow(data)` plants had no visits). In lesson 12 we learned zero-inflated models. In `brms` we can go one step further and model the zero-inflation probability with its own predictors (this is called **distributional regression**). Let's fit a Poisson and a zero-inflated negative binomial model, in which the probability of a structural zero depends on habitat:
+
+```{r fit_others}
+fit_pois<-brm(dg_visits ~ temp_std + hum_std + lum_std + s250clasif,
+              family = poisson(),
+              prior = c(prior(normal(0, 1), class = "b"),
+                        prior(normal(0, 1.5), class = "Intercept")),
+              data = data, seed = 22, refresh = 0)
+
+fit_zinb<-brm(bf(dg_visits ~ temp_std + hum_std + lum_std + s250clasif,
+                 zi ~ s250clasif),
+              family = zero_inflated_negbinomial(),
+              prior = c(priors_nb,
+                        prior(normal(0, 1.5), class = "b", dpar = "zi")),
+              data = data, seed = 22, refresh = 0)
+summary(fit_zinb)
+```
+
+Instead of AIC, Bayesian models are compared using **leave-one-out cross-validation (LOO)**, which estimates how well each model would predict new data. The `loo_compare()` function ranks the models: the first row is the best one, and differences (`elpd_diff`) smaller than about twice their standard error (`se_diff`) are not meaningful.
+
+```{r loo}
+loo_pois<-loo(fit_pois)
+loo_nb<-loo(fit_nb)
+loo_zinb<-loo(fit_zinb)
+
+loo_compare(loo_pois, loo_nb, loo_zinb)
+```
+
+Also, check the **Pareto k** diagnostics in each `loo` object (e.g., `print(loo_nb)`): values > 0.7 mean that some observations are very influential and the LOO estimate may be unreliable (in such case use `loo(fit, moment_match = TRUE)` or `kfold()`).
+
+```{r loo_detail}
+loo_nb
+```
+
+
+# Example 2: Seed removal as a binomial process
+
+In the same study, we measured the proportion of fruits removed from each plant (_removal_), and we also know the crop size (number of fruits) of each plant. A proportion based on counts should not be analyzed as a Gaussian variable (nor transformed): the proper approach is a **binomial** model with the number of trials. In `brms` we use the `| trials()` syntax:
+
+```{r removal_data}
+data$removed<-round(data$removal * data$crop_size)
+data$dg_std<-as.numeric(scale(data$dg_visits))
+head(data[, c("plant_tag", "crop_size", "removal", "removed", "dg_visits", "s250clasif")])
+```
+
+```{r fit_binom}
+fit_bin<-brm(removed | trials(crop_size) ~ dg_std + s250clasif,
+             family = binomial(),
+             prior = c(prior(normal(0, 1), class = "b"),
+                       prior(normal(0, 1.5), class = "Intercept")),
+             data = data, seed = 22, refresh = 0)
+summary(fit_bin)
+```
+
+Let's check if this model reproduces the observed proportions:
+
+```{r ppc_binom, fig.width=8, fig.height=4}
+pp_check(fit_bin, type = "intervals") + My_Theme +
+  labs(x = "Plant", y = "Fruits removed")
+```
+
+Doh! Many observed values (dark dots) fall outside the predicted intervals. This is **overdispersion** in a binomial model: plants differ among them much more than a binomial distribution allows. A simple and elegant solution is to add an **observation-level random effect** (one random intercept per plant), which absorbs this extra variation:
+
+```{r fit_olre}
+fit_olre<-brm(removed | trials(crop_size) ~ dg_std + s250clasif + (1 | plant_tag),
+              family = binomial(),
+              prior = c(prior(normal(0, 1), class = "b"),
+                        prior(normal(0, 1.5), class = "Intercept"),
+                        prior(exponential(1), class = "sd")),
+              data = data, seed = 22, refresh = 0,
+              control = list(adapt_delta = 0.95))
+summary(fit_olre)
+```
+
+```{r ppc_olre, fig.width=8, fig.height=4}
+pp_check(fit_olre, type = "intervals") + My_Theme +
+  labs(x = "Plant", y = "Fruits removed")
+```
+
+Much better! Please notice that we increased `adapt_delta` to 0.95: this makes the sampler take smaller steps, which helps avoiding divergent transitions in hierarchical models. Also, notice that the credible intervals of the slopes are now wider than in the binomial model: ignoring overdispersion makes us overconfident (the same happened with Poisson vs negative binomial in lesson 11).
+
+## Predictions on the probability scale
+
+Logit-scale coefficients are hard to interpret. With the posterior draws we can get the predicted removal probability for each habitat (for an average plant with an average number of visits), and the difference between them, all with their full uncertainty:
+
+```{r epred}
+newdat<-data.frame(dg_std = 0, s250clasif = c("Native", "Novel"), crop_size = 1)
+pred<-posterior_epred(fit_olre, newdata = newdat, re_formula = NA)
+colnames(pred)<-c("Native", "Novel")
+
+# Predicted removal probability
+apply(pred, 2, quantile, probs = c(0.5, 0.025, 0.975))
+
+# Difference (Novel - Native) and probability that it is positive
+diff_hab<-pred[, "Novel"] - pred[, "Native"]
+quantile(diff_hab, c(0.5, 0.025, 0.975))
+mean(diff_hab > 0)
+```
+
+```{r plot_diff, fig.width=7, fig.height=4}
+ggplot(data.frame(diff = diff_hab), aes(x = diff)) +
+  geom_density(fill = "dodgerblue2", alpha = 0.6) +
+  geom_vline(xintercept = 0, linetype = 2) +
+  labs(x = "Difference in removal probability (Novel - Native)", y = "Posterior density") +
+  My_Theme
+```
+
+This is one of the most useful features of Bayesian inference: any derived quantity (differences, ratios, predictions) automatically inherits the uncertainty of all the parameters. No delta method, no bootstrap needed.
+
+
+# Example 3: Hierarchical models and shrinkage
+
+In lesson 14 we used the data of [Cordero et al. 2020](https://www.mdpi.com/2071-1050/12/21/9252) to model the proportion of threatened mammal species per country, using _Geography_ as a random factor. Here we will make two improvements:
+
+1. The response is a proportion bounded between 0 and 1 (not based on counts), so instead of transforming it, we will use a **Beta distribution**.
+2. We will use _Continent_ as a random effect. Some continents are represented by only 2 or 3 countries, a situation in which frequentist mixed models often produce singular fits. Bayesian hierarchical models handle this gracefully thanks to the priors.
+
+```{r threat_data}
+threat<-read.table("data/10_data_threat.txt",
+                     header=TRUE,
+                     sep="\t",
+                     dec=",",
+                     na.strings="NA")
+
+# Standardizing predictors makes priors easier to set (and sampling more efficient)
+threat$urb_z<-as.numeric(scale(threat$Urbanization))
+threat$dens_z<-as.numeric(scale(log(threat$Pop_density)))
+threat$educ_z<-as.numeric(scale(threat$education_GDP))
+threat$prot_z<-as.numeric(scale(threat$perc_prot_land))
+
+table(threat$Continent)
+summary(threat$prop_thr_mammals17)
+```
+
+```{r fit_beta}
+fit_beta<-brm(prop_thr_mammals17 ~ urb_z + dens_z + educ_z + prot_z + (1 | Continent),
+              family = Beta(),
+              prior = c(prior(normal(0, 1), class = "b"),
+                        prior(normal(-2, 1), class = "Intercept"),   # ~12% threatened
+                        prior(exponential(2), class = "sd"),
+                        prior(gamma(2, 0.1), class = "phi")),
+              data = threat, seed = 22, refresh = 0,
+              control = list(adapt_delta = 0.95))
+summary(fit_beta)
+```
+
+```{r ppc_beta, fig.width=7, fig.height=4}
+pp_check(fit_beta, ndraws = 100) + My_Theme
+```
+
+The **Group-Level Effects** section shows the standard deviation among continents (`sd(Intercept)`). Let's look at the continent-level estimates (the random intercepts):
+
+```{r ranef}
+ranef(fit_beta)$Continent[, , "Intercept"]
+```
+
+## What is shrinkage?
+
+Hierarchical models do **partial pooling**: the estimate of each group is a compromise between its own data and the overall mean. Groups with few observations (e.g., Oceania or North America) are pulled more strongly towards the overall mean, because we have less information about them. This is called **shrinkage**, and it protects us from over-interpreting groups with small samples. Let's see it:
+
+```{r shrinkage, fig.width=8, fig.height=5}
+# Raw (no pooling) mean of each continent on the logit scale
+raw<-aggregate(qlogis(prop_thr_mammals17) ~ Continent, data = threat, FUN = mean)
+names(raw)[2]<-"raw"
+raw$n<-as.numeric(table(threat$Continent)[raw$Continent])
+
+# Partial pooling estimate (intercept + continent deviation), without predictors
+pp<-coef(fit_beta)$Continent[, "Estimate", "Intercept"]
+raw$pooled<-pp[raw$Continent]
+
+ggplot(raw) +
+  geom_segment(aes(x = "No pooling", xend = "Partial pooling",
+                   y = raw, yend = pooled, group = Continent), colour = "grey60") +
+  geom_point(aes(x = "No pooling", y = raw, size = n), colour = "chocolate2") +
+  geom_point(aes(x = "Partial pooling", y = pooled, size = n), colour = "dodgerblue2") +
+  geom_text(aes(x = "No pooling", y = raw, label = Continent), hjust = 1.2, size = 3.5) +
+  geom_hline(yintercept = fixef(fit_beta)["Intercept", "Estimate"], linetype = 2) +
+  labs(x = "", y = "Threatened mammals (logit scale)", size = "N countries") +
+  My_Theme
+```
+
+The dashed line is the overall intercept. Continents with few countries move more towards it. Please note that the partial pooling estimates also account for the predictors, so the comparison is only illustrative, but you get the idea.
+
+
+# Example 4: A Bayesian meta-analysis
+
+In lesson 21 we conducted a meta-analysis on the effect of biological control on crop damage using the data of [Diaz-Siefer et al. 2022](https://link.springer.com/article/10.1007/s10340-021-01438-4). There was a hidden problem there: several case studies come from the **same paper**, so they are not independent. A meta-analysis is just a hierarchical model with known sampling variances, so we can fit it with `brms` and add a multilevel structure (cases nested within papers) very easily. The `se()` term tells `brms` the standard error of each effect size:
+
+```{r meta_data}
+meta<-read.table("./data/21_data_meta_damage.txt", header = T)
+meta$se<-sqrt(meta$var)
+table(table(meta$paperID))   # how many cases per paper
+```
+
+```{r fit_meta}
+fit_meta<-brm(hedges_d | se(se) ~ 1 + (1 | paperID/caseID),
+              prior = c(prior(normal(0, 1), class = "Intercept"),
+                        prior(cauchy(0, 0.5), class = "sd")),
+              data = meta, seed = 22, refresh = 0,
+              control = list(adapt_delta = 0.99))
+summary(fit_meta)
+```
+
+In this output, the **Intercept** is the overall effect size, `sd(Intercept)` for _paperID_ is the heterogeneity among papers ($\tau$ between papers), and the one for _paperID:caseID_ is the heterogeneity among cases within the same paper. We can compute the probability that the overall effect is positive, and the probability that it is larger than a "small" effect size (0.2 in Cohen's scale):
+
+```{r meta_hyp}
+hypothesis(fit_meta, c("Intercept > 0", "Intercept > 0.2"))
+```
+
+And moderators (e.g., zone) are included just like any other predictor:
+
+```{r fit_meta_zone}
+fit_meta_zone<-brm(hedges_d | se(se) ~ 0 + zone + (1 | paperID/caseID),
+                   prior = c(prior(normal(0, 1), class = "b"),
+                             prior(cauchy(0, 0.5), class = "sd")),
+                   data = meta, seed = 22, refresh = 0,
+                   control = list(adapt_delta = 0.99))
+fixef(fit_meta_zone)
+hypothesis(fit_meta_zone, "zonetropical > zonetemperate")
+```
+
+Using `0 + zone` we remove the intercept, so we get the mean effect size of each zone directly (instead of a difference with a reference level). This makes a forest plot super easy:
+
+```{r forest_zone, fig.width=7, fig.height=3}
+mcmc_intervals(fit_meta_zone, pars = c("b_zonetemperate", "b_zonetropical"),
+               prob = 0.5, prob_outer = 0.95) +
+  geom_vline(xintercept = 0, linetype = 2) +
+  labs(x = "Hedges' d") + My_Theme
+```
+
+
+# What else can brms do?
+
+We only scratched the surface. The same `brm()` function can handle many other models that we have seen in this course (and more). Here there are some formulas to give you an idea (not run):
+
+```{r other_models, eval=FALSE}
+# GAM with a cyclic smooth for seasonality (lesson 13 and 19)
+brm(abundance ~ s(day_of_year, bs = "cc") + (1 | site), family = negbinomial(), data = d)
+
+# Spatial model with a Gaussian process over coordinates (lesson 15)
+brm(visits ~ habitat + gp(UTM_E, UTM_N), family = negbinomial(), data = d)
+
+# Temporal autocorrelation (lesson 19)
+brm(count ~ temperature + ar(time = year, gr = site, p = 1), family = poisson(), data = d)
+
+# Ordinal responses, e.g. damage classes 0-4 (never treat them as continuous!)
+brm(damage_class ~ treatment + (1 | plant), family = cumulative("logit"), data = d)
+
+# Proportions with exact 0s and 1s (e.g., fruit set, % leaf area damaged)
+brm(fruit_set ~ habitat, family = zero_one_inflated_beta(), data = d)
+
+# Phylogenetic mixed model (A = phylogenetic covariance matrix from ape::vcv())
+brm(trait ~ predictor + (1 | gr(species, cov = A)), data = d, data2 = list(A = A))
+
+# Bayesian path analysis / SEM: several responses in one model
+brm(bf(visits ~ temperature + habitat, family = negbinomial()) +
+    bf(removed | trials(crop_size) ~ visits + habitat, family = binomial()) +
+    set_rescor(FALSE), data = d)
+```
+
+Other useful functions: `stancode(fit)` to see the Stan code behind the model, `update(fit, newdata = ...)` to refit without recompiling, the `file = "fits/model1"` argument in `brm()` to save the fitted model and avoid refitting it every time, and the `tidybayes` and `marginaleffects` packages for tidy summaries and plots.
+
+
+## How to report a Bayesian model
+
+When writing your paper, please include:
+
+- The likelihood (distribution and link function) and the priors (and a justification of them).
+- The software (R, `brms`, Stan versions), the number of chains, iterations, and warmup.
+- Convergence diagnostics (all R-hat < 1.01, ESS values, no divergent transitions).
+- A posterior predictive check (usually in the Supplementary material).
+- Posterior medians (or means) with 95% credible intervals, and probabilities of direction when useful. Avoid talking about "significance"!
+- A prior sensitivity analysis if your results could depend on the priors (e.g., small datasets).
+
+Reviewers are often more familiar with frequentist results, so a clear methods section goes a long way.
+
+
+## Final thoughts
+
+Bayesian statistics is not a different set of models: it is a different (and, in my opinion, more intuitive) way of learning from data. Everything we learned in this course (distributions, random effects, smooths, meta-analysis) can be fitted in a Bayesian framework with `brms`, using the same formula syntax. The main advantages are: (i) direct probability statements about our hypotheses, (ii) full uncertainty propagation to any derived quantity, (iii) stable estimates with small or unbalanced datasets (a very common situation in field ecology), and (iv) incredible flexibility to build models that fit our data, instead of forcing our data into the models available. The price to pay is computing time and the responsibility of choosing and justifying the priors. It is worth it!
+
+
+## Further reading
+
+- Bürkner, P.-C. (2017). brms: An R package for Bayesian multilevel models using Stan. _Journal of Statistical Software_, 80(1), 1-28.
+- Bürkner, P.-C. (2018). Advanced Bayesian multilevel modeling with the R package brms. _The R Journal_, 10(1), 395-411.
+- McElreath, R. (2020). _Statistical Rethinking_, 2nd ed. CRC Press. The best book to learn Bayesian thinking. Solomon Kurz translated the whole book to `brms` [here](https://bookdown.org/content/4857/).
+- Gelman, A. et al. (2020). Bayesian workflow. [arXiv:2011.01808](https://arxiv.org/abs/2011.01808).
+- The `brms` website: https://paulbuerkner.com/brms/
+
+
+## Session
+
+```{r session, echo=TRUE}
+sessionInfo()
+```
