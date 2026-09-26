@@ -225,7 +225,7 @@ The output looks like a GLM, but with some new columns:
 - **Rhat**: compares the chains among them. It should be < 1.01. Larger values mean the chains did not agree (i.e., they did not converge), and results cannot be trusted.
 - **Bulk_ESS** and **Tail_ESS**: effective sample size. They should be > 400 (at least 100 per chain).
 
-Also, if the sampler found problems, `brms` will warn us about **divergent transitions**. Never ignore those warnings! Let's look at the chains as well (trace plots). They should look like "hairy caterpillars", well mixed and without trends:
+Also, if the sampler found problems, `brms` will warn us about **divergent transitions**. Never ignore those warnings! (Please notice that in this document warnings are hidden by the `setup` chunk, so run the code in your console to see them.) Let's look at the chains as well (trace plots). They should look like "hairy caterpillars", well mixed and without trends:
 
 ```{r trace, fig.width=10, fig.height=6}
 plot(fit_nb, ask = FALSE)
@@ -251,7 +251,7 @@ round(cbind(Frequentist = coef(model_freq),
             Bayesian = fixef(fit_nb)[, "Estimate"]), 3)
 ```
 
-Pretty similar, as expected when the priors are weakly informative. But now we have much more information. Let's visualize the full posteriors of the slopes:
+Pretty similar, as expected when the priors are weakly informative. In both cases, all the credible intervals (and the confidence intervals) include zero, so none of the predictors has a clear effect on _Dromiciops_ visits. But now we have much more information. Let's visualize the full posteriors of the slopes:
 
 ```{r post_areas, fig.width=8, fig.height=4}
 mcmc_areas(fit_nb, pars = c("b_temp_std", "b_hum_std", "b_lum_std", "b_s250clasifNovel"),
@@ -268,6 +268,8 @@ hypothesis(fit_nb, "temp_std > 0")
 
 The column **Post.Prob** is the posterior probability of our hypothesis, and **Evid.Ratio** tells us how many times more likely the hypothesis is than its opposite. This is much more intuitive than a _p_-value!
 
+In our case, the probability that visits are lower in the novel habitat is 0.43 and the probability of a positive temperature effect is 0.66. Both are close to a coin flip (0.5), so our data simply cannot tell us the direction of these effects. A non-significant _p_-value does not distinguish between "there is no effect" and "we don't know"; posterior probabilities near 0.5 and wide credible intervals clearly tell us that **we don't know** (more data are needed).
+
 We can also work directly with the **posterior draws**, and compute any quantity we want (with its uncertainty!). For example, the change in visits on the natural scale:
 
 ```{r draws}
@@ -279,6 +281,8 @@ rr_novel<-exp(draws$b_s250clasifNovel)
 median(rr_novel)
 quantile(rr_novel, c(0.025, 0.975))
 ```
+
+Visits in the novel habitat are about 1.1 times those in the native forest, but the 95% credible interval goes from about 0.4 (less than half the visits) to more than 3 times the visits. Again: a lot of uncertainty.
 
 Finally, a plot of the predicted visits (conditional effects):
 
@@ -317,11 +321,15 @@ loo_zinb<-loo(fit_zinb)
 loo_compare(loo_pois, loo_nb, loo_zinb)
 ```
 
-Also, check the **Pareto k** diagnostics in each `loo` object (e.g., `print(loo_nb)`): values > 0.7 mean that some observations are very influential and the LOO estimate may be unreliable (in such case use `loo(fit, moment_match = TRUE)` or `kfold()`).
+The negative binomial model is the best one. The zero-inflated negative binomial is only 1.2 units worse (with a standard error of 0.7), so both models predict equally well, and we should keep the simpler one (negative binomial). Once overdispersion is accounted for, we do not need an extra zero-inflation process: the `zi_Intercept` of the ZINB model is small (-1.82 on the logit scale, i.e., about 14% of structural zeros) and very uncertain, and it does not differ between habitats. The Poisson model is far behind (almost 35 units worse), confirming what we found in lesson 11.
+
+Also, check the **Pareto k** diagnostics in each `loo` object: values > 0.7 mean that some observations are very influential and the LOO estimate may be unreliable.
 
 ```{r loo_detail}
 loo_nb
 ```
+
+We have one plant with a bad Pareto k (the `diag_elpd` column of `loo_compare()` warned us about this too). One single observation will not change the ranking here, but in a paper we should re-check it with `loo(fit_nb, moment_match = TRUE)` or `kfold(fit_nb, K = 10)`.
 
 
 # Example 2: Seed removal as a binomial process
@@ -350,33 +358,36 @@ pp_check(fit_bin, type = "intervals") + My_Theme +
   labs(x = "Plant", y = "Fruits removed")
 ```
 
-Doh! Many observed values (dark dots) fall outside the predicted intervals. This is **overdispersion** in a binomial model: plants differ among them much more than a binomial distribution allows. A simple and elegant solution is to add an **observation-level random effect** (one random intercept per plant), which absorbs this extra variation:
+Doh! Many observed values (dark dots) fall outside the predicted intervals, which are extremely narrow. This is **overdispersion** in a binomial model: plants differ among them much more than a binomial distribution allows (e.g., some plants lost all their fruits and others none, regardless of the number of visits). Please notice how small the standard errors of the coefficients are in the summary above: ignoring overdispersion makes us overconfident.
 
-```{r fit_olre}
-fit_olre<-brm(removed | trials(crop_size) ~ dg_std + s250clasif + (1 | plant_tag),
-              family = binomial(),
-              prior = c(prior(normal(0, 1), class = "b"),
-                        prior(normal(0, 1.5), class = "Intercept"),
-                        prior(exponential(1), class = "sd")),
-              data = data, seed = 22, refresh = 0,
-              control = list(adapt_delta = 0.95))
-summary(fit_olre)
+The count analogue of this problem was solved using the negative binomial distribution instead of the Poisson one. For proportions, the analogue is the **beta-binomial distribution**: each plant has its own removal probability, which varies around the mean following a Beta distribution with a precision parameter `phi` (the smaller `phi`, the larger the overdispersion).
+
+```{r fit_bb}
+fit_bb<-brm(removed | trials(crop_size) ~ dg_std + s250clasif,
+            family = beta_binomial(),
+            prior = c(prior(normal(0, 1), class = "b"),
+                      prior(normal(0, 1.5), class = "Intercept"),
+                      prior(exponential(0.1), class = "phi")),
+            data = data, seed = 22, refresh = 0)
+summary(fit_bb)
 ```
 
-```{r ppc_olre, fig.width=8, fig.height=4}
-pp_check(fit_olre, type = "intervals") + My_Theme +
+```{r ppc_bb, fig.width=8, fig.height=4}
+pp_check(fit_bb, type = "intervals") + My_Theme +
   labs(x = "Plant", y = "Fruits removed")
 ```
 
-Much better! Please notice that we increased `adapt_delta` to 0.95: this makes the sampler take smaller steps, which helps avoiding divergent transitions in hierarchical models. Also, notice that the credible intervals of the slopes are now wider than in the binomial model: ignoring overdispersion makes us overconfident (the same happened with Poisson vs negative binomial in lesson 11).
+Much better! Now the predictive intervals are wide enough to include almost all the observed values. The precision parameter is low (`phi` around 1.2), confirming strong overdispersion, and the credible intervals of the slopes are 4-5 times wider than in the binomial model. Even so, both effects remain clearly positive: plants with more _Dromiciops_ visits lost a larger proportion of their fruits (which makes sense, as this marsupial is the main seed disperser of this mistletoe), and removal was higher in the novel habitat.
+
+Another common solution is adding an **observation-level random effect** (i.e., `+ (1 | plant_tag)`, one random intercept per plant). It works, but be careful: with one random effect per observation, the model reproduces each data point almost perfectly, so a posterior predictive check like the one above is not informative anymore. It is also harder to sample (it needs more iterations to reach R-hat < 1.01 with these data).
 
 ## Predictions on the probability scale
 
-Logit-scale coefficients are hard to interpret. With the posterior draws we can get the predicted removal probability for each habitat (for an average plant with an average number of visits), and the difference between them, all with their full uncertainty:
+Logit-scale coefficients are hard to interpret. With the posterior draws we can get the predicted removal probability for each habitat (for a plant with an average number of visits), and the difference between them, all with their full uncertainty:
 
 ```{r epred}
 newdat<-data.frame(dg_std = 0, s250clasif = c("Native", "Novel"), crop_size = 1)
-pred<-posterior_epred(fit_olre, newdata = newdat, re_formula = NA)
+pred<-posterior_epred(fit_bb, newdata = newdat)
 colnames(pred)<-c("Native", "Novel")
 
 # Predicted removal probability
@@ -387,6 +398,8 @@ diff_hab<-pred[, "Novel"] - pred[, "Native"]
 quantile(diff_hab, c(0.5, 0.025, 0.975))
 mean(diff_hab > 0)
 ```
+
+Plants in the novel habitat lost about half of their fruits, whereas plants in the native forest lost less than one third. The difference is about 23 percentage points (95% CI: 8-37 points), and the probability that removal is higher in the novel habitat is > 0.99.
 
 ```{r plot_diff, fig.width=7, fig.height=4}
 ggplot(data.frame(diff = diff_hab), aes(x = diff)) +
@@ -439,25 +452,44 @@ summary(fit_beta)
 pp_check(fit_beta, ndraws = 100) + My_Theme
 ```
 
-The **Group-Level Effects** section shows the standard deviation among continents (`sd(Intercept)`). Let's look at the continent-level estimates (the random intercepts):
+Please notice that we increased `adapt_delta` to 0.95: this makes the sampler take smaller steps, which helps avoiding divergent transitions in hierarchical models.
+
+None of the four predictors has a strong effect: all the slopes are small and their credible intervals include (or almost include) zero. Population density shows the most consistent effect (a positive slope, with most of the posterior above zero; check it with `hypothesis(fit_beta, "dens_z > 0")`).
+
+The **Multilevel Hyperparameters** section shows the standard deviation among continents (`sd(Intercept)` = 0.46), which is larger than any of the slopes: _where_ a country is matters more than its urbanization or education investment. Let's look at the continent-level estimates (the random intercepts, as deviations from the overall intercept):
 
 ```{r ranef}
 ranef(fit_beta)$Continent[, , "Intercept"]
 ```
 
+European countries have a clearly lower proportion of threatened mammals than the average (its interval excludes zero), whereas Oceania and Asia tend to have higher proportions, although with more uncertainty.
+
 ## What is shrinkage?
 
-Hierarchical models do **partial pooling**: the estimate of each group is a compromise between its own data and the overall mean. Groups with few observations (e.g., Oceania or North America) are pulled more strongly towards the overall mean, because we have less information about them. This is called **shrinkage**, and it protects us from over-interpreting groups with small samples. Let's see it:
+Hierarchical models do **partial pooling**: the estimate of each group is a compromise between its own data and the overall mean. Groups with few observations (e.g., Oceania or North America) are pulled more strongly towards the overall mean, because we have less information about them. This is called **shrinkage**, and it protects us from over-interpreting groups with small samples. To see it clearly, let's fit a simpler model with no predictors (only the continent random intercept), so that the only difference between the raw and the pooled estimates is the pooling itself:
+
+```{r fit_beta0}
+fit_beta0<-brm(prop_thr_mammals17 ~ 1 + (1 | Continent),
+               family = Beta(),
+               prior = c(prior(normal(-2, 1), class = "Intercept"),
+                         prior(exponential(2), class = "sd"),
+                         prior(gamma(2, 0.1), class = "phi")),
+               data = threat, seed = 22, refresh = 0,
+               control = list(adapt_delta = 0.95))
+```
 
 ```{r shrinkage, fig.width=8, fig.height=5}
-# Raw (no pooling) mean of each continent on the logit scale
-raw<-aggregate(qlogis(prop_thr_mammals17) ~ Continent, data = threat, FUN = mean)
+# Raw (no pooling) estimate: mean proportion of each continent, on the logit scale
+raw<-aggregate(prop_thr_mammals17 ~ Continent, data = threat, 
+               FUN = function(x) qlogis(mean(x)))
 names(raw)[2]<-"raw"
 raw$n<-as.numeric(table(threat$Continent)[raw$Continent])
 
-# Partial pooling estimate (intercept + continent deviation), without predictors
-pp<-coef(fit_beta)$Continent[, "Estimate", "Intercept"]
+# Partial pooling estimate (intercept + continent deviation)
+pp<-coef(fit_beta0)$Continent[, "Estimate", "Intercept"]
 raw$pooled<-pp[raw$Continent]
+raw$shift<-round(raw$pooled - raw$raw, 2)
+raw
 
 ggplot(raw) +
   geom_segment(aes(x = "No pooling", xend = "Partial pooling",
@@ -465,12 +497,12 @@ ggplot(raw) +
   geom_point(aes(x = "No pooling", y = raw, size = n), colour = "chocolate2") +
   geom_point(aes(x = "Partial pooling", y = pooled, size = n), colour = "dodgerblue2") +
   geom_text(aes(x = "No pooling", y = raw, label = Continent), hjust = 1.2, size = 3.5) +
-  geom_hline(yintercept = fixef(fit_beta)["Intercept", "Estimate"], linetype = 2) +
+  geom_hline(yintercept = fixef(fit_beta0)["Intercept", "Estimate"], linetype = 2) +
   labs(x = "", y = "Threatened mammals (logit scale)", size = "N countries") +
   My_Theme
 ```
 
-The dashed line is the overall intercept. Continents with few countries move more towards it. Please note that the partial pooling estimates also account for the predictors, so the comparison is only illustrative, but you get the idea.
+The dashed line is the overall intercept. North America (2 countries) and Oceania (3 countries) are pulled strongly towards it (a shift of about 0.4 logit units), whereas Africa, Asia, and Central America, with many countries, barely move. Europe moves a bit despite having 33 countries, because it is the most extreme group (the further from the mean, the stronger the pull). With only 2 or 3 countries, a continent-level mean can be very extreme just by chance, so shrinkage is a sensible (and automatic) correction.
 
 
 # Example 4: A Bayesian meta-analysis
@@ -492,11 +524,15 @@ fit_meta<-brm(hedges_d | se(se) ~ 1 + (1 | paperID/caseID),
 summary(fit_meta)
 ```
 
-In this output, the **Intercept** is the overall effect size, `sd(Intercept)` for _paperID_ is the heterogeneity among papers ($\tau$ between papers), and the one for _paperID:caseID_ is the heterogeneity among cases within the same paper. We can compute the probability that the overall effect is positive, and the probability that it is larger than a "small" effect size (0.2 in Cohen's scale):
+In this output, the **Intercept** is the overall effect size, `sd(Intercept)` for _paperID_ is the heterogeneity among papers ($\tau$ between papers), and the one for _paperID:caseID_ is the heterogeneity among cases within the same paper. Don't worry about `sigma` being 0 with `NA` diagnostics: the residual variation is fixed by the known standard errors given in `se()`, so there is no residual SD to estimate.
+
+The overall effect size is 0.45 (95% CI: 0.26-0.63), very close to the random-effects estimate of lesson 21 (about 0.46), and in the same direction. The credible interval is a bit wider, because now we account for the non-independence of cases from the same paper and for the uncertainty in the heterogeneity. Interestingly, heterogeneity among cases within the same paper (0.38) is larger than heterogeneity among papers (0.27). We can compute the probability that the overall effect is positive, and the probability that it is larger than a "small" effect size (0.2 in Cohen's scale):
 
 ```{r meta_hyp}
 hypothesis(fit_meta, c("Intercept > 0", "Intercept > 0.2"))
 ```
+
+Both probabilities are > 0.99. None of the 4000 posterior draws were below zero, which is why the evidence ratio of the first hypothesis is `Inf` (it just means "larger than we can measure with 4000 draws").
 
 And moderators (e.g., zone) are included just like any other predictor:
 
@@ -510,7 +546,7 @@ fixef(fit_meta_zone)
 hypothesis(fit_meta_zone, "zonetropical > zonetemperate")
 ```
 
-Using `0 + zone` we remove the intercept, so we get the mean effect size of each zone directly (instead of a difference with a reference level). This makes a forest plot super easy:
+Using `0 + zone` we remove the intercept, so we get the mean effect size of each zone directly (instead of a difference with a reference level). Both zones have almost identical mean effect sizes (about 0.45), and the probability that the effect is larger in tropical than in temperate zones is 0.47, i.e., a coin flip: biological control seems to work equally well in both zones. This makes a forest plot super easy:
 
 ```{r forest_zone, fig.width=7, fig.height=3}
 mcmc_intervals(fit_meta_zone, pars = c("b_zonetemperate", "b_zonetropical"),
