@@ -52,7 +52,7 @@ n_plants
 n_visited
 ```
 
-We can compute the posterior for the visitation probability ($\theta$) by brute force, evaluating Bayes' theorem over a grid of possible values between 0 and 1 (this is called **grid approximation**). We will compare two priors: a flat one (we know nothing) and an informative one (e.g., a previous study told us that _Dromiciops_ visits about 20% of the plants).
+We can compute the posterior for the visitation probability ($\theta$) by brute force, evaluating Bayes' theorem over a grid of possible values between 0 and 1 (this is called **grid approximation**). We will compare two priors: a flat one (we know nothing) and an informative one (e.g., a previous study told us that _Dromiciops gliroides_ visits about 20% of the plants).
 
 ```{r grid, fig.width=10, fig.height=4}
 theta<-seq(0, 1, length.out = 1000)
