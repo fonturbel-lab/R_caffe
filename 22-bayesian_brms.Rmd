@@ -18,7 +18,7 @@ knitr::opts_chunk$set(
 
 # A different way of thinking about uncertainty
 
-During this course we have fitted many models (ANOVAs, GLMs, GLMMs, GAMs, meta-analyses) and all of them had something in common: we obtained a _p_-value and decided whether an effect was "significant" or not. That is the **frequentist** approach, and it answers a rather strange question: _how likely are these data (or more extreme ones) if the null hypothesis were true?_
+During this course we have fitted many models using different approaches (ANOVAs, GLMs, GLMMs, GAMs, meta-analyses) and all of them had something in common: we obtained a _p_-value and decided whether an effect was "significant" or not. That is the **frequentist** approach, and it answers a rather strange question: _how likely are these data (or more extreme ones) if the null hypothesis were true?_
 
 Most of the time, what we really want to know is the opposite: _given these data, how likely is it that the effect is positive? how big is it? how sure am I?_ That is exactly what **Bayesian statistics** answers. Instead of a single point estimate and a _p_-value, we obtain a full probability distribution (the **posterior**) for every parameter in our model.
 
