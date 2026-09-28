@@ -143,7 +143,7 @@ My_Theme = theme(
 
 Fitting a Bayesian model is not just pressing a button. A good workflow has these steps:
 
-1. **Choose the likelihood** (data distribution), exactly as we learned in lesson 11.
+1. **Choose the likelihood** (data distribution), just as we learned in lesson 11.
 2. **Choose the priors**, and check what they imply using a **prior predictive check**.
 3. **Fit the model** (MCMC sampling).
 4. **Check convergence**: R-hat, effective sample size (ESS), and divergent transitions.
