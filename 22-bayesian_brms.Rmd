@@ -156,7 +156,7 @@ Let's go through each step with real data.
 
 # Example 1: Counting marsupial visits (again!)
 
-In lesson 11 we modeled the number of _Dromiciops gliroides_ visits to mistletoe plants as a function of temperature, humidity, luminosity (all standardized), and habitat (native forest vs. novel _Eucalyptus_ plantation). We found overdispersion and moved from a Poisson to a negative binomial GLM. Let's recall that result:
+In lesson 11 we modeled the number of _Dromiciops gliroides_ visits to mistletoe plants as a function of temperature, humidity, luminosity (all standardized), and habitat (native forest vs. novel _Eucalyptus_ plantation). We found overdispersion and switched from a Poisson to a negative binomial GLM. Let's recall that result:
 
 ```{r freq_nb}
 model_freq<-glm.nb(dg_visits ~ temp_std + hum_std + lum_std + s250clasif, data=data)
