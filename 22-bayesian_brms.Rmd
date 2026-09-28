@@ -105,7 +105,7 @@ Please notice the interpretation: the 95% **credible interval** means that, give
 Grid approximation works great with one parameter, but it becomes impossible with the 5, 10, or 50 parameters of a real model. For that we need **Markov Chain Monte Carlo (MCMC)** sampling, and this is where `brms` comes in.
 
 
-# Meet brms
+# Introducing the `brms` package
 
 `brms` (by Paul-Christian Bürkner) is an R package that lets us write Bayesian models using the same formula syntax we already know from `lm()`, `glm()`, and `lme4`. Behind the scenes, `brms` translates our formula into [Stan](https://mc-stan.org) code, compiles it into a C++ program, and samples the posterior using Hamiltonian Monte Carlo (a very efficient MCMC algorithm). We do not need to write any Stan code at all (although we can look at it using `stancode()`).
 
