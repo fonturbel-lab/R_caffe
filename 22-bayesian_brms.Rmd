@@ -22,7 +22,7 @@ During this course we have fitted many models using different approaches (ANOVAs
 
 Most of the time, what we really want to know is the opposite: _given these data, how likely is it that the effect is positive? how big is it? how sure am I?_ That is exactly what **Bayesian statistics** answers. Instead of a single point estimate and a _p_-value, we obtain a full probability distribution (the **posterior**) for every parameter in our model.
 
-## Bayes' theorem in one line
+## Bayes' theorem in a nutshell
 
 Everything in Bayesian statistics comes from this simple rule:
 
