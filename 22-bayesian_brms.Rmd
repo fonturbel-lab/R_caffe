@@ -556,7 +556,7 @@ mcmc_intervals(fit_meta_zone, pars = c("b_zonetemperate", "b_zonetropical"),
 ```
 
 
-# What else can brms do?
+# What else can `brms` do?
 
 We only scratched the surface. The same `brm()` function can handle many other models that we have seen in this course (and more). Here there are some formulas to give you an idea (not run):
 
