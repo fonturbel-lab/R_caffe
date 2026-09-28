@@ -60,6 +60,9 @@ This repository presents a comprehensive R course intended for self-learning and
 
 21.- Meta analysis (bonus track)
 
+
+### Part 4 - Advanced statistics :metal:
+
 22.- Bayesian statistics with brms
 
 
