@@ -201,7 +201,7 @@ The dark line is our observed data, and the light lines are datasets simulated u
 
 ## Step 3: fitting the model
 
-Now we fit the model with the data. We will run 4 **chains** (independent MCMC runs) with 2000 iterations each, of which the first 1000 are **warmup** (the sampler learning where the posterior is, which is discarded).
+Now we fit the model with the data. We will run 4 **chains** (independent MCMC runs) with 2000 iterations each, of which the first 1000 are **warmup** (i.e., the sampler learning where the posterior is, which is discarded).
 
 ```{r fit_nb}
 fit_nb<-brm(dg_visits ~ temp_std + hum_std + lum_std + s250clasif,
