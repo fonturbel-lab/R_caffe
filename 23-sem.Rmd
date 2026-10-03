@@ -1,0 +1,490 @@
+---
+title: "23 - Structural Equation Modeling (SEM)"
+author: "Francisco E. Fonturbel"
+date: "03/October/2026"
+output:
+  html_document:
+    includes:
+        after_body: footer.html
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	echo = TRUE,
+	message = FALSE,
+	warning = FALSE
+)
+```
+
+# From single responses to causal networks
+
+So far, every model in this course had one response variable and a set of predictors. But nature does not work like that. Let's think about our mistletoe system: habitat affects the visits of pollinators and seed dispersers, pollination affects the number of fruits produced, the number of fruits may attract (or not) seed dispersers, dispersers remove fruits, and seeds that are dispersed may (or may not) become seedlings. Each variable is a response in one part of the system and a predictor in another one. If we analyze each piece separately, we lose the big picture: we cannot quantify **indirect effects** (e.g., the effect of habitat on seedlings _through_ seed dispersers), and we cannot test whether our idea of how the whole system works is consistent with the data.
+
+**Structural Equation Modeling (SEM)** is the tool for this. An SEM is a set of equations (one for each response) that together represent a hypothesized **causal network**. As James Grace explains in his book _Structural Equation Modeling and Natural Systems_ (2006), the main value of SEM is not to replace our familiar statistical models, but to let us **evaluate multivariate hypotheses**: we start from what we know (theory, previous studies, natural history) and ask whether the data are consistent with it.
+
+Please notice an important point: SEM does not prove causality. The causal arrows come from our knowledge of the system, not from the data. What SEM does is to tell us whether our causal hypothesis is _compatible_ with the patterns observed, and to estimate the strength of each link.
+
+## Some vocabulary
+
+SEM has its own jargon. These are the key concepts:
+
+- **Path diagram**: a graphical representation of our model. Boxes are measured (observed) variables, single-headed arrows ($\rightarrow$) are hypothesized causal effects, and double-headed arrows ($\leftrightarrow$) are correlations without a causal direction (e.g., two variables sharing an unmeasured common cause).
+- **Exogenous variables**: variables with no arrows pointing to them (they are only predictors).
+- **Endogenous variables**: variables with at least one arrow pointing to them (they are responses in at least one equation).
+- **Path coefficients**: the regression coefficients associated to each arrow.
+- **Direct, indirect, and total effects**: if $A \rightarrow B \rightarrow C$ and also $A \rightarrow C$, then $A$ has a direct effect on $C$, an indirect effect through $B$ (the product of the coefficients along the path), and a total effect (direct + indirect).
+- **Latent variables**: variables that we cannot measure directly (e.g., "habitat quality", "body condition"), but that we can estimate from several observed indicators.
+- **Missing paths**: every pair of variables NOT connected by an arrow is a hypothesis too (they are expected to be independent, conditional on the other variables). These missing paths are what make the model testable!
+
+## Two ways of fitting an SEM
+
+1. **Global estimation** (also called covariance-based SEM; `lavaan` and `sem` packages): all the equations are fitted at once by comparing the covariance matrix implied by the model with the observed covariance matrix. This is the classic approach used in Grace's book. It allows latent variables, but it assumes multivariate normality and needs relatively large samples.
+2. **Local estimation** (also called piecewise SEM; `piecewiseSEM` package): each equation is fitted separately as a regular model (`lm`, `glm`, `glmer`, etc.), and the whole network is evaluated using Shipley's **tests of directed separation**. This approach is very convenient in ecology, as it allows non-normal distributions, random effects, and smaller samples.
+
+We will see both approaches.
+
+## Grace's workflow
+
+1. **Start from theory**: draw a **meta-model** (a conceptual diagram of the processes involved) before looking at the data.
+2. Translate the meta-model into a model with the variables we actually measured.
+3. Check the sample size: a common rule of thumb is 5-10 observations per estimated parameter (for global estimation), and fewer predictors than observations for each equation (for local estimation).
+4. Fit the model and evaluate its **global fit**.
+5. If the model fits poorly, use **diagnostics** to find where the problem is. Add paths only if they make biological sense (otherwise we are just data dredging!).
+6. Interpret the coefficients, and the direct, indirect, and total effects.
+7. Report everything, including the changes made to the original model.
+
+```{r packages}
+library(sem)           # John Fox's SEM package
+library(lavaan)        # Global estimation SEM (loaded after sem, so sem() is lavaan's)
+library(semPlot)       # Path diagrams from fitted models
+library(piecewiseSEM)  # Local estimation SEM (GLMs, mixed models)
+library(DiagrammeR)    # Drawing conceptual diagrams
+library(MASS)          # glm.nb
+library(lme4)          # glmer
+```
+
+
+# Example 1: Fire and plant diversity in Californian shrublands
+
+To learn the basics we will use the classic dataset of [Grace & Keeley (2006)](https://esajournals.onlinelibrary.wiley.com/doi/10.1890/1051-0761%282006%29016%5B0503%3AASEMAO%5D2.0.CO%3B2), one of the main examples of Grace's book. After the large 1993 wildfires in southern California, the authors surveyed 90 shrubland plots and recorded the plant species richness that recovered after the fire. This dataset is included in the `piecewiseSEM` package:
+
+```{r keeley}
+data(keeley)
+head(keeley)
+```
+
+The variables are:
+
+- _distance_: distance from the coast (a proxy of landscape position and climate)
+- _elev_: elevation (m)
+- _abiotic_: an index of abiotic favorability for plants (soil conditions)
+- _age_: age of the stand before the fire (years)
+- _hetero_: spatial heterogeneity of the plot
+- _firesev_: fire severity (an index based on the remaining stem diameter)
+- _cover_: total plant cover after the fire
+- _rich_: plant species richness after the fire
+
+Covariance-based SEM gets in trouble when variances are very different among variables (e.g., the variance of _rich_ is ~17,000 times larger than the variance of _hetero_). So, we will express _hetero_ and _cover_ as percentages. This does not change the results at all, it just changes the units:
+
+```{r rescale}
+k<-keeley
+k$hetero<-k$hetero*100
+k$cover<-k$cover*100
+round(sapply(k, var), 2)
+```
+
+## The meta-model
+
+Following Grace's advice, let's start drawing our hypothesis. Older stands accumulate more fuel, so they should burn more severely. Severe fires kill more plants, reducing plant cover, and cover affects richness. Also, landscape position (distance from the coast) influences stand age, abiotic conditions, and heterogeneity, and all of them may affect richness:
+
+```{r metamodel}
+grViz("
+digraph metamodel {
+  graph [rankdir = LR]
+  node [shape = box, style = filled, fillcolor = '#FFF5E6', fontname = Helvetica]
+  distance [label = 'Distance\nfrom coast']
+  age [label = 'Stand age']
+  firesev [label = 'Fire severity']
+  cover [label = 'Plant cover']
+  abiotic [label = 'Abiotic\nconditions']
+  hetero [label = 'Heterogeneity']
+  rich [label = 'Species\nrichness', fillcolor = '#D6E9F8']
+  distance -> {age abiotic hetero rich}
+  age -> firesev -> cover -> rich
+  {abiotic hetero} -> rich
+}
+")
+```
+
+## A first (and simple) model with lavaan
+
+Let's start with the core of the model: $age \rightarrow fire\ severity \rightarrow cover$. In `lavaan`, we write each equation using the `~` operator, just as in a regular model, and all the equations go inside a text string:
+
+```{r m1}
+mod1<-'
+  firesev ~ age
+  cover ~ firesev
+'
+fit1<-sem(mod1, data = k)
+summary(fit1, fit.measures = TRUE, standardized = TRUE, rsquare = TRUE)
+```
+
+There is a lot of information here. The most important parts are:
+
+- **Model Test User Model**: the $\chi^2$ test compares the covariances implied by our model with the observed ones. Here comes something counterintuitive: in SEM we want a **non-significant** $\chi^2$ ($P$ > 0.05), as it means that there are no significant differences between our model and the data!
+- **Fit indices**: CFI (Comparative Fit Index, should be > 0.95), RMSEA (Root Mean Square Error of Approximation, should be < 0.05-0.08), and SRMR (Standardized Root Mean Square Residual, should be < 0.08). These are guidelines, not strict rules.
+- **Regressions**: the path coefficients. The `Std.all` column contains the **standardized coefficients** (in units of standard deviations), which allow us to compare the strength of different paths.
+- **R-Square**: the proportion of variance explained for each endogenous variable.
+
+Our model has 1 degree of freedom: we have one missing path ($age \rightarrow cover$), so we are testing the hypothesis that age affects cover _only_ through fire severity. The $\chi^2$ test is not significant ($P$ = 0.069), but the RMSEA (0.16) and CFI (0.94) suggest that the fit is not great. Where is the problem? **Modification indices** tell us how much the $\chi^2$ would decrease if we add a given path:
+
+```{r modind1}
+modindices(fit1, minimum.value = 3)
+```
+
+Adding a direct effect of age on cover (`cover ~ age`) would improve the model. Does it make sense? Yes: older stands may have plants with deeper roots or more resprouting capacity, regardless of fire severity. Let's add it, and while we are at it, let's estimate the indirect and total effects of age on cover. To do so, we give names (labels) to the coefficients and use the `:=` operator to define new parameters:
+
+```{r m2}
+mod2<-'
+  firesev ~ a*age
+  cover ~ b*firesev + c*age
+  indirect := a*b
+  total := c + a*b
+'
+fit2<-sem(mod2, data = k)
+summary(fit2, standardized = TRUE)
+```
+
+Now our model has 0 degrees of freedom. This is a **saturated model**: all the possible paths are included, so it reproduces the data perfectly and its fit cannot be tested (there are no missing paths to test!). This is why it is important to have models with missing paths.
+
+The results show that the direct effect of age on cover is weak ($P$ = 0.067), while the indirect effect through fire severity is significant (standardized indirect effect = -0.16). Thus, stand age reduces plant cover mostly because older stands burn more severely.
+
+## The full model
+
+Now let's fit the complete model that we drew above:
+
+```{r full}
+mod_full<-'
+  age ~ distance
+  abiotic ~ distance
+  hetero ~ distance
+  firesev ~ age
+  cover ~ firesev
+  rich ~ distance + abiotic + hetero + cover
+'
+fit_full<-sem(mod_full, data = k)
+fitMeasures(fit_full, c("chisq", "df", "pvalue", "cfi", "rmsea", "srmr"))
+```
+
+The fit is borderline: $P$ = 0.052, CFI = 0.94, RMSEA = 0.09, SRMR = 0.09. Let's check the modification indices (values > 3.84 correspond to a significant $\chi^2$ improvement with 1 df):
+
+```{r modind_full}
+modindices(fit_full, minimum.value = 3.84, sort. = TRUE)
+```
+
+The largest modification index suggests a correlation between the residuals of heterogeneity and cover (`hetero ~~ cover`). A double-headed arrow means that both variables share a source of variation not included in our model. That makes sense: plots with a more heterogeneous environment may also have a patchier plant cover, due to processes we did not measure (e.g., microtopography, rockiness). Please notice that the other two suggestions (`hetero ~ cover` and `cover ~ hetero`) are directional versions of the same problem, and a causal arrow between them is harder to justify. Let's add the correlated error:
+
+```{r full2}
+mod_full2<-'
+  age ~ distance
+  abiotic ~ distance
+  hetero ~ distance
+  firesev ~ age
+  cover ~ firesev
+  rich ~ distance + abiotic + hetero + cover
+  hetero ~~ cover
+'
+fit_full2<-sem(mod_full2, data = k)
+fitMeasures(fit_full2, c("chisq", "df", "pvalue", "cfi", "rmsea", "srmr"))
+anova(fit_full, fit_full2)
+```
+
+Great! Now the model fits well ($P$ = 0.26, CFI = 0.98, RMSEA = 0.05), and it is significantly better than the previous one ($\Delta\chi^2$ = 7.33, $P$ = 0.007, and also lower AIC). Let's see the standardized coefficients and the $R^2$ values:
+
+```{r std_full2}
+std<-standardizedSolution(fit_full2)
+std[std$op %in% c("~", "~~") & std$lhs != std$rhs, c("lhs", "op", "rhs", "est.std", "pvalue")]
+lavInspect(fit_full2, "rsquare")
+```
+
+All the paths are significant. Our model explains 51% of the variation in species richness. Heterogeneity (0.35), cover (0.29), distance (0.29), and abiotic conditions (0.26) have similar direct effects on richness.
+
+## Indirect effects and bootstrapping
+
+What is the effect of stand age on species richness? There is no direct arrow between them, but there is an indirect path: $age \rightarrow fire\ severity \rightarrow cover \rightarrow richness$. The indirect effect is the product of the three coefficients. Standard errors of products are not well estimated by the default method (delta method), so it is a good idea to use **bootstrapping** (i.e., refitting the model many times on resampled data):
+
+```{r indirect}
+mod_ind<-'
+  age ~ distance
+  abiotic ~ distance
+  hetero ~ distance
+  firesev ~ a*age
+  cover ~ b*firesev
+  rich ~ distance + abiotic + hetero + c*cover
+  hetero ~~ cover
+  age_on_rich := a*b*c
+'
+set.seed(23)
+fit_ind<-sem(mod_ind, data = k, se = "bootstrap", bootstrap = 1000)
+pe<-parameterEstimates(fit_ind, boot.ci.type = "perc", standardized = TRUE)
+pe[pe$op == ":=", c("label", "est", "ci.lower", "ci.upper", "std.all")]
+```
+
+The indirect effect of age on richness is negative and its 95% bootstrap confidence interval does not include zero. Older stands have fewer species after the fire, because they burn more severely and lose more plant cover. The standardized indirect effect is small (-0.06), which is expected: the effect is "diluted" along a chain of three links.
+
+## Drawing the path diagram
+
+The `semPlot` package draws the path diagram directly from the fitted model. Blue arrows are positive effects and orange arrows are negative ones, and their width is proportional to the standardized coefficient:
+
+```{r sempaths, fig.width=10, fig.height=6}
+semPaths(fit_full2, what = "std", layout = "tree2", rotation = 2,
+         residuals = FALSE, nCharNodes = 0, sizeMan = 9,
+         edge.label.cex = 1, fade = FALSE,
+         posCol = "dodgerblue3", negCol = "chocolate2")
+```
+
+
+## The same thing with the `sem` package
+
+The `sem` package by John Fox was one of the first SEM packages for R. Its syntax is a bit different: we use `specifyEquations()` and the `=` sign, and we name each coefficient. Let's fit the chain $distance \rightarrow age \rightarrow fire\ severity \rightarrow cover$:
+
+```{r sem_pkg}
+eqs<-specifyEquations(text = "
+  age = b1*distance
+  firesev = b2*age
+  cover = b3*firesev
+")
+fit_sem<-sem::sem(eqs, data = k[, c("distance", "age", "firesev", "cover")],
+                  fixed.x = "distance")
+summary(fit_sem)
+stdCoef(fit_sem)
+```
+
+Please notice that we used `sem::sem()`, because both `lavaan` and `sem` have a function called `sem()`, and the last package loaded "wins" (we loaded `lavaan` last, so a plain `sem()` is the `lavaan` one). The `fixed.x` argument tells the function that _distance_ is exogenous. Let's compare it with `lavaan`:
+
+```{r sem_vs_lavaan}
+fit_lav<-lavaan::sem('age ~ distance
+                      firesev ~ age
+                      cover ~ firesev', data = k)
+coef(fit_lav)[1:3]
+```
+
+The coefficients are identical. Today, `lavaan` is the most popular choice (it is actively developed and has a very friendly syntax), but `sem` is still a solid option.
+
+
+# Example 2: Local estimation with piecewiseSEM
+
+Global estimation has two important limitations for ecologists: it assumes (multivariate) normality, and it cannot handle random effects easily. **Piecewise SEM** solves both problems, by fitting each equation separately using any model we like.
+
+How do we test the whole network, then? Using Shipley's **tests of directed separation (d-sep)**. The idea is simple: for each pair of variables that is NOT connected by an arrow, our model claims that they are independent once we account for their causes. Thus, we can test each of these **independence claims** (the **basis set**) using a regular model. If any claim fails, a path is missing. Then, the _P_-values of all the claims are combined in the **Fisher's C** statistic:
+
+$$C = -2 \sum_{i=1}^{k} \ln(P_i)$$
+
+which follows a $\chi^2$ distribution with $2k$ degrees of freedom. As before, a **non-significant** $C$ means that the model is consistent with the data.
+
+Let's fit the same model of Grace & Keeley using `piecewiseSEM`. We list each equation as a separate `lm()` model inside `psem()`, and correlated errors are specified with the `%~~%` operator:
+
+```{r psem_keeley}
+keeley_psem<-psem(
+  lm(age ~ distance, data = k),
+  lm(abiotic ~ distance, data = k),
+  lm(hetero ~ distance, data = k),
+  lm(firesev ~ age, data = k),
+  lm(cover ~ firesev, data = k),
+  lm(rich ~ distance + abiotic + hetero + cover, data = k),
+  hetero %~~% cover,
+  data = k)
+
+summary(keeley_psem, .progressBar = FALSE)
+```
+
+The output has four parts:
+
+- **Tests of directed separation**: the 11 independence claims of our model. None of them is significant, so there are no important missing paths (the weakest claim is fire severity vs distance, $P$ = 0.10).
+- **Global goodness-of-fit**: Fisher's C = 24.3, $P$ = 0.33, so our model is consistent with the data. `piecewiseSEM` also reports a likelihood-based $\chi^2$ test, which is somewhat more strict here ($P$ = 0.038). When both tests disagree, it is a good idea to look carefully at the independence claims with the lowest _P_-values.
+- **Coefficients**: raw and standardized estimates. Please compare them with the `lavaan` results: they are almost identical (minor differences are due to the different estimation method).
+- **Individual R-squared** for each response.
+
+
+# Example 3: Pollination, seed dispersal, and recruitment of a mistletoe
+
+Now let's use real data with all the "problems" of field data. We will use (again!) the data of [Fontúrbel et al. (2015)](https://besjournals.onlinelibrary.wiley.com/doi/abs/10.1111/1365-2745.12443) on the mistletoe _Tristerix corymbosus_, pollinated by the hummingbird _Sephanoides sephaniodes_ and dispersed by the marsupial _Dromiciops gliroides_, in native forests and novel _Eucalyptus_ plantations. Our response variables are counts and proportions, and we have only 70 plants, so global estimation is not an option.
+
+```{r mistletoe}
+data<-read.csv("data/11_mistletoe_data.csv",
+                     header=TRUE,
+                     sep=";",
+                     dec=".",
+                     na.strings="NA")
+
+# Habitat as a 0/1 variable (1 = novel Eucalyptus plantation)
+data$novel<-ifelse(data$s250clasif == "Novel", 1, 0)
+
+# Proportion of fruits removed, rounded to match whole fruits
+data$removal<-round(data$removal * data$crop_size) / data$crop_size
+
+head(data[, c("plant_tag", "novel", "flowers", "ss_visits", "crop_size",
+              "dg_visits", "removal", "seedling")])
+```
+
+We coded habitat as a 0/1 variable instead of a factor, as `piecewiseSEM` handles binary numeric variables much more easily than factors (the result is exactly the same).
+
+## Our hypothesis
+
+Based on what we know about this system, we propose the following model:
+
+1. Hummingbird visits depend on habitat and on the number of flowers (a larger floral display may attract more visits).
+2. Crop size (number of fruits) depends on the number of flowers and on the hummingbird visits (pollination).
+3. _Dromiciops_ visits depend on habitat and on crop size (more fruits may attract more dispersers).
+4. Fruit removal depends on _Dromiciops_ visits and on habitat.
+5. Seedlings around the plant depend on _Dromiciops_ visits (as it is the only seed disperser).
+
+```{r metamodel2}
+grViz("
+digraph mistletoe {
+  graph [rankdir = LR]
+  node [shape = box, style = filled, fillcolor = '#FFF5E6', fontname = Helvetica]
+  novel [label = 'Novel habitat']
+  flowers [label = 'Flowers']
+  ss [label = 'Hummingbird\nvisits']
+  crop [label = 'Crop size']
+  dg [label = 'Dromiciops\nvisits']
+  rem [label = 'Fruit removal']
+  seed [label = 'Seedlings', fillcolor = '#D6E9F8']
+  {novel flowers} -> ss
+  {flowers ss} -> crop
+  {novel crop} -> dg
+  {dg novel} -> rem
+  dg -> seed
+}
+")
+```
+
+Each equation needs its own distribution (remember lesson 11!). Visits, crop size, and seedlings are overdispersed counts, so we will use negative binomial GLMs. Fruit removal is a proportion of fruits, so we will use a binomial GLMM with an **observation-level random effect** (one random intercept per plant) to account for overdispersion (in lesson 22 we found strong overdispersion in this variable). For binomial models with proportions, we provide the number of trials (crop size) with the `weights` argument.
+
+```{r mistletoe_models}
+m_ss<-glm.nb(ss_visits ~ novel + flowers, data = data)
+m_crop<-glm.nb(crop_size ~ flowers + ss_visits, data = data)
+m_dg<-glm.nb(dg_visits ~ novel + crop_size, data = data)
+m_rem<-glmer(removal ~ dg_visits + novel + (1 | plant_tag),
+             family = binomial, weights = crop_size, data = data)
+m_seed<-glm.nb(seedling ~ dg_visits, data = data)
+
+net1<-psem(m_ss, m_crop, m_dg, m_rem, m_seed, data = data)
+```
+
+Before evaluating our model there is a technical detail. With non-linear models (e.g., a log or logit link), the independence claim "_A_ is independent of _B_" may give a different _P_-value depending on which variable is used as response. The `conserve = TRUE` argument tests both directions and keeps the most conservative _P_-value:
+
+```{r net1}
+summary(net1, .progressBar = FALSE, conserve = TRUE)
+```
+
+Doh! The Fisher's C is highly significant ($P$ < 0.001), so our model is **not** consistent with the data. The tests of directed separation tell us exactly where the problem is. Three independence claims fail:
+
+- **Seedlings ~ novel habitat** ($P$ < 0.001): seedling numbers differ between habitats, beyond the effect of _Dromiciops_ visits. This makes a lot of sense: seed dispersal is just the first step, but seeds need suitable conditions (and suitable host plants) to establish, and those differ between native forests and _Eucalyptus_ plantations.
+- **Seedlings ~ crop size** ($P$ = 0.002): plants with more fruits have more seedlings around them. Also very reasonable: more fruits means more seeds available.
+- **Removal ~ flowers** ($P$ = 0.028): plants with more flowers have lower fruit removal. We do not have a clear mechanism for this (a satiation effect of the dispersers could explain it, but crop size, which is the variable directly related to that mechanism, was not related to removal; $P$ = 0.45). With 11 claims tested, one of them may be significant just by chance, so following Grace's advice we will NOT add this path.
+
+Let's add the first two paths, which are biologically justified, and fit the model again:
+
+```{r net2}
+m_seed2<-glm.nb(seedling ~ dg_visits + novel + crop_size, data = data)
+
+net2<-psem(m_ss, m_crop, m_dg, m_rem, m_seed2, data = data)
+summary(net2, .progressBar = FALSE, conserve = TRUE)
+AIC(net1, net2)
+```
+
+Great! The new model is consistent with the data (Fisher's C = 16.1, $P$ = 0.59), and it has a much lower AIC. Please notice that `removal ~ flowers` is still in the list of claims ($P$ = 0.028), but the overall model fits well. We should mention it in our paper as a possible pattern to explore in future studies.
+
+## What does our model tell us?
+
+Let's look at the coefficients (in the scale of the link function: log for negative binomial, and logit for binomial):
+
+```{r net2_coefs}
+coefs(net2)[, c("Response", "Predictor", "Estimate", "Std.Error", "P.Value")]
+```
+
+The story told by our SEM is quite interesting:
+
+- **Pollination**: hummingbird visits were not related to habitat or flowers, and they were not related to crop size either. Crop size was almost entirely determined by the number of flowers ($R^2$ = 0.97).
+- **Seed dispersal**: _Dromiciops_ visits were not related to habitat or crop size, but plants with more visits had a higher fruit removal (+0.41 on the logit scale per visit). Removal was also much higher in the novel habitat (+2.18 on the logit scale).
+- **Recruitment**: each additional _Dromiciops_ visit multiplied the number of seedlings by $e^{0.55}$ = 1.73. However, plants in the novel habitat had $e^{-3.77}$ = 0.02 times the seedlings of plants in native forests (i.e., 98% fewer seedlings!).
+
+So, in the novel habitat fruits are removed at higher rates, but this does not translate into more seedlings. **Seed removal is not the same as successful recruitment**, and we could only see this by looking at the whole system at once.
+
+We can also draw our model. Solid arrows are significant paths and dashed arrows are non-significant ones:
+
+```{r plot_net2}
+plot(net2, show = "unstd", digits = 2)
+```
+
+## A note on standardized coefficients
+
+You may have noticed that we did not compare standardized coefficients in this example. With Gaussian models, standardized coefficients are easy to compute and to interpret. But with non-Gaussian responses (counts, proportions), the variance of the response depends on the link function and on the distribution, so standardizing is not straightforward. `piecewiseSEM` offers two approaches (`standardize.type = "latent.linear"` and `"Menard.OE"` in `coefs()`), but they are unreliable with very overdispersed responses like our seedlings (here they give coefficients with the wrong sign!). For the same reason, **indirect effects should not be calculated** by multiplying coefficients from models with different link functions. If you need indirect effects with non-Gaussian responses, a Bayesian SEM (see below) is a much better option, as we can compute them on the response scale using the posterior draws (lesson 22).
+
+
+# What else can SEM do?
+
+We only scratched the surface. Here there are some other common SEM applications (not run):
+
+```{r other_sem, eval=FALSE}
+# Latent variables (lavaan): "condition" measured by three indicators
+mod_latent<-'
+  condition =~ body_mass + fat_score + hematocrit   # measurement model
+  survival ~ condition + age                         # structural model
+'
+fit_latent<-sem(mod_latent, data = d)
+
+# Multigroup analysis: do path coefficients differ between habitats?
+fit_groups<-sem(mod_full2, data = d, group = "habitat")
+multigroup(my_psem, group = "habitat")              # piecewiseSEM version
+
+# Random effects in piecewiseSEM (e.g., plots within sites)
+psem(lmer(growth ~ temperature + (1 | site), data = d),
+     glmer(survival ~ growth + (1 | site), family = binomial, data = d),
+     data = d)
+
+# Bayesian SEM with brms (lesson 22): each sub-model with its own distribution
+library(brms)
+fit_bsem<-brm(bf(dg_visits ~ novel + crop_size, family = negbinomial()) +
+              bf(seedling ~ dg_visits + novel + crop_size, family = negbinomial()) +
+              set_rescor(FALSE), data = data)
+```
+
+
+## How to report an SEM
+
+When writing your paper, please include:
+
+- The meta-model and the rationale of each path (the biological hypotheses behind them).
+- The estimation method (global or local), the software, and the distribution used for each response.
+- The global fit statistics ($\chi^2$, CFI, RMSEA, SRMR for global estimation; Fisher's C for piecewise SEM).
+- Any modification made to the original model, and why. Never hide the original model!
+- A path diagram with the coefficients (standardized when possible), and the $R^2$ of each response.
+- Direct, indirect, and total effects when relevant, with their confidence intervals.
+
+
+## Final thoughts
+
+Structural Equation Modeling changes the question from "does X affect Y?" to "how does the whole system work?". It forces us to make our hypotheses explicit (drawing the arrows), it tests them as a whole, and it allows us to quantify indirect effects that are invisible to single-response models. As Grace insists in his book, SEM works best when it is guided by theory and natural history: the arrows come from our knowledge of the system, and the data tell us whether our knowledge is consistent with reality. In ecology, piecewise SEM opened the door to using all the models we learned in this course (GLMs, GLMMs, and more) as building blocks of causal networks.
+
+
+## Further reading
+
+- Grace, J.B. (2006). _Structural Equation Modeling and Natural Systems_. Cambridge University Press. The essential book on SEM for ecologists.
+- Grace, J.B. & Keeley, J.E. (2006). A structural equation model analysis of postfire plant diversity in California shrublands. _Ecological Applications_, 16(2), 503-514.
+- Grace, J.B. et al. (2010). On the specification of structural equation models for ecological systems. _Ecological Monographs_, 80(1), 67-87.
+- Shipley, B. (2016). _Cause and Correlation in Biology_, 2nd ed. Cambridge University Press.
+- Lefcheck, J.S. (2016). piecewiseSEM: Piecewise structural equation modelling in R for ecology, evolution, and systematics. _Methods in Ecology and Evolution_, 7(5), 573-579.
+- Rosseel, Y. (2012). lavaan: An R package for structural equation modeling. _Journal of Statistical Software_, 48(2), 1-36.
+- Fox, J. (2006). Structural equation modeling with the sem package in R. _Structural Equation Modeling_, 13(3), 465-486.
+- Epskamp, S. (2015). semPlot: Unified visualizations of structural equation models. _Structural Equation Modeling_, 22(3), 474-483.
+- Jon Lefcheck's free online book on SEM in R: https://jslefche.github.io/sem_book/
+
+
+## Session
+
+```{r session, echo=TRUE}
+sessionInfo()
+```
