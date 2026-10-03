@@ -1,11 +1,13 @@
 {
   "code/data_audit_functions.R": {
-    "mtime": 1784477785.4409146,
+    "mtime": 1784814980.9379594,
+    "seen": 1790957316.3978791,
     "ast_hash": "36bc66290b5747088e07a05da0c30892",
     "semantic_hash": "36bc66290b5747088e07a05da0c30892"
   },
   "multiplot.R": {
-    "mtime": 1718287045.5280194,
+    "mtime": 1756481445.6559002,
+    "seen": 1790957316.39788,
     "ast_hash": "2a5929205acd0f7a432136b033842409",
     "semantic_hash": "2a5929205acd0f7a432136b033842409"
   },
@@ -117,7 +119,7 @@
   "README.md": {
     "mtime": 1782250161.6644607,
     "ast_hash": "b7f43441a6c3128f37f798ee71d4a77b",
-    "semantic_hash": "b7f43441a6c3128f37f798ee71d4a77b"
+    "semantic_hash": ""
   },
   "data/02_palms.txt": {
     "mtime": 1718287045.5230186,
@@ -200,9 +202,10 @@
     "semantic_hash": "487a26b027f6a3bc47b178be108c54e4"
   },
   "lessons/Spanish/buenas_practicas.html": {
-    "mtime": 1784477423.1230633,
-    "ast_hash": "af82e0be80ae1b6850ee9f71243fbcfd",
-    "semantic_hash": "af82e0be80ae1b6850ee9f71243fbcfd"
+    "mtime": 1784814980.9467793,
+    "seen": 1790957316.3978822,
+    "ast_hash": "8fabd8b905c131e73bac91f844224884",
+    "semantic_hash": "8fabd8b905c131e73bac91f844224884"
   },
   "lessons/Spanish/clase_probabilidad.html": {
     "mtime": 1776095269.2901115,
@@ -223,5 +226,23 @@
     "mtime": 1718287045.527954,
     "ast_hash": "bcf93ae8c77ded318620d38bb454c0da",
     "semantic_hash": "bcf93ae8c77ded318620d38bb454c0da"
+  },
+  "22-bayesian_brms.html": {
+    "mtime": 1790777862.12799,
+    "seen": 1790957316.397881,
+    "ast_hash": "c50a81dff11dd25eedbbbca44e6541a1",
+    "semantic_hash": "c50a81dff11dd25eedbbbca44e6541a1"
+  },
+  "lessons/English/best_practices.html": {
+    "mtime": 1784814980.9444907,
+    "seen": 1790957316.397881,
+    "ast_hash": "44c3f2e9d412bdc8fdde277887387344",
+    "semantic_hash": "44c3f2e9d412bdc8fdde277887387344"
+  },
+  "lessons/English/brms_overview.md": {
+    "mtime": 1790610324.1521044,
+    "seen": 1790957316.3978822,
+    "ast_hash": "785e51a6e17c40c63a268da13880ad7a",
+    "semantic_hash": "785e51a6e17c40c63a268da13880ad7a"
   }
 }
