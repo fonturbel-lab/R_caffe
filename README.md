@@ -65,13 +65,15 @@ This repository presents a comprehensive R course intended for self-learning and
 
 22.- Bayesian statistics with brms
 
+23.- Structural Equation Modeling (SEM)
+
 
 ### Bonus lessons :gift:
 
 - Probability Theory, Distributions, and Summary Statistics (English version: `lessons/English/`)
 
 
-This first edition (c) 2022-2026 is composed by 22 lessons plus bonus content, but more lessons are expected to be added in the near future. If you have any suggestions, please let me know.
+This first edition (c) 2022-2026 is composed by 23 lessons plus bonus content, but more lessons are expected to be added in the near future. If you have any suggestions, please let me know.
 
 
 ### How to take the most of these lessons
