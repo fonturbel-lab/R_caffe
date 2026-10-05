@@ -39,12 +39,12 @@ library(ggplot2)    # For advanced plotting
 library(dplyr)      # For data manipulation
 library(tidyr)      # For data reshaping
 library(corrplot)   # For correlation plots
+library(nestedANOSIM) # For two-way ANOSIM and SIMPER (github.com/fonturbel/nestedANOSIM)
 
 data<-read.table("data/16_bird_data.txt", 
                      header=TRUE, 
                      sep="\t", dec=".", 
                      na.strings="NA")
-attach(data)
 
 # Check data structure
 str(data)
@@ -163,7 +163,8 @@ hist(birdist, main="Distribution of Bray-Curtis Dissimilarities",
      xlab="Dissimilarity", col="lightblue", breaks=20)
 
 #ANOSIM per habitat
-forestbirds<-anosim(birdist, data$Habitat, permutations = 999, distance = "bray")
+# birdist is already a Bray-Curtis matrix, so anosim() needs no 'distance' argument
+forestbirds<-anosim(birdist, data$Habitat, permutations = 999)
 summary(forestbirds)
 plot(forestbirds, xlab="Condition", ylab="Rank distance")
 
@@ -180,7 +181,7 @@ So, there is no significant difference among habitat conditions (R = `r round(fo
 What about sampling approaches?
 
 ```{r anosim2}
-sampbirds<-anosim(birdist, data$Sample, permutations = 999, distance = "bray")
+sampbirds<-anosim(birdist, data$Sample, permutations = 999)
 summary(sampbirds)
 plot(sampbirds, xlab="Sampling method", ylab="Rank distance")
 
@@ -190,6 +191,50 @@ print("Interpretation: R > 0.25 suggests some separation between sampling method
 ```
 
 In this case, we found a significant difference (R = `r round(sampbirds$statistic, 3)`, p = `r sampbirds$signif`), in which point counts are different from camera traps. This makes biological sense as different sampling methods may detect different species or relative abundances.
+
+### Two-way ANOSIM: habitat within each sampling method
+
+The two tests above look at one factor at a time, but our design has two: **habitat** (4 levels) and **sampling method** (3 levels), with 3 sites per habitat. Both factors are **crossed**: every habitat was sampled with every method. Since sampling method has a strong effect, it could be hiding a habitat effect. A two-way ANOSIM answers this by testing sampling method first and then habitat *within* each sampling method separately.
+
+`vegan` only implements one-way ANOSIM, so we will use the `nested_anosim()` function from the `nestedANOSIM` package (install it with `remotes::install_github("fonturbel/nestedANOSIM")`). It runs three tests on the same Bray-Curtis matrix:
+
+1. An overall test on the combined method x habitat groups.
+2. A test of the main factor (sampling method).
+3. A test of the second factor (habitat) within each level of the main factor, with a correction for multiple tests (`p_adjust`).
+
+There is one more detail. The **same 12 sites** were sampled with point counts and, in two consecutive years, with camera traps (`Camera1` = first year, `Camera2` = second year), so the three samples from a site are not independent (they are *paired*). To account for this, we restrict the permutations of the sampling-method test to happen *within* each site using the `strata` argument. Within a single method each site appears only once, so the habitat tests use ordinary permutations.
+
+```{r anosim_twoway}
+# Site ID: the same 12 sites (rows 1-12) were sampled with each method
+site <- paste0("S", rep(1:12, 3))
+table(site, data$Sample)[1:3, ]   # each site appears once per method
+
+birds2 <- nested_anosim(comm   = birds,
+                        main   = data$Sample,    # main factor
+                        nested = data$Habitat,   # tested within each method
+                        strata = site,           # paired design: permute within sites
+                        method = "bray",
+                        permutations = 9999,
+                        p_adjust = "holm",       # we run 3 habitat tests
+                        seed = 123)
+```
+
+The effect of sampling method holds after accounting for the paired design (R = `r round(birds2$main$statistic, 3)`, p = `r format(birds2$main$signif, scientific = FALSE)`). However, habitat has no effect even when we compare habitats within the same sampling method:
+
+```{r anosim_twoway_table}
+birds2$nested
+```
+
+Notice the **negative R** within `Camera2` (R = `r round(birds2$nested$R[birds2$nested$main_level == "Camera2"], 3)`): dissimilarities among sites of the same habitat are *larger* than those between habitats. Also keep in mind that we only have 3 sites per habitat and method, so these tests have little statistical power: a non-significant result does not prove that habitats are identical.
+
+The `plot_anosim_box()` function draws the ANOSIM boxplots with `ggplot2`. It accepts a two-way result (choosing the test with `which`) or a regular `anosim` object:
+
+```{r anosim_twoway_plots, fig.height=4.5, fig.width=6}
+plot_anosim_box(birds2, which = "main", xlab = "Sampling method")
+plot_anosim_box(birds2, which = "Point", xlab = "Habitat")
+```
+
+Which factor goes first depends on the question. Here we asked whether habitat matters once we control for the sampling method. If we wanted to know whether the sampling methods differ within each habitat, we would use `main = data$Habitat` and `nested = data$Sample` instead.
 
 ```{r anosim_ordination, eval=FALSE, fig.height=6, fig.width=12, include=FALSE}
 ### Visualizing ANOSIM Results with Ordination [temporarily disabled]
@@ -242,19 +287,58 @@ In the second case, we found a significant difference in the ANOSIM test. But, w
 simbirds<-simper(birds, group = data$Sample, permutations = 999)
 summary(simbirds, digits = 3)
 
-# Extract and visualize top contributors
-simper_summary <- summary(simbirds)
 
-# For Camera1 vs Point comparison (if exists in results)
-if("Camera1_Point" %in% names(simper_summary)) {
-  top_species <- simper_summary$Camera1_Point[1:10,]
-  
-  barplot(top_species$contr, names.arg=rownames(top_species),
-          las=2, col="coral", 
-          main="Top 10 Species Contributing to Dissimilarity\n(Camera1 vs Point)",
-          ylab="Contribution (%)", cex.names=0.7)
-}
+# The comparisons are named after the groups, in order of appearance in the data
+names(simbirds)
 ```
+
+The output of `summary()` is a list with one table per pair of groups, which is not very convenient to work with. The `nested_simper()` function from `nestedANOSIM` returns the same results as a single tidy data frame. It uses the same design as the two-way ANOSIM: the main factor (sampling method, permuting within sites) and the second factor (habitat) within each sampling method. By default it keeps the species that together explain 70% of the dissimilarity (`cutoff = 0.7`):
+
+```{r simper_twoway}
+simbirds2 <- nested_simper(comm   = birds,
+                           main   = data$Sample,
+                           nested = data$Habitat,
+                           strata = site,          # paired design, as in the ANOSIM
+                           permutations = 999,
+                           cutoff = 0.7,
+                           seed = 123)
+
+# Tidy table for the sampling methods: one row per species and comparison
+simbirds2$main[, c("comparison", "species", "pct", "cum_pct", "mean_a", "mean_b", "p")]
+```
+
+`pct` is the percentage of the average dissimilarity explained by each species, `cum_pct` is the cumulative percentage, and `mean_a` and `mean_b` are the mean abundances in the first and second group of each comparison. Being a data frame, it is easy to plot:
+
+```{r simper_twoway_plot, fig.height=4.5, fig.width=7}
+top <- subset(simbirds2$main, comparison == "Point vs Camera1")
+barplot(top$pct, names.arg = top$species, las = 2, col = "coral",
+        main = "Species contributing to dissimilarity\n(Point vs Camera1)",
+        ylab = "Contribution (%)", cex.names = 0.7)
+```
+
+The hummingbird (`COLIBRI`) alone explains about `r round(simbirds2$main$pct[simbirds2$main$comparison == "Point vs Camera1" & simbirds2$main$species == "COLIBRI"])`% of the difference between point counts and camera traps, as both methods detect it very differently.
+
+SIMPER p-values must be read with care when there are more than two groups. To compute them, `vegan` permutes the labels of *all* groups, so the p-value of one pair is also affected by the other groups. For instance, several species look "significant" between the two camera years:
+
+```{r simper_cameras}
+cams <- subset(simbirds2$main, comparison == "Camera1 vs Camera2")
+cams[, c("species", "pct", "mean_a", "mean_b", "p")]
+```
+
+However, a pairwise ANOSIM shows that the two camera years do not differ as a whole:
+
+```{r anosim_cameras}
+two_cams <- data$Sample != "Point"
+set.seed(123)
+cameras <- anosim(vegdist(birds[two_cams, ], method = "bray"),
+                  data$Sample[two_cams], permutations = 9999,
+                  strata = site[two_cams])
+cameras
+```
+
+The bird communities recorded by the cameras did not differ between years (R = `r round(cameras$statistic, 3)`, p = `r round(cameras$signif, 3)`), so camera traps produced consistent results from one year to the next. The species-level p-values from SIMPER are therefore better used as a guide than as formal tests.
+
+Keep in mind that SIMPER contributions are descriptive: abundant and highly variable species tend to dominate them (Warton et al. 2012, *Methods in Ecology and Evolution* 3: 89-101). This is one of the reasons to use model-based approaches such as `mvabund`, which we will see next.
 
 ## Multivariate Abundance Analysis using mvabund
 
