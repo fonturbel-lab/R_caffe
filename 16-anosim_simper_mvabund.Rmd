@@ -196,7 +196,7 @@ In this case, we found a significant difference (R = `r round(sampbirds$statisti
 
 The two tests above look at one factor at a time, but our design has two: **habitat** (4 levels) and **sampling method** (3 levels), with 3 sites per habitat. Both factors are **crossed**: every habitat was sampled with every method. Since sampling method has a strong effect, it could be hiding a habitat effect. A two-way ANOSIM answers this by testing sampling method first and then habitat *within* each sampling method separately.
 
-`vegan` only implements one-way ANOSIM, so we will use the `nested_anosim()` function from the `nestedANOSIM` package (install it with `remotes::install_github("fonturbel/nestedANOSIM")`). It runs three tests on the same Bray-Curtis matrix:
+`vegan` only implements one-way ANOSIM, so we will use the `nested_anosim()` function from the `nestedANOSIM` package (avaiable from GitHub, install it with `remotes::install_github("fonturbel/nestedANOSIM")`). It runs three tests on the same Bray-Curtis matrix:
 
 1. An overall test on the combined method x habitat groups.
 2. A test of the main factor (sampling method).
